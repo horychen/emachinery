@@ -1,1 +1,1 @@
-include core/.txt
+global-include *.txt *.py

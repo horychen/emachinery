@@ -1,5 +1,4 @@
-import utils.conversion
-
+import conversion
 
 # NUMBER_OF_POLE_PAIRS = 1
 # RATED_CURRENT_RMS = 0.8
@@ -33,7 +32,7 @@ import utils.conversion
 
 
 def main():
-    em = utils.conversion.ElectricMachinery( NUMBER_OF_POLE_PAIRS = 4,
+    em = conversion.ElectricMachinery( NUMBER_OF_POLE_PAIRS = 4,
                                        RATED_CURRENT_RMS = 12.8,
                                        RATED_POWER_WATT = 400,
                                        RATED_SPEED_RPM = 3000

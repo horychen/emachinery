@@ -6,13 +6,14 @@ HERE = pathlib.Path(__file__).parent
 
 # The text of the README file
 README = (HERE / "README.md").read_text()
+CHANGELOG = (HERE / "CHANGELOG.txt").read_text()
 
 # This call to setup() does all the work
 setup(
     name="emachinery",
     version="1.0.2",
     description="A package for electric machinery analysis.",
-    long_description=README,
+    long_description=README + '\n\n' + CHANGELOG,
     long_description_content_type="text/markdown",
     url="https://github.com/horychen/emachinery",
     author="Jiahao Chen",
@@ -24,6 +25,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],
+    keywords='electricmachinery', 
     packages=["core"],
     include_package_data=True,
     install_requires=[],
