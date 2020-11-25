@@ -1,4 +1,8 @@
-import conversion
+# from emachinery.conversion import ElectricMachinery
+from utils import conversion
+from gui import emy
+
+from gui.main import main
 
 # NUMBER_OF_POLE_PAIRS = 1
 # RATED_CURRENT_RMS = 0.8
@@ -30,15 +34,15 @@ import conversion
 # RATED_POWER_WATT = 400
 # RATED_SPEED_RPM = 3000
 
-
-def main():
-    em = conversion.ElectricMachinery( NUMBER_OF_POLE_PAIRS = 4,
-                                       RATED_CURRENT_RMS = 12.8,
-                                       RATED_POWER_WATT = 400,
-                                       RATED_SPEED_RPM = 3000
-        )
+# def main():
+#     em = conversion.ElectricMachinery( NUMBER_OF_POLE_PAIRS = 4,
+#                                        RATED_CURRENT_RMS = 12.8,
+#                                        RATED_POWER_WATT = 400,
+#                                        RATED_SPEED_RPM = 3000)
+#     print(em)
+#     emy.run()
 
 if __name__ == '__main__':
     main()
 
-
+    # 这里不要写任何其他代码了，emy只会调用main()

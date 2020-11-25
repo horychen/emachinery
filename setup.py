@@ -1,5 +1,5 @@
 import pathlib
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent
@@ -8,10 +8,17 @@ HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text()
 CHANGELOG = (HERE / "CHANGELOG.txt").read_text()
 
+buf = (HERE / "emachinery/__init__.py").read_text()
+loc1 = buf.find('__version__') + len('__version__')
+loc2 = buf[loc1:].find("'") + 1
+loc3 = buf[loc1+loc2:].find("'")
+VERSION = buf[loc1+loc2:loc1+loc2+loc3]
+print(VERSION)
+
 # This call to setup() does all the work
 setup(
     name="emachinery",
-    version="1.0.2",
+    version=VERSION,
     description="A package for electric machinery analysis.",
     long_description=README + '\n\n' + CHANGELOG,
     long_description_content_type="text/markdown",
@@ -26,12 +33,14 @@ setup(
         "Programming Language :: Python :: 3.9",
     ],
     keywords='electricmachinery', 
-    packages=["core"],
+    # package_dir={'emachinery':'core'},
+    # packages=find_packages(),
+    packages=["emachinery"],
     include_package_data=True,
     install_requires=[],
     entry_points={
         "console_scripts": [
-            "emy=core.__main__:main",
+            "emy=emachinery.__main__:main",
         ]
     },
 )
