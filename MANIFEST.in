@@ -1,1 +1,1 @@
-global-include *.txt *.py *.qss *.ui
+recursive-include emachinery *.txt *.py *.qss *.ui *.json *.xlsx
