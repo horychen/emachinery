@@ -1,6 +1,6 @@
 # from emachinery.conversion import ElectricMachinery
 from utils import conversion
-from gui import emy
+# from gui import test
 
 from gui.main import main
 
@@ -40,7 +40,7 @@ from gui.main import main
 #                                        RATED_POWER_WATT = 400,
 #                                        RATED_SPEED_RPM = 3000)
 #     print(em)
-#     emy.run()
+#     test.run()
 
 if __name__ == '__main__':
     main()

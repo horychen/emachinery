@@ -99,18 +99,17 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tab, "")
         self.tab_2 = QtWidgets.QWidget()
         self.tab_2.setObjectName("tab_2")
-        self.MplWidget = MplWidget(self.tab_2)
-        self.MplWidget.setGeometry(QtCore.QRect(0, 100, 791, 321))
-        self.MplWidget.setObjectName("MplWidget")
-        self.horizontalLayoutWidget = QtWidgets.QWidget(self.tab_2)
-        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(280, 30, 169, 36))
-        self.horizontalLayoutWidget.setObjectName("horizontalLayoutWidget")
-        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget)
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayoutWidget_2 = QtWidgets.QWidget(self.tab_2)
+        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(50, 20, 721, 831))
+        self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
+        self.verticalLayout_inTab2 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_2)
+        self.verticalLayout_inTab2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_inTab2.setObjectName("verticalLayout_inTab2")
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem2)
-        self.pushButton_getSignal = QtWidgets.QPushButton(self.horizontalLayoutWidget)
+        self.pushButton_getSignal = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
@@ -119,6 +118,10 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.pushButton_getSignal)
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem3)
+        self.verticalLayout_inTab2.addLayout(self.horizontalLayout_2)
+        self.MplWidget = MplWidget(self.verticalLayoutWidget_2)
+        self.MplWidget.setObjectName("MplWidget")
+        self.verticalLayout_inTab2.addWidget(self.MplWidget)
         self.tabWidget.addTab(self.tab_2, "")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -173,8 +176,10 @@ class Ui_MainWindow(object):
         self.actionLocate.setText(_translate("MainWindow", "Json File"))
         self.actionDark.setText(_translate("MainWindow", "Dark"))
         self.actionLight.setText(_translate("MainWindow", "Light"))
-from consolewidget import ConsoleWidget
-from mplwidget import MplWidget
+# from consolewidget import ConsoleWidget
+# from mplwidget import MplWidget
+from emachinery.gui.consolewidget import ConsoleWidget
+from emachinery.gui.mplwidget import MplWidget
 
 
 if __name__ == "__main__":
