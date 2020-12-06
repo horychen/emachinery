@@ -176,10 +176,11 @@ class Ui_MainWindow(object):
         self.actionLocate.setText(_translate("MainWindow", "Json File"))
         self.actionDark.setText(_translate("MainWindow", "Dark"))
         self.actionLight.setText(_translate("MainWindow", "Light"))
-# from consolewidget import ConsoleWidget
-# from mplwidget import MplWidget
-from emachinery.gui.consolewidget import ConsoleWidget
-from emachinery.gui.mplwidget import MplWidget
+from consolewidget import ConsoleWidget
+from mplwidget import MplWidget
+
+# from emachinery.gui.consolewidget import ConsoleWidget
+# from emachinery.gui.mplwidget import MplWidget
 
 
 if __name__ == "__main__":

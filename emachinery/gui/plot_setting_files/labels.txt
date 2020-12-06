@@ -1,0 +1,4 @@
+$i_d,~i_q$ [A]
+Speed [rpm]
+$i_d^*,~i_q^*$ [A]
+Position [rad]

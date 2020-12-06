@@ -1,0 +1,4 @@
+ACM.x[0]*AINV2PINV,ACM.x[1]*AINV2PINV
+ACM.x[2]*RAD_PER_SEC_2_RPM,sm.omg_elec*RAD_PER_SEC_2_RPM
+CTRL.id_cmd,CTRL.iq_cmd
+ACM.x[3]
