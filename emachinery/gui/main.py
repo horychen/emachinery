@@ -27,6 +27,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import re
 
+from time import sleep
+
 class EmachineryWidget(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
@@ -60,11 +62,13 @@ class EmachineryWidget(QMainWindow):
         self.update_namePlateData()
 
         def get_motor_dict(mj):
+            # read from json file
             motor = mj["SEW400W (SF60B04030C2004)"]["基本参数"]
 
             n_pp = motor["极对数 [1]"]
             R    = motor["电机线电阻 [Ohm]"]/2
-            L    = motor["电机D轴线电感 [mH]"]/2*1e-3
+            Ld   = motor["电机D轴线电感 [mH]"]/2*1e-3
+            Lq   = motor["电机Q轴线电感 [mH]"]/2*1e-3
             KE   = motor["转矩常数 [Nm/Arms]"] / 1.5 / n_pp * 1.414
             J_s  = motor["转动惯量 [kg.cm^2]"]*1e-4
             IN   = motor["额定电流 [Arms]"]
@@ -74,24 +78,32 @@ class EmachineryWidget(QMainWindow):
             motor_dict = dict()
             motor_dict['n_pp'] = n_pp
             motor_dict['Rs'] = R
-            motor_dict['Ld'] = L
-            motor_dict['Lq'] = L
+            motor_dict['Ld'] = Ld
+            motor_dict['Lq'] = Lq
             motor_dict['KE'] = KE
             motor_dict['J_s'] = J_s
             motor_dict['IN'] = IN
             motor_dict['PW'] = PW
             motor_dict['RPM'] = RPM
 
-            CL_TS = 1/20e3
-            VL_TS = 4*CL_TS # if modified, need to change SPEED_LOOP_CEILING in ACMConfig.h as well
-
+            # below is by user GUI input
+            CL_TS = eval(self.ui.lineEdit_CLTS.text())
+            VL_TS = eval(self.ui.lineEdit_CLTS.text())
+            EndTime = eval(self.ui.lineEdit_EndTime.text())
             motor_dict['CL_TS'] = CL_TS
             motor_dict['VL_TS'] = VL_TS
+            motor_dict['EndTime'] = EndTime
 
-            motor_dict['JLoadRatio'] = JLoadRatio = 0.16 # 0.16 # 3 [%]
-            motor_dict['Tload'] = TLoad = 0.0 # 0.05 # [Nm]
-            motor_dict['ViscousCoeff'] = B = 0.7e-4
+            print('DEBUG: EndTime =', EndTime, 's')
 
+            motor_dict['JLoadRatio']   = eval(self.ui.lineEdit_LoadInertiaPercentage.text()) #[%]
+            motor_dict['Tload']        = eval(self.ui.lineEdit_LoadTorque.text()) #[Nm]
+            motor_dict['ViscousCoeff'] = eval(self.ui.lineEdit_ViscousCoefficient.text()) #[Nm/(rad/s)]
+
+            motor_dict['data_fname_prefix'] = self.ui.lineEdit_OutputDataFileName.text()
+
+            # this will be passed to C based simulation
+            self.motor_dict = motor_dict
 
         '''tab_2: Plots
         '''
@@ -162,7 +174,7 @@ class EmachineryWidget(QMainWindow):
         # self.lineEdit_npp.textChanged[str].connect(self.doSomething)
         # read in c header file and figure out what are the possible labels
 
-    def runCBasedSimulation(self):
+    def runCBasedSimulation(self, bool_savePlotSetting=True, bool_updatePlotSetting=True):
 
         def savePlotSettings():
             with open(self.ui.lineEdit_path2ACMPlotLabels.text(), 'w') as f:
@@ -170,6 +182,7 @@ class EmachineryWidget(QMainWindow):
             with open(self.ui.lineEdit_path2ACMPlotSignals.text(), 'w') as f:
                 f.write(self.ui.plainTextEdit_ACMPlotDetails.toPlainText())
 
+        def decode_labelsAndSignals():
             # #define DATA_LABELS
             labels = [el.strip() for el in self.ui.plainTextEdit_ACMPlotLabels.toPlainText().split('\n') if el.strip()!='']
             # avoid using ',' or ';' in label, because comma will be interpreted as new column by pandas
@@ -190,20 +203,118 @@ class EmachineryWidget(QMainWindow):
             details = [el.strip() for el in re.split('\n|,', details) if el.strip()!='']
             self.list__detail = details
             # print(details)
+            return details
 
+        def updatePlotSettings(details):
             with open(self.path2acmsimc+'/c/utility.c', 'r', encoding='utf-8') as f:
                 new_line = []
                 for line in f.readlines():
-                    if   '#define DATA_LABELS '  in line: new_line.append(rf'#define DATA_LABELS "{",".join(details)}\n"' +'\n')
-                    elif '#define DATA_DETAILS ' in line: new_line.append(rf'#define DATA_DETAILS {",".join(details)}' +'\n')
+                    if   '#define DATA_LABELS '  in line: new_line.append(rf'#define DATA_LABELS "{  ",".join(details)}\n"'       +'\n')
+                    elif '#define DATA_DETAILS ' in line: new_line.append(rf'#define DATA_DETAILS {  ",".join(details)}'          +'\n')
                     elif '#define DATA_FORMAT '  in line: new_line.append(rf'#define DATA_FORMAT "{("%g,"*len(details))[:-1]}\n"' +'\n')
                     else: new_line.append(line)
             with open(self.path2acmsimc+'/c/utility.c', 'w', encoding='utf-8') as f:
                 f.writelines(new_line)
 
-        savePlotSettings()
+        if bool_savePlotSetting: savePlotSettings()
+        details = decode_labelsAndSignals()
+        if bool_updatePlotSetting: updatePlotSettings(details)
+
+        # compile c and run
+        if os.path.exists(self.path2acmsimc+"/dat/info.dat"):
+            os.remove(self.path2acmsimc+"/dat/info.dat")
         os.system(f"cd /d {self.path2acmsimc}/c && gmake main && start cmd /c main")
+        while not os.path.exists(self.path2acmsimc+"/dat/info.dat"):
+            print('sleep for info.dat')
+            sleep(0.1)
+
         self.update_ACMPlot()
+
+    def runCBasedSimulation_SweepFrequnecyAnalysis(self):
+        for delta in [6.5]:
+        # for delta in [15]:
+
+            # Specify your desired speed closed-loop bandwidth
+            # desired_BW_velocity_HZ = 223
+            desired_BW_velocity_HZ = 100
+
+            currentPI, speedPI, 上位机电流PI, 上位机速度PI, MagPhaseOmega = tuner.iterate_for_desired_bandwidth(delta, desired_BW_velocity_HZ)
+            currentKp, currentKi = currentPI
+            speedKp, speedKi = speedPI
+            上位机电流KP, 上位机电流KI = 上位机电流PI
+            上位机速度KP, 上位机速度KI = 上位机速度PI
+            print(f'\n\n\
+                #define CURRENT_KP {currentKp:g}\n\
+                #define CURRENT_KI {currentKi:g}\n\
+                #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)\n\
+                #define SPEED_KP {speedKp:g}\n\
+                #define SPEED_KI {speedKi:g}\n\
+                #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)\n')
+
+            fig5 = plt.figure(5)
+            fig5.axes[0].set_ylim([-3, 10]) # -3dB
+            fig5.axes[1].set_ylim([-90, 0]) # 90 deg
+            print('------------end of tuner\n\n\n')
+
+            max_freq = 2*desired_BW_velocity_HZ
+            init_freq = 2
+
+            # change to false to save time
+            if True:
+                ad = simulator.acm_designer(work_dir=self.path2acmsimc)
+                ad.update_ACMConfig_evaluate_PI_coefficients(currentPI, speedPI, 上位机电流PI, 上位机速度PI, 
+                                                             max_freq=max_freq, init_freq=init_freq,
+                                                             motor_dict=motor_dict)
+
+                self.ui.plainTextEdit_ACMPlotLabels.appendPlainText('\nSweepSpeed [rpm]')
+                self.ui.plainTextEdit_ACMPlotDetails.appendPlainText('rpm_speed_command,sm.omg')
+                self.runCBasedSimulation(self, bool_savePlotSetting=False, bool_updatePlotSetting=True)
+
+                # plt.figure()
+                data_file_name = ad.plot_PI_coefficients()
+                print('------------end of simulator\n\n\n')
+                # plt.show()
+
+            # # 1. Ploe simualted Bode plot
+            # dB, Deg, Freq, max_freq = analyzer.analyze(ad.data_fname, max_freq, ad)
+            # plt.figure(4, figsize=(20,8))
+            # plt.plot(Freq, dB, '--.', label=ad.data_fname)
+
+            # index, value = analyzer.find_nearest(dB, -3) # find -3dB freq
+            # VLBW = Freq[index]
+            # plt.text(VLBW, -5, f'{VLBW:.0f} Hz', color='red', fontsize=20)
+            # plt.plot([0,max_freq], [-3, -3], 'k--')
+            # plt.ylabel('Velocity Closed-loop transfer function amplitude [dB]')
+
+            # plt.xscale('log')
+            # plt.xlabel('Frequency [Hz]')
+            # plt.legend()
+
+
+            # # 2. Plot designed Bode plot
+            # # plt.figure(4, figsize=(20,8))
+            # mag, phase, omega = MagPhaseOmega
+            # index_max_freq = sum(omega/(2*np.pi) < max_freq)
+            # plt.plot((omega/(2*np.pi))[:index_max_freq], 20*np.log10(mag[:index_max_freq]), '-.', label=f'designed:$\\delta={delta}$')
+
+            # 3. Plot measured Bode plot
+            # fname = r'D:\ISMC\SweepFreq\Jupyter\VLBW-Data/' + 'BiasSine500rpm' + data_file_name[data_file_name.find(data_fname_prefix)+len(data_fname_prefix)+len('-CLOSED-@'):-4]+'.txt'
+            # try:
+            #     CL_VL_TF, list_phase_difference, list_qep_max_frequency, max_freq = Experiment.analyze_experimental_measurements(fname)
+            # except FileNotFoundError as e:
+            #     raise e
+            #     print(str(e))
+            #     pass
+            # except Exception as e:
+            #     raise e
+            # finally:
+            #     index, value = Experiment.find_nearest(CL_VL_TF, -3) # find -3dB freq
+            #     VLBW = list_qep_max_frequency[index]
+            #     plt.text(VLBW, -5, f'{VLBW:.0f} Hz', color='purple', fontsize=20)
+            #     plt.plot(list_qep_max_frequency, CL_VL_TF, '--.', label=fname)
+
+            # plt.legend()
+            # break        
 
     def update_ACMPlot(self):
         if(not self.bool_import_ACMPlot):
@@ -227,7 +338,12 @@ class EmachineryWidget(QMainWindow):
 
             for j in range(number_of_traces_per_subplot):
                 key = self.list__detail[trace_counter]
-                signal = df_profiles[key]
+                # print('key:', key)
+                try:
+                    signal = df_profiles[key]
+                except Exception as e:
+                    print('debug:', df_profiles.keys())
+                    raise e
                 trace_counter += 1
                 ax.plot(time, signal, '-.', lw=1, label=key)
             ax.set_ylabel(self.list__label[i])

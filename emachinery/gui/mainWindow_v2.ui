@@ -54,7 +54,7 @@
            <string notr="true"/>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -550,43 +550,10 @@
               <x>30</x>
               <y>20</y>
               <width>361</width>
-              <height>248</height>
+              <height>274</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_7">
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_9">
-               <item>
-                <widget class="QLabel" name="label_2">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>FEA Configuration     </string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="comboBox_FEAConfig_2">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="baseSize">
-                  <size>
-                   <width>0</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_11">
                <item>
@@ -619,7 +586,7 @@
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_8">
                  <item>
-                  <widget class="QLabel" name="label_npd_10">
+                  <widget class="QLabel" name="label_EndTime">
                    <property name="frameShape">
                     <enum>QFrame::Panel</enum>
                    </property>
@@ -627,17 +594,30 @@
                     <enum>QFrame::Plain</enum>
                    </property>
                    <property name="text">
-                    <string>Number of Poles</string>
+                    <string>End Time [s]</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLabel" name="label_npd_11">
+                  <widget class="QLabel" name="label_CLTS">
+                   <property name="frameShape">
+                    <enum>QFrame::Panel</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Plain</enum>
+                   </property>
+                   <property name="text">
+                    <string>Current Loop TS [1/Hz]</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_VLTS">
                    <property name="frameShape">
                     <enum>QFrame::Panel</enum>
                    </property>
                    <property name="text">
-                    <string>Rated Current [Arms]</string>
+                    <string>Velocity Loop TS [1/Hz]]</string>
                    </property>
                   </widget>
                  </item>
@@ -647,7 +627,7 @@
                     <enum>QFrame::Panel</enum>
                    </property>
                    <property name="text">
-                    <string>Rated Power [W]</string>
+                    <string>Load Torque [Nm]</string>
                    </property>
                   </widget>
                  </item>
@@ -657,7 +637,17 @@
                     <enum>QFrame::Panel</enum>
                    </property>
                    <property name="text">
-                    <string>Rated Speed [rpm]</string>
+                    <string>Load Inertia Percentage [%]</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_npd_15">
+                   <property name="frameShape">
+                    <enum>QFrame::Panel</enum>
+                   </property>
+                   <property name="text">
+                    <string>Viscous Coefficient [Nm/rad*s]</string>
                    </property>
                   </widget>
                  </item>
@@ -667,7 +657,7 @@
                     <enum>QFrame::Panel</enum>
                    </property>
                    <property name="text">
-                    <string>Output Folder Name</string>
+                    <string>Output Data File Name@acmsimc</string>
                    </property>
                   </widget>
                  </item>
@@ -676,37 +666,51 @@
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_9">
                  <item>
-                  <widget class="QLineEdit" name="lineEdit_npp_3">
+                  <widget class="QLineEdit" name="lineEdit_EndTime">
                    <property name="text">
-                    <string>0</string>
+                    <string>10</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_CLTS">
+                   <property name="text">
+                    <string>1/20e3</string>
                    </property>
                   </widget>
                  </item>
                  <item>
                   <widget class="QLineEdit" name="lineEdit_RatedCurrent_3">
                    <property name="text">
-                    <string>0</string>
+                    <string>4/20e3</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLineEdit" name="lineEdit_RatedPower_3">
+                  <widget class="QLineEdit" name="lineEdit_LoadTorque">
                    <property name="text">
-                    <string>50000</string>
+                    <string>0.05</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLineEdit" name="lineEdit_RatedSpeed_4">
+                  <widget class="QLineEdit" name="lineEdit_LoadInertiaPercentage">
                    <property name="text">
-                    <string>30000</string>
+                    <string>16</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLineEdit" name="lineEdit_RatedSpeed_5">
+                  <widget class="QLineEdit" name="lineEdit_ViscousCoefficient">
                    <property name="text">
-                    <string>default/</string>
+                    <string>0.7e-4</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_OutputDataFileName">
+                   <property name="text">
+                    <string>PMSM_SweepFreq</string>
                    </property>
                   </widget>
                  </item>
@@ -730,9 +734,9 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QPushButton" name="pushButton_updateModel_3">
+                <widget class="QPushButton" name="pushButton_SweepFreq">
                  <property name="text">
-                  <string>Run for Fun</string>
+                  <string>Run Simulation for Sweep Frequency</string>
                  </property>
                 </widget>
                </item>
