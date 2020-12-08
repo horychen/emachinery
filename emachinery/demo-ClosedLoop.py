@@ -4,11 +4,11 @@ from _tuner import tuner
 from _simulator import simulator 
 from _analyzer import analyzer
 
+# import os 
 from pylab import np, plt, mpl
 import control
 mpl.rcParams['figure.dpi'] = 120
 plt.style.use('ggplot')
-
 
 # import Experiment
 
@@ -40,6 +40,8 @@ if __name__ == '__main__':
 
     CL_TS = 1/20e3
     VL_TS = 4*CL_TS # if modified, need to change SPEED_LOOP_CEILING in ACMConfig.h as well
+    motor_dict['CL_TS'] = CL_TS
+    motor_dict['VL_TS'] = VL_TS
 
     motor_dict['JLoadRatio'] = JLoadRatio = 0.16 # 0.16 # 3 [%]
     motor_dict['Tload'] = TLoad = 0.0 # 0.05 # [Nm]
@@ -62,7 +64,7 @@ if __name__ == '__main__':
         desired_BW_velocity_HZ = 100
 
         currentPI, speedPI, 上位机电流PI, 上位机速度PI, MagPhaseOmega \
-            = tuner.iterate_for_desired_bandwidth(delta, desired_BW_velocity_HZ, R, L, J_s*(1+JLoadRatio), n_pp, KE, CL_TS=CL_TS, VL_TS=VL_TS)
+            = tuner.iterate_for_desired_bandwidth(delta, desired_BW_velocity_HZ, motor_dict)
         currentKp, currentKi = currentPI
         speedKp, speedKi = speedPI
         上位机电流KP, 上位机电流KI = 上位机电流PI
@@ -82,15 +84,16 @@ if __name__ == '__main__':
 
 
 
-        data_fname_prefix = 'pmsm-pid'
+        motor_dict['data_fname_prefix'] = 'pmsm-pid'
+
         max_freq = 2*desired_BW_velocity_HZ
         init_freq = 2
 
         # change to false to save time
         if True:
-            ad = simulator.acm_designer(CL_TS)
+            ad = simulator.acm_designer(r'D:\DrH\Codes\acmsimcv5') # os.path.dirname(os.path.realpath(__file__))
             ad.update_ACMConfig_evaluate_PI_coefficients(currentPI, speedPI, 上位机电流PI, 上位机速度PI, 
-                                                         data_fname_prefix=data_fname_prefix, max_freq=max_freq, init_freq=init_freq,
+                                                         max_freq=max_freq, init_freq=init_freq,
                                                          motor_dict=motor_dict)
             data_fname = ad.compile_c_and_run()
             # plt.figure()

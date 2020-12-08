@@ -92,19 +92,18 @@ class acm_designer(object):
         with open(self.work_dir+'/c/ACMConfig.h', 'r') as f:
             new_line = []
             for line in f.readlines():
-                if   '#define CURRENT_KP ' in line: new_line.append(f'#define CURRENT_KP ({currentPI[0]:g})\n')
+                if   '#define NUMBER_OF_STEPS' in line: new_line.append(f'#define NUMBER_OF_STEPS {NUMBER_OF_STEPS_CL_TS:.0f}\n')
+                elif '#define CURRENT_KP ' in line: new_line.append(f'#define CURRENT_KP ({currentPI[0]:g})\n')
                 elif '#define CURRENT_KI ' in line: new_line.append(f'#define CURRENT_KI ({currentPI[1]:g})\n')
                 elif '#define SPEED_KP '   in line: new_line.append(f'#define SPEED_KP ({speedPI[0]:g})\n')
                 elif '#define SPEED_KI '   in line: new_line.append(f'#define SPEED_KI ({speedPI[1]:g})\n')
                 elif '#define CL_TS '      in line: new_line.append(f'#define CL_TS ({CL_TS:g})\n')
                 elif '#define CL_TS_INVERSE'        in line: new_line.append(f'#define CL_TS_INVERSE ({1.0/CL_TS:g})\n')
                 elif '#define SPEED_LOOP_CEILING'   in line: new_line.append(f'#define SPEED_LOOP_CEILING (4)\n')
-                elif '#define DATA_FILE_NAME'       in line: new_line.append(f'#define DATA_FILE_NAME "{self.data_fname}"\n')
                 elif '#define SWEEP_FREQ_MAX_FREQ'  in line: new_line.append(f'#define SWEEP_FREQ_MAX_FREQ {max_freq:.0f}\n')
                 elif '#define SWEEP_FREQ_INIT_FREQ' in line: new_line.append(f'#define SWEEP_FREQ_INIT_FREQ {init_freq:.0f}\n')
                 elif '#define SWEEP_FREQ_C2V'       in line: new_line.append(f'#define SWEEP_FREQ_C2V {"TRUE" if SWEEP_FREQ_C2V else "FALSE"}\n')
                 elif '#define SWEEP_FREQ_C2C'       in line: new_line.append(f'#define SWEEP_FREQ_C2C {"TRUE" if SWEEP_FREQ_C2C else "FALSE"}\n')
-                elif '#define NUMBER_OF_STEPS'      in line: new_line.append(f'#define NUMBER_OF_STEPS {NUMBER_OF_STEPS_CL_TS:.0f}\n')
                 elif '#define PMSM_NUMBER_OF_POLE_PAIRS'          in line: new_line.append(f'#define PMSM_NUMBER_OF_POLE_PAIRS          {motor_dict["n_pp"]}\n')
                 elif '#define PMSM_RESISTANCE'                    in line: new_line.append(f'#define PMSM_RESISTANCE                    {motor_dict["Rs"]}\n')
                 elif '#define PMSM_D_AXIS_INDUCTANCE'             in line: new_line.append(f'#define PMSM_D_AXIS_INDUCTANCE             {motor_dict["Ld"]}\n')
@@ -117,6 +116,7 @@ class acm_designer(object):
                 elif '#define LOAD_INERTIA'                       in line: new_line.append(f'#define LOAD_INERTIA                       {motor_dict["JLoadRatio"]}\n')
                 elif '#define LOAD_TORQUE'                        in line: new_line.append(f'#define LOAD_TORQUE                        {motor_dict["Tload"]}\n')
                 elif '#define VISCOUS_COEFF'                      in line: new_line.append(f'#define VISCOUS_COEFF                      {motor_dict["ViscousCoeff"]}\n')
+                elif '#define DATA_FILE_NAME'                     in line: new_line.append(f'#define DATA_FILE_NAME "{self.data_fname}"\n')
                 else: new_line.append(line)
         with open(self.work_dir+'/c/ACMConfig.h', 'w') as f:
             f.writelines(new_line)        
@@ -170,6 +170,11 @@ class acm_designer(object):
         # plt.show()
 
         return data_file_name
+
+    def compile_c_and_run(self):
+        os.system(f"cd /d {self.work_dir}/c && gmake main && start cmd /c main")
+        return self.data_fname
+
 
 if __name__ == '__main__':
 

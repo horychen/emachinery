@@ -5,10 +5,10 @@ from setuptools import setup, find_packages
 HERE = pathlib.Path(__file__).parent
 
 # The text of the README file
-README = (HERE / "README.md").read_text()
-CHANGELOG = (HERE / "CHANGELOG.txt").read_text()
+README = (HERE / "README.md").read_text(encoding='utf-8')
+CHANGELOG = (HERE / "CHANGELOG.txt").read_text(encoding='utf-8')
 
-buf = (HERE / "emachinery/__init__.py").read_text()
+buf = (HERE / "emachinery/__init__.py").read_text(encoding='utf-8')
 loc1 = buf.find('__version__') + len('__version__')
 loc2 = buf[loc1:].find("'") + 1
 loc3 = buf[loc1+loc2:].find("'")

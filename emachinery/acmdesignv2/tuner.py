@@ -31,12 +31,12 @@ def 上位机速度PI系数转换CODE(上位机速度KP, 上位机速度KI, VL_T
     return iSMC_speedKp, iSMC_speedKi, iSMC_speedKiCode
 
 # current reference to current measurement
-def c2c_design(R, L, BW_current_Hz=1000, CL_TS=1/20e3):
-    currentKp, currentKi = get_coeffs_dc_motor_current_regulator(R, L, BW_current_Hz)
+def c2c_design(R, L, CLBW_Hz=1000, CL_TS=1/20e3):
+    currentKp, currentKi = get_coeffs_dc_motor_current_regulator(R, L, CLBW_Hz)
     currentKiCode = currentKi * currentKp * CL_TS
     if True:
         # 这里打印的用于实验中CCS的debug窗口检查电流环PI系数
-        上位机电流KP = BW_current_Hz
+        上位机电流KP = CLBW_Hz
         上位机电流KI = 1000
         iSMC_currentKp = 上位机电流KP * L * 2*np.pi
         iSMC_currentKi = 上位机电流KI/1000 * R/L
@@ -57,7 +57,7 @@ def c2c_design(R, L, BW_current_Hz=1000, CL_TS=1/20e3):
 
     # fig5 = plt.figure(fignum)
     # plt.title('Designed Current Ref. to Velocity Meas. Transfer Function')
-    mag, phase, omega = control.bode_plot(c2c_tf, 2*np.pi*np.logspace(0,4,500), dB=1, Hz=1, deg=1, lw='0.5', label=f'{BW_current_Hz:g} Hz')
+    mag, phase, omega = control.bode_plot(c2c_tf, 2*np.pi*np.logspace(0,4,500), dB=1, Hz=1, deg=1, lw='0.5', label=f'{CLBW_Hz:g} Hz')
     open_cutoff_frequency_HZ = omega[(np.abs(mag-0.0)).argmin()]/2/np.pi
     # print('\tCut-off frequency (without speed PI regulator):', open_cutoff_frequency_HZ, 'Hz')
     return  (currentKp, currentKi), \
@@ -65,13 +65,13 @@ def c2c_design(R, L, BW_current_Hz=1000, CL_TS=1/20e3):
             (mag, phase, omega)
 
 # current reference to velocity measaurement (this is not velocity open loop, because speed PI is not considered)
-def c2v_design(R, L, n_pp, J_s, KE, B=0, BW_current_Hz=1000, CL_TS=1/20e3, fignum=5):
+def c2v_design(R, L, n_pp, J_s, KE, B=0, CLBW_Hz=1000, CL_TS=1/20e3, fignum=5):
 
-    currentKp, currentKi = get_coeffs_dc_motor_current_regulator(R, L, BW_current_Hz)
+    currentKp, currentKi = get_coeffs_dc_motor_current_regulator(R, L, CLBW_Hz)
     currentKiCode = currentKi * currentKp * CL_TS
     if True:
         # 这里打印的用于实验中CCS的debug窗口检查电流环PI系数
-        上位机电流KP = BW_current_Hz
+        上位机电流KP = CLBW_Hz
         上位机电流KI = 1000
         iSMC_currentKp = 上位机电流KP * L * 2*np.pi
         iSMC_currentKi = 上位机电流KI/1000 * R/L
@@ -98,7 +98,7 @@ def c2v_design(R, L, n_pp, J_s, KE, B=0, BW_current_Hz=1000, CL_TS=1/20e3, fignu
 
     # fig5 = plt.figure(fignum)
     # plt.title('Designed Current Ref. to Velocity Meas. Transfer Function')
-    mag, phase, omega = control.bode_plot(c2v_tf, 2*np.pi*np.logspace(0,4,500), dB=1, Hz=1, deg=1, lw='0.5', label=f'{BW_current_Hz:g} Hz')
+    mag, phase, omega = control.bode_plot(c2v_tf, 2*np.pi*np.logspace(0,4,500), dB=1, Hz=1, deg=1, lw='0.5', label=f'{CLBW_Hz:g} Hz')
     open_cutoff_frequency_HZ = omega[(np.abs(mag-0.0)).argmin()]/2/np.pi
     # print('\tCut-off frequency (without speed PI regulator):', open_cutoff_frequency_HZ, 'Hz')
     return  (currentKp, currentKi), \
@@ -106,7 +106,7 @@ def c2v_design(R, L, n_pp, J_s, KE, B=0, BW_current_Hz=1000, CL_TS=1/20e3, fignu
             (mag, phase, omega)
 
 # velocity reference to velocity measaurement
-def iterate_for_desired_bandwidth( delta, desired_BW_velocity_HZ, BW_current_Hz_initial=1000, BW_Current_Hz_Step_Size=100):
+def iterate_for_desired_bandwidth( delta, desired_VLBW_Hz, motor_dict, CLBW_Hz_initial=1000, CLBW_Hz_stepSize=100):
 
     R          = motor_dict['Rs']
     L          = motor_dict['Lq']
@@ -118,35 +118,35 @@ def iterate_for_desired_bandwidth( delta, desired_BW_velocity_HZ, BW_current_Hz_
     VL_TS      = motor_dict['VL_TS']
     J_total = J_s*(1+JLoadRatio) 
 
-    BW_current_Hz = BW_current_Hz_initial  #100 # Hz (initial)
-    BW_velocity_HZ = 0  # Hz (initial)
+    CLBW_Hz = CLBW_Hz_initial  #100 # Hz (initial)
+    VLBW_Hz = 0  # Hz (initial)
     count = 0
     while True:
         count += 1
         if count>20:
-            msg = f'Loop count 20 is reached. Step size is {BW_Current_Hz_Step_Size} Hz.'
+            msg = f'Loop count 20 is reached. Step size is {CLBW_Hz_stepSize} Hz.'
             print(msg)
             # raise Exception()
             break
 
         # Current loop (Tune its bandwidth to support required speed response)
-        if abs(BW_velocity_HZ - desired_BW_velocity_HZ)<=10: # Hz
+        if abs(VLBW_Hz - desired_VLBW_Hz)<=10: # Hz
             break
         else:
-            if BW_velocity_HZ > desired_BW_velocity_HZ:
-                BW_current_Hz -= BW_Current_Hz_Step_Size # Hz
-                if BW_current_Hz<=0:
-                    raise Exception(f'Negative BW_current_Hz. Maybe change the step size of "BW_current_Hz" ({BW_Current_Hz_Step_Size} Hz) and try again.')
+            if VLBW_Hz > desired_VLBW_Hz:
+                CLBW_Hz -= CLBW_Hz_stepSize # Hz
+                if CLBW_Hz<=0:
+                    raise Exception(f'Negative CLBW_Hz. Maybe change the step size of "CLBW_Hz" ({CLBW_Hz_stepSize} Hz) and try again.')
                     break
             else:
-                BW_current_Hz += BW_Current_Hz_Step_Size # Hz
-        print(f'BW_current_Hz = {BW_current_Hz}')
+                CLBW_Hz += CLBW_Hz_stepSize # Hz
+        print(f'CLBW_Hz = {CLBW_Hz}')
 
-        currentKp, currentKi = get_coeffs_dc_motor_current_regulator(R, L, BW_current_Hz)
+        currentKp, currentKi = get_coeffs_dc_motor_current_regulator(R, L, CLBW_Hz)
         currentKiCode = currentKi * currentKp * CL_TS
         if True:
             # 这里打印的用于实验中CCS的debug窗口检查电流环PI系数
-            上位机电流KP = BW_current_Hz
+            上位机电流KP = CLBW_Hz
             上位机电流KI = 1000
             iSMC_currentKp = 上位机电流KP * L * 2*np.pi
             iSMC_currentKi = 上位机电流KI/1000 * R/L
@@ -193,11 +193,11 @@ def iterate_for_desired_bandwidth( delta, desired_BW_velocity_HZ, BW_current_Hz_
         Gw_closed = Gw_open / (1+Gw_open)
         # print(Gw_closed)
 
-        fig5 = plt.figure(fignum)
+        fig5 = plt.figure(5)
         plt.title('Designed Velocity Ref. to Velocity Meas. Transfer Function')
         mag, phase, omega = control.bode_plot(Gw_closed, 2*np.pi*np.logspace(0,4,500), dB=1, Hz=1, deg=1, lw='0.5', label=f'{delta:g}')
-        BW_velocity_HZ = omega[(np.abs(mag-0.707)).argmin()]/2/np.pi
-        print('\tSpeed loop bandwidth:', BW_velocity_HZ, 'Hz')
+        VLBW_Hz = omega[(np.abs(mag-0.707)).argmin()]/2/np.pi
+        print('\tSpeed loop bandwidth:', VLBW_Hz, 'Hz')
     return  (currentKp, currentKi), \
             (speedKp, speedKi), \
             (上位机电流KP, 上位机电流KI), \
@@ -219,9 +219,9 @@ if __name__ == '__main__':
     delta = 6.5
 
     # Specify your desired speed closed-loop bandwidth
-    desired_BW_velocity_HZ = 100
+    desired_VLBW_Hz = 100
 
-    currentPI, speedPI, _, _, _ = iterate_for_desired_bandwidth(delta, desired_BW_velocity_HZ, R, L, J_s, n_pp, KE)
+    currentPI, speedPI, _, _, _ = iterate_for_desired_bandwidth(delta, desired_VLBW_Hz, R, L, J_s, n_pp, KE)
     currentKp, currentKi = currentPI
     speedKp, speedKi = speedPI
 
