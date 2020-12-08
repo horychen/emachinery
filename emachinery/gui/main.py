@@ -3,7 +3,7 @@
 
 import pkg_resources # to include resource file: mainWindow.ui # https://stackoverflow.com/questions/6028000/how-to-read-a-static-file-from-inside-a-python-package/20885799
 
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt5.uic import loadUi
 from PyQt5 import QtCore #, QtGui, QtWidgets
 
@@ -102,6 +102,8 @@ class EmachineryWidget(QMainWindow):
         self.comboActivate_namePlateData()
 
         self.motor_dict = self.get_motor_dict(self.mj)
+        self.control_dict   = dict()
+        self.sweepFreq_dict = dict()
 
         '''tab_2: Plots
         '''
@@ -153,6 +155,19 @@ class EmachineryWidget(QMainWindow):
             print(e)
             print('ACMPlot settings are not found. Will use the default instead.')
 
+        # Select Excitation
+        self.list__radioButton4Excitation = [
+            self.ui.radioButton_Excitation_Position,
+            self.ui.radioButton_Excitation_Velocity,
+            self.ui.radioButton_Excitation_SweepFrequency]
+        self.list__checkedExcitation = [radioButton.isChecked() for radioButton in self.list__radioButton4Excitation]
+        for radioButton in self.list__radioButton4Excitation:
+            radioButton.toggled.connect(self.radioChecked_ACMExcitation)
+
+        # settings for sweep frequency
+        self.ui.radioButton_openLoop.toggled.connect(self.radioChecked_Settings4SweepFrequency)
+        self.ui.radioButton_currentLoopOnly.toggled.connect(self.radioChecked_Settings4SweepFrequency)
+
         '''tab_5: ACMPlot
         '''
         self.ui.pushButton_ACMPlotHere.clicked.connect(self.update_ACMPlot)
@@ -172,6 +187,7 @@ class EmachineryWidget(QMainWindow):
         self.ui.label_qpix_Note1.setPixmap(latex_repo.qpixmap_Note1)
         self.ui.label_qpix_Note2.setPixmap(latex_repo.qpixmap_Note2)
         self.ui.pushButton_pidTuner.clicked.connect(self.series_pid_tuner)
+        # self.ui.pushButton_SweepFreq.clicked.connect(self.runCBasedSimulation_SweepFrequnecyAnalysis)
 
         '''menu
         '''
@@ -216,6 +232,10 @@ class EmachineryWidget(QMainWindow):
         self.ui.lineEdit_PC_speedKP  .setText(f'{上位机速度KP:g}')
         self.ui.lineEdit_PC_speedKI  .setText(f'{上位机速度KI:g}')
 
+    def get_control_dict(self):
+
+        self.control_dict["currentPI"] = (eval(self.lineEdit_currentKP.text()), eval(self.lineEdit_currentKI.text()))
+        self.control_dict["speedPI"]   = (eval(self.lineEdit_speedKP.text()),   eval(self.lineEdit_speedKI.text()))
         # print(f'\n\n\
         #     #define CURRENT_KP {currentKp:g}\n\
         #     #define CURRENT_KI {currentKi:g}\n\
@@ -223,6 +243,23 @@ class EmachineryWidget(QMainWindow):
         #     #define SPEED_KP {speedKp:g}\n\
         #     #define SPEED_KI {speedKi:g}\n\
         #     #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)\n')
+        
+        self.list__checkedExcitation = [radioButton.isChecked() for radioButton in self.list__radioButton4Excitation]
+        self.control_dict['ExcitationType'] = np.argmax(self.list__checkedExcitation)
+
+        print(self.control_dict, end='\n'*2)
+        return self.control_dict
+
+    def get_sweepFreq_dict(self):
+
+        self.sweepFreq_dict["max_freq"] = 2 * eval(self.ui.lineEdit_desiredVLBW.text())
+        self.sweepFreq_dict["init_freq"] = 2
+        self.sweepFreq_dict["SWEEP_FREQ_C2V"] = self.ui.radioButton_openLoop.isChecked()
+        self.sweepFreq_dict["SWEEP_FREQ_C2C"] = self.ui.radioButton_currentLoopOnly.isChecked()
+
+        print(self.sweepFreq_dict, end='\n'*2)
+        return self.sweepFreq_dict
+
 
     ''' C-based Simulation '''
     # read in .dat file for plot
@@ -316,6 +353,39 @@ class EmachineryWidget(QMainWindow):
         # animate it (it is okay for incomeplete data)
         self.anim = animation.FuncAnimation(self.ui.MplWidget_ACMPlot.canvas.figure, ACMアニメ, interval=100)
         self.ui.MplWidget_ACMPlot.canvas.draw()
+    def radioChecked_ACMExcitation(self):
+        # This is not needed as there is an option for radioButton as autoExclusive
+        # temp = [radioButton.isChecked() for radioButton in self.list__radioButton4Excitation]
+        # if sum(temp)>=2:
+        #     index = 0
+        #     for new, old in zip(temp, self.list__checkedExcitation):
+        #         # 原来已经被勾上的
+        #         if new == old == True:
+        #             self.list__radioButton4Excitation[index].setChecked()
+        #         # 刚刚被勾上的
+        #         if new != old and new == True:
+        #             self.control_dict['ExcitationType'] = index
+        #         index += 1
+
+        self.list__checkedExcitation = [radioButton.isChecked() for radioButton in self.list__radioButton4Excitation]
+        self.control_dict['ExcitationType'] = np.argmax(self.list__checkedExcitation)
+
+        # sweep frequency
+        if self.control_dict['ExcitationType'] == 2:
+            self.ui.groupBox_sweepFrequency.setEnabled(True)
+        else:
+            self.ui.groupBox_sweepFrequency.setEnabled(False)
+    def radioChecked_Settings4SweepFrequency(self):
+        # This is not needed as there is an option for radioButton as autoExclusive
+        if self.ui.radioButton_openLoop.isChecked() and self.ui.radioButton_currentLoopOnly.isChecked():
+            msg = QMessageBox()
+            msg.setWindowTitle("Warning")
+            msg.setText("Not support open-loop and current-loop-only at the same time!\nPlease select only one of them.")
+            msg.setIcon(QMessageBox.Warning)
+            x = msg.exec_()
+            self.ui.radioButton_openLoop.setChecked(False)
+            self.ui.radioButton_currentLoopOnly.setChecked(False)
+
     # save setting, compile .c and run .exe
     def runCBasedSimulation(self, bool_=True, bool_savePlotSetting=True, bool_updatePlotSetting=True):
         # why bool_ is always set to False???
@@ -362,27 +432,57 @@ class EmachineryWidget(QMainWindow):
             with open(path2acmsimc+'/c/utility.c', 'w', encoding='utf-8') as f:
                 f.writelines(new_lines)
 
-        def updateACMConfig(path2acmsimc, motor_dict):
+        def updateACMConfig(path2acmsimc, motor_dict, control_dict, sweepFreq_dict):
             self = None
             NUMBER_OF_STEPS_CL_TS = motor_dict['EndTime']/motor_dict['CL_TS']
             print('NUMBER_OF_STEPS_CL_TS', NUMBER_OF_STEPS_CL_TS)
             with open(path2acmsimc+'/c/ACMConfig.h', 'r', encoding='utf-8') as f:
                 new_lines = []
                 for line in f.readlines():
+                    # Basic Quantities
                     if   '#define NUMBER_OF_STEPS' in line: new_lines.append(f'#define NUMBER_OF_STEPS {NUMBER_OF_STEPS_CL_TS:.0f}\n')
                     elif '#define CL_TS '          in line: new_lines.append(f'#define CL_TS          ({motor_dict["CL_TS"]:g})\n')
                     elif '#define CL_TS_INVERSE'   in line: new_lines.append(f'#define CL_TS_INVERSE  ({1.0/motor_dict["CL_TS"]:g})\n')
                     elif '#define VL_TS '          in line: new_lines.append(f'#define VL_TS          ({motor_dict["VL_TS"]:g})\n')
+                    elif '#define DATA_FILE_NAME'  in line: new_lines.append(f'#define DATA_FILE_NAME "{"../dat/"+motor_dict["data_fname_prefix"]+".dat"}"\n')
+                    # Load Related Quantities
                     elif '#define LOAD_INERTIA'    in line: new_lines.append(f'#define LOAD_INERTIA    {motor_dict["JLoadRatio"]}\n')
                     elif '#define LOAD_TORQUE'     in line: new_lines.append(f'#define LOAD_TORQUE     {motor_dict["Tload"]}\n')
                     elif '#define VISCOUS_COEFF'   in line: new_lines.append(f'#define VISCOUS_COEFF   {motor_dict["ViscousCoeff"]}\n')
-                    elif '#define DATA_FILE_NAME'  in line: new_lines.append(f'#define DATA_FILE_NAME "{"../dat/"+motor_dict["data_fname_prefix"]+".dat"}"\n')
+                    # Machine Parameters
+                    elif '#define PMSM_NUMBER_OF_POLE_PAIRS'          in line: new_lines.append(f'#define PMSM_NUMBER_OF_POLE_PAIRS          {motor_dict["n_pp"]}\n')
+                    elif '#define PMSM_RESISTANCE'                    in line: new_lines.append(f'#define PMSM_RESISTANCE                    {motor_dict["Rs"]}\n')
+                    elif '#define PMSM_D_AXIS_INDUCTANCE'             in line: new_lines.append(f'#define PMSM_D_AXIS_INDUCTANCE             {motor_dict["Ld"]}\n')
+                    elif '#define PMSM_Q_AXIS_INDUCTANCE'             in line: new_lines.append(f'#define PMSM_Q_AXIS_INDUCTANCE             {motor_dict["Lq"]}\n')
+                    elif '#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE' in line: new_lines.append(f'#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE {motor_dict["KE"]}\n')
+                    elif '#define PMSM_SHAFT_INERTIA'                 in line: new_lines.append(f'#define PMSM_SHAFT_INERTIA                 {motor_dict["J_s"]}\n')
+                    elif '#define PMSM_RATED_CURRENT_RMS'             in line: new_lines.append(f'#define PMSM_RATED_CURRENT_RMS             {motor_dict["IN"]}\n')
+                    elif '#define PMSM_RATED_POWER_WATT'              in line: new_lines.append(f'#define PMSM_RATED_POWER_WATT              {motor_dict["PW"]}\n')
+                    elif '#define PMSM_RATED_SPEED_RPM'               in line: new_lines.append(f'#define PMSM_RATED_SPEED_RPM               {motor_dict["RPM"]}\n')
+                    # Control Related Quantities
+                    elif len(control_dict.keys()) > 2: # there could be only ExcitationType assigned
+                        # PID Coefficients
+                        if   '#define CURRENT_KP '     in line: new_lines.append(f'#define CURRENT_KP ({control_dict["currentPI"][0]:g})\n')
+                        elif '#define CURRENT_KI '     in line: new_lines.append(f'#define CURRENT_KI ({control_dict["currentPI"][1]:g})\n')
+                        elif '#define SPEED_KP '       in line: new_lines.append(f'#define SPEED_KP ({  control_dict["speedPI"]  [0]:g})\n')
+                        elif '#define SPEED_KI '       in line: new_lines.append(f'#define SPEED_KI ({  control_dict["speedPI"]  [1]:g})\n')
+                        elif '#define EXCITATION_TYPE' in line: new_lines.append(f'#define EXCITATION_TYPE ({control_dict["ExcitationType"]})\n')
+                        # Sweep Frequency Related Quantities
+                        elif len(sweepFreq_dict.keys()) > 0:
+                            if   '#define SWEEP_FREQ_MAX_FREQ'  in line: new_lines.append(f'#define SWEEP_FREQ_MAX_FREQ {     sweepFreq_dict["max_freq"]:.0f}\n')
+                            elif '#define SWEEP_FREQ_INIT_FREQ' in line: new_lines.append(f'#define SWEEP_FREQ_INIT_FREQ {    sweepFreq_dict["init_freq"]:.0f}\n')
+                            elif '#define SWEEP_FREQ_C2V'       in line: new_lines.append(f'#define SWEEP_FREQ_C2V {"TRUE" if sweepFreq_dict["SWEEP_FREQ_C2V"] else "FALSE"}\n')
+                            elif '#define SWEEP_FREQ_C2C'       in line: new_lines.append(f'#define SWEEP_FREQ_C2C {"TRUE" if sweepFreq_dict["SWEEP_FREQ_C2C"] else "FALSE"}\n')
+                            else: new_lines.append(line)
+                        else: new_lines.append(line)
                     else: new_lines.append(line)
             with open(path2acmsimc+'/c/ACMConfig.h', 'w', encoding='utf-8') as f:
                 f.writelines(new_lines)
 
         # update panel inputs
         self.motor_dict = self.get_motor_dict(self.mj)
+        self.control_dict = self.get_control_dict()
+        self.sweepFreq_dict = self.get_sweepFreq_dict()
 
         # save 
         if bool_savePlotSetting: savePlotSettings()
@@ -392,7 +492,7 @@ class EmachineryWidget(QMainWindow):
 
         # update path/to/acmsimcv5/c/utility.c
         if bool_updatePlotSetting: updatePlotSettings(self.path2acmsimc, self.list__detail)
-        updateACMConfig(self.path2acmsimc, self.motor_dict)
+        updateACMConfig(self.path2acmsimc, self.motor_dict, self.control_dict, self.sweepFreq_dict)
 
         # compile c and run
         if os.path.exists(self.path2acmsimc+"/dat/info.dat"):
@@ -407,90 +507,89 @@ class EmachineryWidget(QMainWindow):
         # sleep(2) # it takes time for main.exe to write data into the disk.
         self.update_ACMPlot()
     def runCBasedSimulation_SweepFrequnecyAnalysis(self):
-        for delta in [6.5]:
-        # for delta in [15]:
 
-            # Specify your desired speed closed-loop bandwidth
-            # desired_BW_velocity_HZ = 223
-            desired_BW_velocity_HZ = 100
+        self.series_pid_tuner()
 
-            currentPI, speedPI, 上位机电流PI, 上位机速度PI, MagPhaseOmega = tuner.iterate_for_desired_bandwidth(delta, desired_BW_velocity_HZ)
-            currentKp, currentKi = currentPI
-            speedKp, speedKi = speedPI
-            上位机电流KP, 上位机电流KI = 上位机电流PI
-            上位机速度KP, 上位机速度KI = 上位机速度PI
-            print(f'\n\n\
-                #define CURRENT_KP {currentKp:g}\n\
-                #define CURRENT_KI {currentKi:g}\n\
-                #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)\n\
-                #define SPEED_KP {speedKp:g}\n\
-                #define SPEED_KI {speedKi:g}\n\
-                #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)\n')
+        # currentPI, speedPI, 上位机电流PI, 上位机速度PI, MagPhaseOmega = tuner.iterate_for_desired_bandwidth(delta, desired_BW_velocity_HZ)
+        # currentKp, currentKi = currentPI
+        # speedKp, speedKi = speedPI
+        # 上位机电流KP, 上位机电流KI = 上位机电流PI
+        # 上位机速度KP, 上位机速度KI = 上位机速度PI
+        # print(f'\n\n\
+        #     #define CURRENT_KP {currentKp:g}\n\
+        #     #define CURRENT_KI {currentKi:g}\n\
+        #     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)\n\
+        #     #define SPEED_KP {speedKp:g}\n\
+        #     #define SPEED_KI {speedKi:g}\n\
+        #     #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)\n')
 
-            fig5 = plt.figure(5)
-            fig5.axes[0].set_ylim([-3, 10]) # -3dB
-            fig5.axes[1].set_ylim([-90, 0]) # 90 deg
-            print('------------end of tuner\n\n\n')
+        # fig5 = plt.figure(5)
+        # fig5.axes[0].set_ylim([-3, 10]) # -3dB
+        # fig5.axes[1].set_ylim([-90, 0]) # 90 deg
+        # print('------------end of tuner\n\n\n')
 
-            max_freq = 2*desired_BW_velocity_HZ
-            init_freq = 2
+        # max_freq = 2*desired_BW_velocity_HZ
+        # init_freq = 2
 
-            # change to false to save time
-            if True:
-                ad = simulator.acm_designer(work_dir=self.path2acmsimc)
-                ad.update_ACMConfig_evaluate_PI_coefficients(currentPI, speedPI, 上位机电流PI, 上位机速度PI, 
-                                                             max_freq=max_freq, init_freq=init_freq,
-                                                             motor_dict=motor_dict)
+        # # change to false to save time
+        # if True:
+        #     ad = simulator.acm_designer(work_dir=self.path2acmsimc)
+        #     ad.update_ACMConfig_evaluate_PI_coefficients(currentPI, speedPI, 上位机电流PI, 上位机速度PI, 
+        #                                                  max_freq=max_freq, init_freq=init_freq,
+        #                                                  motor_dict=motor_dict)
 
-                self.ui.plainTextEdit_ACMPlotLabels.appendPlainText('\nSweepSpeed [rpm]')
-                self.ui.plainTextEdit_ACMPlotDetails.appendPlainText('rpm_speed_command,sm.omg')
-                self.runCBasedSimulation(self, bool_savePlotSetting=False, bool_updatePlotSetting=True)
+        #     self.ui.plainTextEdit_ACMPlotLabels.appendPlainText('\nSweepSpeed [rpm]')
+        #     self.ui.plainTextEdit_ACMPlotDetails.appendPlainText('rpm_speed_command,sm.omg')
+        #     self.runCBasedSimulation(self, bool_savePlotSetting=False, bool_updatePlotSetting=True)
 
-                # plt.figure()
-                data_file_name = ad.plot_PI_coefficients()
-                print('------------end of simulator\n\n\n')
-                # plt.show()
-
-            # # 1. Ploe simualted Bode plot
-            # dB, Deg, Freq, max_freq = analyzer.analyze(ad.data_fname, max_freq, ad)
-            # plt.figure(4, figsize=(20,8))
-            # plt.plot(Freq, dB, '--.', label=ad.data_fname)
-
-            # index, value = analyzer.find_nearest(dB, -3) # find -3dB freq
-            # VLBW = Freq[index]
-            # plt.text(VLBW, -5, f'{VLBW:.0f} Hz', color='red', fontsize=20)
-            # plt.plot([0,max_freq], [-3, -3], 'k--')
-            # plt.ylabel('Velocity Closed-loop transfer function amplitude [dB]')
-
-            # plt.xscale('log')
-            # plt.xlabel('Frequency [Hz]')
-            # plt.legend()
+        #     # plt.figure()
+        #     data_file_name = ad.plot_PI_coefficients()
+        #     print('------------end of simulator\n\n\n')
+        #     # plt.show()
 
 
-            # # 2. Plot designed Bode plot
-            # # plt.figure(4, figsize=(20,8))
-            # mag, phase, omega = MagPhaseOmega
-            # index_max_freq = sum(omega/(2*np.pi) < max_freq)
-            # plt.plot((omega/(2*np.pi))[:index_max_freq], 20*np.log10(mag[:index_max_freq]), '-.', label=f'designed:$\\delta={delta}$')
 
-            # 3. Plot measured Bode plot
-            # fname = r'D:\ISMC\SweepFreq\Jupyter\VLBW-Data/' + 'BiasSine500rpm' + data_file_name[data_file_name.find(data_fname_prefix)+len(data_fname_prefix)+len('-CLOSED-@'):-4]+'.txt'
-            # try:
-            #     CL_VL_TF, list_phase_difference, list_qep_max_frequency, max_freq = Experiment.analyze_experimental_measurements(fname)
-            # except FileNotFoundError as e:
-            #     raise e
-            #     print(str(e))
-            #     pass
-            # except Exception as e:
-            #     raise e
-            # finally:
-            #     index, value = Experiment.find_nearest(CL_VL_TF, -3) # find -3dB freq
-            #     VLBW = list_qep_max_frequency[index]
-            #     plt.text(VLBW, -5, f'{VLBW:.0f} Hz', color='purple', fontsize=20)
-            #     plt.plot(list_qep_max_frequency, CL_VL_TF, '--.', label=fname)
 
-            # plt.legend()
-            # break        
+        # # 1. Ploe simualted Bode plot
+        # dB, Deg, Freq, max_freq = analyzer.analyze(ad.data_fname, max_freq, ad)
+        # plt.figure(4, figsize=(20,8))
+        # plt.plot(Freq, dB, '--.', label=ad.data_fname)
+
+        # index, value = analyzer.find_nearest(dB, -3) # find -3dB freq
+        # VLBW = Freq[index]
+        # plt.text(VLBW, -5, f'{VLBW:.0f} Hz', color='red', fontsize=20)
+        # plt.plot([0,max_freq], [-3, -3], 'k--')
+        # plt.ylabel('Velocity Closed-loop transfer function amplitude [dB]')
+
+        # plt.xscale('log')
+        # plt.xlabel('Frequency [Hz]')
+        # plt.legend()
+
+
+        # # 2. Plot designed Bode plot
+        # # plt.figure(4, figsize=(20,8))
+        # mag, phase, omega = MagPhaseOmega
+        # index_max_freq = sum(omega/(2*np.pi) < max_freq)
+        # plt.plot((omega/(2*np.pi))[:index_max_freq], 20*np.log10(mag[:index_max_freq]), '-.', label=f'designed:$\\delta={delta}$')
+
+        # 3. Plot measured Bode plot
+        # fname = r'D:\ISMC\SweepFreq\Jupyter\VLBW-Data/' + 'BiasSine500rpm' + data_file_name[data_file_name.find(data_fname_prefix)+len(data_fname_prefix)+len('-CLOSED-@'):-4]+'.txt'
+        # try:
+        #     CL_VL_TF, list_phase_difference, list_qep_max_frequency, max_freq = Experiment.analyze_experimental_measurements(fname)
+        # except FileNotFoundError as e:
+        #     raise e
+        #     print(str(e))
+        #     pass
+        # except Exception as e:
+        #     raise e
+        # finally:
+        #     index, value = Experiment.find_nearest(CL_VL_TF, -3) # find -3dB freq
+        #     VLBW = list_qep_max_frequency[index]
+        #     plt.text(VLBW, -5, f'{VLBW:.0f} Hz', color='purple', fontsize=20)
+        #     plt.plot(list_qep_max_frequency, CL_VL_TF, '--.', label=fname)
+
+        # plt.legend()
+        # break        
 
     ''' Optimization Section '''
     # choose machine specification
