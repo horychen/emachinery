@@ -12,18 +12,18 @@ def toggle_stylesheet(path):
     :path:      A full path to a resource or file on system
     '''
 
-    path = pkg_resources.resource_filename(__name__, path)
+    filepath_to_qssFile = pkg_resources.resource_filename(__name__, path)
 
     # get the QApplication instance,  or crash if not set
     app = QApplication.instance()
     if app is None:
         raise RuntimeError("No Qt Application found.")
 
-    if path == "":
+    if filepath_to_qssFile == "":
         app.setStyleSheet("")
         return
 
-    file = QFile(path)
+    file = QFile(filepath_to_qssFile)
     file.open(QFile.ReadOnly | QFile.Text)
     stream = QTextStream(file)
     app.setStyleSheet(stream.readAll())

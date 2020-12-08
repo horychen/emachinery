@@ -17,6 +17,7 @@ import matplotlib.animation as animation
 import pandas as pd
 import random
 
+import os, sys
 from collections import OrderedDict
 import json
 import re
@@ -32,9 +33,11 @@ from emachinery.gui.stylesheet.toggle_stylesheet import toggle_stylesheet
 
 from emachinery.gui.mainWindow_v2 import Ui_MainWindow
 
-import latexdemo
+from emachinery.gui import latexdemo
 
-r''' If you want to import a new module (say tuner) in a new directory (acmdesignv2), you need to follow these steps:
+Help = r''' 
+If you want to import a new module (say tuner) in a new directory (acmdesignv2), you need to follow these steps:
+
 1. Open __init__.py in emachinery folder, and add path to sys.
 2. Create an __init__.py file inside your new directory.
 3. Cd to D:\DrH\Codes\emachineryTestPYPI and do: pip install -e .
@@ -57,6 +60,10 @@ You are going to see the following error message:
       File "D:\DrH\Codes\emachineryTestPYPI\emachinery\gui\main.py", line 28, in <module>
         from emachinery.acmdesignv2 import tuner
     ModuleNotFoundError: No module named 'emachinery.acmdesignv2'
+
+If you see error message similar to:
+    'EmachineryWidget' object has no attribute 'lineEdit_path2boptPython'
+this is likely that you should call self.ui.lineEdit_path2boptPython instead of self.lineEdit_path2boptPython.
 '''
 # from emachinery.acmdesignv2.tuner import tuner
 # from emachinery.acmdesignv2.simulator import simulator
@@ -70,17 +77,17 @@ class EmachineryWidget(QMainWindow):
         '''
         # __name__ in case you're within the package
         # - otherwise it would be 'lidtk' in this example as it is the package name
-        path = 'mainWindow_v2.ui'  # always use slash
-        filepath = pkg_resources.resource_filename(__name__, path)
+        filepath_to_mainWindow_v2 = pkg_resources.resource_filename(__name__, 'mainWindow_v2.ui')  # always use slash
 
         ''' load ui or import ui class
         '''
         try:
+            # raise ModuleNotFoundError
             print('CJH: plan A to load .ui file.\n')
-            self.ui = loadUi(filepath, self) # baseinstance=self
+            self.ui = loadUi(filepath_to_mainWindow_v2, self) # baseinstance=self
         except ModuleNotFoundError as e:
-            raise e
-            print(str(e))
+            # raise e
+            print('Error caught:', str(e)) # No module named 'consolewidget' # This module is imported in the .ui file so it will not be found.
             print('CJH: will use plan B now.\n')
             self.ui = Ui_MainWindow()
             self.ui.setupUi(self)
@@ -111,7 +118,7 @@ class EmachineryWidget(QMainWindow):
         '''tab_3: FEA-based Optimization
         '''
         try:
-            path = self.lineEdit_path2boptPython.text()
+            path = self.ui.lineEdit_path2boptPython.text()
             with open(path+'/codes3/machine_specifications.json', 'r', encoding='utf-8') as f:
                 self.bopt_fea_config_dict = json.load(f, object_pairs_hook=OrderedDict) # https://stackoverflow.com/questions/10844064/items-in-json-object-are-out-of-order-using-json-dumps/23820416
             self.ui.comboBox_MachineSpec.addItems(self.bopt_fea_config_dict.keys())
@@ -129,16 +136,22 @@ class EmachineryWidget(QMainWindow):
 
         '''tab_4: C-based Simulation
         '''
-        self.path2acmsimc = self.lineEdit_path2acmsimc.text()
+        self.path2acmsimc = self.ui.lineEdit_path2acmsimc.text()
         self.ui.pushButton_runCBasedSimulation.clicked.connect(self.runCBasedSimulation)
 
         # Read in ACM Plot Settings
-        with open(self.ui.lineEdit_path2ACMPlotLabels.text(), 'r') as f:
-            self.ui.plainTextEdit_ACMPlotLabels.clear()
-            self.ui.plainTextEdit_ACMPlotLabels.appendPlainText(f.read())
-        with open(self.ui.lineEdit_path2ACMPlotSignals.text(), 'r') as f:
-            self.ui.plainTextEdit_ACMPlotDetails.clear()
-            self.ui.plainTextEdit_ACMPlotDetails.appendPlainText(f.read())
+        self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, self.ui.lineEdit_path2ACMPlotLabels.text())
+        self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, self.ui.lineEdit_path2ACMPlotSignals.text()) 
+        try:
+            with open(self.filepath_to_ACMPlotLabels, 'r') as f:
+                self.ui.plainTextEdit_ACMPlotLabels.clear()
+                self.ui.plainTextEdit_ACMPlotLabels.appendPlainText(f.read())
+            with open(self.filepath_to_ACMPlotSignals, 'r') as f:
+                self.ui.plainTextEdit_ACMPlotDetails.clear()
+                self.ui.plainTextEdit_ACMPlotDetails.appendPlainText(f.read())
+        except Exception as e:
+            print(e)
+            print('ACMPlot settings are not found. Will use the default instead.')
 
         '''tab_5: ACMPlot
         '''
@@ -273,7 +286,7 @@ class EmachineryWidget(QMainWindow):
                 ax.set_xlabel('Time [s]')
 
                 # adjust height per number of traces
-                self.MplWidget_ACMPlot.setMinimumSize(QtCore.QSize(500, 200*no_traces))
+                self.ui.MplWidget_ACMPlot.setMinimumSize(QtCore.QSize(500, 200*no_traces))
 
 
 
@@ -296,9 +309,9 @@ class EmachineryWidget(QMainWindow):
         # print(bool_, bool_savePlotSetting, bool_updatePlotSetting)
 
         def savePlotSettings():
-            with open(  self.ui.lineEdit_path2ACMPlotLabels.text(), 'w') as f:
+            with open(  self.filepath_to_ACMPlotLabels, 'w') as f:
                 f.write(self.ui.plainTextEdit_ACMPlotLabels.toPlainText())
-            with open(  self.ui.lineEdit_path2ACMPlotSignals.text(), 'w') as f:
+            with open(  self.filepath_to_ACMPlotSignals, 'w') as f:
                 f.write(self.ui.plainTextEdit_ACMPlotDetails.toPlainText())
 
         def decode_labelsAndSignals():
@@ -565,6 +578,5 @@ def main():
     app.exec_()
 
 if __name__ == '__main__':
-    import os, sys
     print(os.path.dirname(os.path.realpath(__file__)))
     main()
