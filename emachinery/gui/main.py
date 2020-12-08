@@ -65,8 +65,8 @@ If you see error message similar to:
     'EmachineryWidget' object has no attribute 'lineEdit_path2boptPython'
 this is likely that you should call self.ui.lineEdit_path2boptPython instead of self.lineEdit_path2boptPython.
 '''
-# from emachinery.acmdesignv2.tuner import tuner
-# from emachinery.acmdesignv2.simulator import simulator
+from emachinery.acmdesignv2 import tuner
+from emachinery.acmdesignv2 import simulator
 
 
 class EmachineryWidget(QMainWindow):
@@ -194,22 +194,35 @@ class EmachineryWidget(QMainWindow):
     ''' PI Regulator Tuning '''
     def series_pid_tuner(self):
         # Specify your desired damping factor
-        delta = self.ui.lineEdit_dampingFactor_delta.text()
+        delta = eval(self.ui.lineEdit_dampingFactor_delta.text())
         # Specify your desired speed closed-loop bandwidth
-        desired_VLBW_HZ = self.ui.lineEdit_desiredVLBW.text()
+        desired_VLBW_HZ = eval(self.ui.lineEdit_desiredVLBW.text())
 
-        currentPI, speedPI, 上位机电流PI, 上位机速度PI, MagPhaseOmega = tuner.iterate_for_desired_bandwidth(delta, desired_VLBW_HZ, motor_dict)
-        currentKp, currentKi = currentPI
-        speedKp, speedKi = speedPI
+        currentPI, speedPI, 上位机电流PI, 上位机速度PI, MagPhaseOmega, BW_in_Hz = tuner.iterate_for_desired_bandwidth(delta, desired_VLBW_HZ, self.motor_dict)
+        currentKp, currentKi     = currentPI
+        speedKp, speedKi         = speedPI
         上位机电流KP, 上位机电流KI = 上位机电流PI
         上位机速度KP, 上位机速度KI = 上位机速度PI
-        print(f'\n\n\
-            #define CURRENT_KP {currentKp:g}\n\
-            #define CURRENT_KI {currentKi:g}\n\
-            #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)\n\
-            #define SPEED_KP {speedKp:g}\n\
-            #define SPEED_KI {speedKi:g}\n\
-            #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)\n')
+        CLBW_Hz, VLBW_Hz         = BW_in_Hz
+
+        self.ui.lineEdit_CLBW        .setText(f'{CLBW_Hz:g}')
+        self.ui.lineEdit_designedVLBW.setText(f'{VLBW_Hz:g}')
+        self.ui.lineEdit_currentKP   .setText(f'{currentKp:g}')
+        self.ui.lineEdit_currentKI   .setText(f'{currentKi:g}')
+        self.ui.lineEdit_speedKP     .setText(f'{speedKp:g}')
+        self.ui.lineEdit_speedKI     .setText(f'{speedKi:g}')
+        self.ui.lineEdit_PC_currentKP.setText(f'{上位机电流KP:g}')
+        self.ui.lineEdit_PC_currentKI.setText(f'{上位机电流KI:g}')
+        self.ui.lineEdit_PC_speedKP  .setText(f'{上位机速度KP:g}')
+        self.ui.lineEdit_PC_speedKI  .setText(f'{上位机速度KI:g}')
+
+        # print(f'\n\n\
+        #     #define CURRENT_KP {currentKp:g}\n\
+        #     #define CURRENT_KI {currentKi:g}\n\
+        #     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)\n\
+        #     #define SPEED_KP {speedKp:g}\n\
+        #     #define SPEED_KI {speedKi:g}\n\
+        #     #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)\n')
 
     ''' C-based Simulation '''
     # read in .dat file for plot

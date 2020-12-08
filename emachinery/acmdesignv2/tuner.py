@@ -140,7 +140,7 @@ def iterate_for_desired_bandwidth( delta, desired_VLBW_Hz, motor_dict, CLBW_Hz_i
                     break
             else:
                 CLBW_Hz += CLBW_Hz_stepSize # Hz
-        print(f'CLBW_Hz = {CLBW_Hz}')
+        # print(f'CLBW_Hz = {CLBW_Hz}')
 
         currentKp, currentKi = get_coeffs_dc_motor_current_regulator(R, L, CLBW_Hz)
         currentKiCode = currentKi * currentKp * CL_TS
@@ -151,14 +151,14 @@ def iterate_for_desired_bandwidth( delta, desired_VLBW_Hz, motor_dict, CLBW_Hz_i
             iSMC_currentKp = 上位机电流KP * L * 2*np.pi
             iSMC_currentKi = 上位机电流KI/1000 * R/L
             iSMC_currentKiCode = iSMC_currentKi * CL_TS * iSMC_currentKp
-            print(f'\tiSMC_currentKp={iSMC_currentKp:g}, \
-                      iSMC_currentKi={iSMC_currentKi:g}, \
-                      iSMC_currentKiCode={iSMC_currentKiCode:g}')
-            print(f'\tSimC_currentKp={currentKp:g}, \
-                      SimC_currentKi={currentKi:g}, \
-                      SimC_currentKiCode={currentKiCode:g}')
-            print(f'\t上位机电流KP={上位机电流KP:g}, \
-                      上位机电流KI={上位机电流KI:g}')
+            # print(f'\tiSMC_currentKp={iSMC_currentKp:g}, \
+            #           iSMC_currentKi={iSMC_currentKi:g}, \
+            #           iSMC_currentKiCode={iSMC_currentKiCode:g}')
+            # print(f'\tSimC_currentKp={currentKp:g}, \
+            #           SimC_currentKi={currentKi:g}, \
+            #           SimC_currentKiCode={currentKiCode:g}')
+            # print(f'\t上位机电流KP={上位机电流KP:g}, \
+            #           上位机电流KI={上位机电流KI:g}')
         Gi_closed = control.tf([1], [L/currentKp, 1]) # current loop zero-pole cancelled already
         currentBandwidth_radPerSec = currentKp/L
 
@@ -174,19 +174,19 @@ def iterate_for_desired_bandwidth( delta, desired_VLBW_Hz, motor_dict, CLBW_Hz_i
 
             iSMC_speedKp, iSMC_speedKi, iSMC_speedKiCode = 上位机速度PI系数转换CODE(上位机速度KP, 上位机速度KI, VL_TS, J_total)
 
-            print(f'\tiSMC_speedKp={iSMC_speedKp:g}, \
-                      iSMC_speedKi={iSMC_speedKi:g}, \
-                      iSMC_speedKiCode={iSMC_speedKiCode:g}')
-            print(f'\tSimC_speedKp={speedKp:g}, \
-                      SimC_speedKi={speedKi:g}, \
-                      SimC_speedKiCode={speedKiCode:g}')
-            print(f'\t上位机速度KP={上位机速度KP:g}, \
-                      上位机速度KI={上位机速度KI:g}')
+            # print(f'\tiSMC_speedKp={iSMC_speedKp:g}, \
+            #           iSMC_speedKi={iSMC_speedKi:g}, \
+            #           iSMC_speedKiCode={iSMC_speedKiCode:g}')
+            # print(f'\tSimC_speedKp={speedKp:g}, \
+            #           SimC_speedKi={speedKi:g}, \
+            #           SimC_speedKiCode={speedKiCode:g}')
+            # print(f'\t上位机速度KP={上位机速度KP:g}, \
+            #           上位机速度KI={上位机速度KI:g}')
         # 下面打印的用于仿真
-        print(f'\tspeedKp = {speedKp:g}', f'speedKi = {speedKi:g}', \
-              f'wzero = {speedKi/2/np.pi:g} Hz', \
-              f'cutoff = {delta*speedKi/2/np.pi:g} Hz', \
-              f'ipole = {currentKp/L/2/np.pi:g} Hz', sep=' | ')
+        # print(f'\tspeedKp = {speedKp:g}', f'speedKi = {speedKi:g}', \
+        #       f'wzero = {speedKi/2/np.pi:g} Hz', \
+        #       f'cutoff = {delta*speedKi/2/np.pi:g} Hz', \
+        #       f'ipole = {currentKp/L/2/np.pi:g} Hz', sep=' | ')
 
         speedPI = control.tf([speedKp, speedKp*speedKi], [1, 0])
         Gw_open = dc_motor_motion * Gi_closed * speedPI
@@ -197,12 +197,13 @@ def iterate_for_desired_bandwidth( delta, desired_VLBW_Hz, motor_dict, CLBW_Hz_i
         plt.title('Designed Velocity Ref. to Velocity Meas. Transfer Function')
         mag, phase, omega = control.bode_plot(Gw_closed, 2*np.pi*np.logspace(0,4,500), dB=1, Hz=1, deg=1, lw='0.5', label=f'{delta:g}')
         VLBW_Hz = omega[(np.abs(mag-0.707)).argmin()]/2/np.pi
-        print('\tSpeed loop bandwidth:', VLBW_Hz, 'Hz')
+        # print('\tSpeed loop bandwidth:', VLBW_Hz, 'Hz')
     return  (currentKp, currentKi), \
             (speedKp, speedKi), \
             (上位机电流KP, 上位机电流KI), \
             (上位机速度KP, 上位机速度KI), \
-            (mag, phase, omega)
+            (mag, phase, omega), \
+            (CLBW_Hz, VLBW_Hz)
 
 if __name__ == '__main__':
     # 伺尔沃400W

@@ -562,7 +562,7 @@
               <x>420</x>
               <y>50</y>
               <width>282</width>
-              <height>236</height>
+              <height>262</height>
              </rect>
             </property>
             <layout class="QFormLayout" name="formLayout">
@@ -608,14 +608,17 @@
              <item row="0" column="1">
               <widget class="QLineEdit" name="lineEdit_CLBW">
                <property name="text">
-                <string>6.5</string>
+                <string>0</string>
                </property>
                <property name="frame">
                 <bool>true</bool>
                </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
               </widget>
              </item>
-             <item row="1" column="0">
+             <item row="2" column="0">
               <widget class="QLabel" name="label_10">
                <property name="frameShape">
                 <enum>QFrame::Panel</enum>
@@ -628,14 +631,17 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
+             <item row="2" column="1">
               <widget class="QLineEdit" name="lineEdit_currentKP">
                <property name="text">
                 <string>0</string>
                </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
               </widget>
              </item>
-             <item row="2" column="0">
+             <item row="3" column="0">
               <widget class="QLabel" name="label_11">
                <property name="frameShape">
                 <enum>QFrame::Panel</enum>
@@ -648,14 +654,17 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="1">
+             <item row="3" column="1">
               <widget class="QLineEdit" name="lineEdit_currentKI">
                <property name="text">
                 <string>0</string>
                </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
               </widget>
              </item>
-             <item row="3" column="0">
+             <item row="4" column="0">
               <widget class="QLabel" name="label_8">
                <property name="frameShape">
                 <enum>QFrame::Panel</enum>
@@ -668,14 +677,17 @@
                </property>
               </widget>
              </item>
-             <item row="3" column="1">
+             <item row="4" column="1">
               <widget class="QLineEdit" name="lineEdit_speedKP">
                <property name="text">
                 <string>0</string>
                </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
               </widget>
              </item>
-             <item row="4" column="0">
+             <item row="5" column="0">
               <widget class="QLabel" name="label_9">
                <property name="frameShape">
                 <enum>QFrame::Panel</enum>
@@ -688,14 +700,17 @@
                </property>
               </widget>
              </item>
-             <item row="4" column="1">
-              <widget class="QLineEdit" name="lineEdit_SpeedKI">
+             <item row="5" column="1">
+              <widget class="QLineEdit" name="lineEdit_speedKI">
                <property name="text">
                 <string>0</string>
                </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
               </widget>
              </item>
-             <item row="5" column="0">
+             <item row="6" column="0">
               <widget class="QLabel" name="label_12">
                <property name="frameShape">
                 <enum>QFrame::Panel</enum>
@@ -708,14 +723,17 @@
                </property>
               </widget>
              </item>
-             <item row="5" column="1">
+             <item row="6" column="1">
               <widget class="QLineEdit" name="lineEdit_PC_currentKP">
                <property name="text">
                 <string>0</string>
                </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
               </widget>
              </item>
-             <item row="6" column="0">
+             <item row="7" column="0">
               <widget class="QLabel" name="label_13">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -734,14 +752,17 @@
                </property>
               </widget>
              </item>
-             <item row="6" column="1">
+             <item row="7" column="1">
               <widget class="QLineEdit" name="lineEdit_PC_currentKI">
                <property name="text">
                 <string>0</string>
                </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
               </widget>
              </item>
-             <item row="7" column="0">
+             <item row="8" column="0">
               <widget class="QLabel" name="label_14">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -760,14 +781,17 @@
                </property>
               </widget>
              </item>
-             <item row="7" column="1">
-              <widget class="QLineEdit" name="lineEdit_PC_speedtKP">
+             <item row="8" column="1">
+              <widget class="QLineEdit" name="lineEdit_PC_speedKP">
                <property name="text">
                 <string>0</string>
                </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
               </widget>
              </item>
-             <item row="8" column="0">
+             <item row="9" column="0">
               <widget class="QLabel" name="label_15">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -786,10 +810,50 @@
                </property>
               </widget>
              </item>
-             <item row="8" column="1">
-              <widget class="QLineEdit" name="lineEdit_PC_speedtKI">
+             <item row="9" column="1">
+              <widget class="QLineEdit" name="lineEdit_PC_speedKI">
                <property name="text">
                 <string>0</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_16">
+               <property name="font">
+                <font>
+                 <italic>false</italic>
+                </font>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::Panel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Plain</enum>
+               </property>
+               <property name="text">
+                <string>Velocity Loop Bandwidth [Hz]</string>
+               </property>
+               <property name="textFormat">
+                <enum>Qt::AutoText</enum>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="lineEdit_designedVLBW">
+               <property name="text">
+                <string>0</string>
+               </property>
+               <property name="frame">
+                <bool>true</bool>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                </property>
               </widget>
              </item>
