@@ -5,6 +5,7 @@ import control
 def get_coeffs_dc_motor_current_regulator(R, L, Bandwidth_Hz):
     Kp = Bandwidth_Hz * 2 * np.pi * L
     Ki = R / L
+    # print('DEBUG', Ki, R, L)
     return Kp, Ki
 
 def get_coeffs_dc_motor_SPEED_regulator(J_s, n_pp, KE, delta, currentBandwidth_radPerSec):
@@ -108,6 +109,8 @@ def c2v_design(R, L, n_pp, J_s, KE, B=0, CLBW_Hz=1000, CL_TS=1/20e3, fignum=5):
 # velocity reference to velocity measaurement
 def iterate_for_desired_bandwidth( delta, desired_VLBW_Hz, motor_dict, CLBW_Hz_initial=1000, CLBW_Hz_stepSize=100):
 
+    # print('DEBUG tuner.py', motor_dict)
+
     R          = motor_dict['Rs']
     L          = motor_dict['Lq']
     J_s        = motor_dict['J_s']
@@ -204,39 +207,3 @@ def iterate_for_desired_bandwidth( delta, desired_VLBW_Hz, motor_dict, CLBW_Hz_i
             (上位机速度KP, 上位机速度KI), \
             (mag, phase, omega), \
             (CLBW_Hz, VLBW_Hz)
-
-if __name__ == '__main__':
-    # 伺尔沃400W
-    R = 0.152    # Ohm
-    L = 0.466e-3 # H
-    J_s  = 0.160*1e-4 # kg.m^2
-    KE =  0.023331 #0.0117246 # Vs
-    n_pp = 4 
-
-
-    # Iterate for a preset speed loop bandwidth based on your delta value
-
-    # Pick your favorite step repsonse by "shape" via damping factor \delta
-    delta = 6.5
-
-    # Specify your desired speed closed-loop bandwidth
-    desired_VLBW_Hz = 100
-
-    currentPI, speedPI, _, _, _ = iterate_for_desired_bandwidth(delta, desired_VLBW_Hz, R, L, J_s, n_pp, KE)
-    currentKp, currentKi = currentPI
-    speedKp, speedKi = speedPI
-
-    mpl.rcParams['figure.dpi'] = 200
-    plt.style.use('ggplot')
-
-    fig5 = plt.figure(5)
-    fig5.axes[0].set_ylim([-3, 10]) # -3dB
-    fig5.axes[1].set_ylim([-90, 0]) # 90 deg
-    print(f'\
-        #define CURRENT_KP {currentKp:g}\n\
-        #define CURRENT_KI {currentKi:g}\n\
-        #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)\n\
-        #define SPEED_KP {speedKp:g}\n\
-        #define SPEED_KI {speedKi:g}\n\
-        #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)\n')
-    plt.show()

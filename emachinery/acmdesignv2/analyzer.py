@@ -3,42 +3,44 @@ from pylab import plt, np
 from pylab import fft
 import math
 import os
-work_dir = os.path.dirname(os.path.realpath(__file__)) + '/'
+# dot_dat_file_dir = os.path.dirname(os.path.realpath(__file__)) + '/'
 
 def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return idx, array[idx]
 
-def analyze(fname, max_freq, ad, init_freq=2, key_ref='rpm_speed_command', key_qep='sm.omg', bool_use_commanded_freq=True):
+def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, key_ref='ACM.rpm_cmd', key_qep='sm.omg_elec*RAD_PER_SEC_2_RPM', bool_use_commanded_freq=True):
+
+    if(not os.path.exists(dot_dat_file_dir)):
+        return None
+
     # read data as Data Frame and process
-    df_info     = pd.read_csv(work_dir+'../_simulator/dat/info.dat', na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
-    df_profiles = pd.read_csv(work_dir+'../_simulator/dat/'+fname, na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
+    # df_info     = pd.read_csv(dot_dat_file_dir+'dat/info.dat', na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
+    df_profiles = pd.read_csv(dot_dat_file_dir, na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
 
     no_samples = df_profiles.shape[0]
     no_traces  = df_profiles.shape[1]
 
-    Ts = df_info['CL_TS'].values[0]
-    data_file_name = df_info['DATA_FILE_NAME'].values[0].strip()
+    Ts = motor_dict['CL_TS']
 
-    print(data_file_name)
-    print(df_info, 'Simulated time: %g s.'%(no_samples * Ts * df_info['DOWN_SAMPLE'].values[0]), 'Key list:', sep='\n')
+    print('Simulated time: %g s.'%(no_samples * Ts * motor_dict['DOWN_SAMPLE']), 'Key list:', sep='\n')
     for key in df_profiles.keys():
         print('\t', key)
 
-    t = np.arange(1, no_samples+1) * df_info['DOWN_SAMPLE'].values[0] * Ts
+    t = np.arange(1, no_samples+1) * motor_dict['DOWN_SAMPLE'] * Ts
     # key_ref = 'rpm_speed_command'
     # key_qep = 'sm.omg'
 
     # Unpack as Series
     time  = t
-    if 'speed' in key_ref:
+    if 'rpm' in key_ref:
         x_ref = df_profiles[key_ref] # [rpm] # 闭环系统传递函数分析单时候，输入输出的单位是一样的，求传递函数的时候一除，就算用的是rpm也都无所谓了（虽然理论上是按elec.rad/s设计的）
         x_qep = df_profiles[key_qep] # [rpm]
     else:
         if 'id' not in key_qep:
             x_ref = df_profiles[key_ref] # [Apk]
-            x_qep = df_profiles[key_qep]/60*2*np.pi*ad.motor_dict["n_pp"] # [rpm] -> [elec.rad/s]
+            x_qep = df_profiles[key_qep]/60*2*np.pi*motor_dict["n_pp"] # [rpm] -> [elec.rad/s]
         else:
             x_ref = df_profiles[key_ref] # [Apk] 
             x_qep = df_profiles[key_qep] # [Apk]
@@ -70,14 +72,14 @@ def analyze(fname, max_freq, ad, init_freq=2, key_ref='rpm_speed_command', key_q
     time  = time [index_begin:index_end]
     x_ref = x_ref[index_begin:index_end]
     x_qep = x_qep[index_begin:index_end]
-    # plt.figure(100, figsize=(20,4))
-    # plt.title('Origianl Signal')
-    # plt.xlabel('Time [s]')
-    # plt.ylabel('Speed [elec.rad/s]')
-    # plt.plot(time, x_ref, label='ref')
+    plt.figure(100, figsize=(20,4))
+    plt.title('Origianl Signal')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Speed [elec.rad/s]')
+    plt.plot(time, x_ref, label='ref')
     # plt.figure(101)
-    # plt.plot(time, x_qep, label='qep')
-    # plt.show()
+    plt.plot(time, x_qep, label='qep')
+    plt.savefig(r'C:\Users\horyc\Desktop\test.png')
     # quit()
     #     # plt.xlim([0, 8/target_Hz])
     #     print()
@@ -106,7 +108,7 @@ def analyze(fname, max_freq, ad, init_freq=2, key_ref='rpm_speed_command', key_q
     index_single_tone_end = 0
     # max_freq = 5 # debug
     # for freq in range(2, max_freq): # datum point at 1 Hz and last point are absent in experiment
-    for freq in range(init_freq, max_freq):
+    for freq in range(sweepFreq_dict['init_freq'], sweepFreq_dict['max_freq']):
         period = 1.0/freq # 1.0 Duration for each frequency
         index_single_tone_begin = index_single_tone_end
         index_single_tone_end = index_single_tone_begin + int(period/Ts)
@@ -156,7 +158,7 @@ def analyze(fname, max_freq, ad, init_freq=2, key_ref='rpm_speed_command', key_q
         max_complexNumber = x_qep_hat[max_index]
         max_phase = np.arctan2(max_complexNumber.imag, max_complexNumber.real); list_qep_max_phase.append(max_phase)
         qep_complexNumber = max_complexNumber
-        
+
         #     print(f'Frequency Resolution: {resolution:.2f} Hz', end=' | ')
         #     print(f'Max Amplitude: {max_amplitude:.2f} rpm', end=' | ')
         #     print(f'Corresponding Frequency: {max_frequency:.2f} Hz')
@@ -180,9 +182,9 @@ def analyze(fname, max_freq, ad, init_freq=2, key_ref='rpm_speed_command', key_q
     CL_VL_TF = [20*np.log10(el) for el in closed_loop_transfer_function]
 
     if bool_use_commanded_freq == True:
-        return CL_VL_TF, list_phase_difference, list_commanded_frequency, max_freq
+        return CL_VL_TF, list_phase_difference, list_commanded_frequency, sweepFreq_dict['max_freq']
     else:
-        return CL_VL_TF, list_phase_difference, list_qep_max_frequency, max_freq
+        return CL_VL_TF, list_phase_difference, list_qep_max_frequency, sweepFreq_dict['max_freq']
 
 # def plot()
 #     plt.figure(4, figsize=(20,8))
@@ -221,10 +223,10 @@ def analyze(fname, max_freq, ad, init_freq=2, key_ref='rpm_speed_command', key_q
 #     # plt.grid()
 #     plt.legend()
 
-def main(ad, data_fname_prefix='default', **kwarg):
+def folder(dot_dat_file_dir, motor_dict, data_fname_prefix='default', **kwarg):
     active_data_fnames = []
     max_freq_list = []
-    for fname in os.listdir(work_dir+'../_simulator/dat/'):
+    for fname in os.listdir(dot_dat_file_dir+'../_simulator/dat/'):
         if data_fname_prefix in fname:
             active_data_fnames.append(fname)
             max_freq_list.append(int(fname[fname.find('@')+1:fname.find('Hz')]))
@@ -233,13 +235,6 @@ def main(ad, data_fname_prefix='default', **kwarg):
 
     # Target file name
     for fname, max_freq in zip(active_data_fnames, max_freq_list):
-        analyze(fname, max_freq, ad, **kwarg)
+        analyze(dot_dat_file_dir, fname, max_freq, ad, **kwarg)
 
     # print('Measured bandwidth is', VLBW, 'Hz')
-
-
-if __name__ == '__main__':
-    main()
-
-if __name__ == '__main__':
-    plt.show()

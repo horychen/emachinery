@@ -66,7 +66,8 @@ If you see error message similar to:
 this is likely that you should call self.ui.lineEdit_path2boptPython instead of self.lineEdit_path2boptPython.
 '''
 from emachinery.acmdesignv2 import tuner
-from emachinery.acmdesignv2 import simulator
+# from emachinery.acmdesignv2 import simulator
+from emachinery.acmdesignv2 import analyzer
 
 
 class EmachineryWidget(QMainWindow):
@@ -101,9 +102,21 @@ class EmachineryWidget(QMainWindow):
         self.ui.comboBox_MachineName.activated.connect(self.comboActivate_namePlateData)
         self.comboActivate_namePlateData()
 
-        self.motor_dict = self.get_motor_dict(self.mj)
-        self.control_dict   = dict()
-        self.sweepFreq_dict = dict()
+        self.motor_dict = self.get_motor_dict(self.mj);
+
+        # Select Excitation
+        self.list__radioButton4Excitation = [
+            self.ui.radioButton_Excitation_Position,
+            self.ui.radioButton_Excitation_Velocity,
+            self.ui.radioButton_Excitation_SweepFrequency]
+        self.list__checkedExcitation = [radioButton.isChecked() for radioButton in self.list__radioButton4Excitation]
+        for radioButton in self.list__radioButton4Excitation:
+            radioButton.toggled.connect(self.radioChecked_ACMExcitation)
+
+        self.control_dict   = dict(); self.control_dict = self.get_control_dict()
+        self.sweepFreq_dict = dict(); self.sweepFreq_dict = self.get_sweepFreq_dict()
+
+
 
         '''tab_2: Plots
         '''
@@ -116,6 +129,8 @@ class EmachineryWidget(QMainWindow):
         self.toolbar = NavigationToolbar(self.ui.MplWidget.canvas, self)
             # self.addToolBar(self.toolbar) # add to mainWindow
         self.ui.verticalLayout_inTab2.addWidget(self.toolbar) # add to tab 2 only
+
+
 
         '''tab_3: FEA-based Optimization
         '''
@@ -136,9 +151,28 @@ class EmachineryWidget(QMainWindow):
             print('[Warn] Skip FEA-based Optimization')
             pass
 
+
+
+
+        '''tab_5: Controller Tuning
+        '''
+        latex_repo = latexdemo.LaTeX_Repo()
+        self.ui.label_qpix_CLKP.setPixmap(latex_repo.qpixmap_CLKP)
+        self.ui.label_qpix_CLKI.setPixmap(latex_repo.qpixmap_CLKI)
+        self.ui.label_qpix_VLKP.setPixmap(latex_repo.qpixmap_VLKP)
+        self.ui.label_qpix_VLKI.setPixmap(latex_repo.qpixmap_VLKI)
+        self.ui.label_qpix_Note1.setPixmap(latex_repo.qpixmap_Note1)
+        self.ui.label_qpix_Note2.setPixmap(latex_repo.qpixmap_Note2)
+        self.ui.pushButton_pidTuner.clicked.connect(self.series_pid_tuner)
+        self.series_pid_tuner()
+        # self.ui.pushButton_SweepFreq.clicked.connect(self.runCBasedSimulation_SweepFrequnecyAnalysis)
+
+
+
         '''tab_4: C-based Simulation
         '''
         self.path2acmsimc = self.ui.lineEdit_path2acmsimc.text()
+        self.data_file_name = self.get_data_file_name()
         self.ui.pushButton_runCBasedSimulation.clicked.connect(self.runCBasedSimulation)
 
         # Read in ACM Plot Settings
@@ -155,39 +189,28 @@ class EmachineryWidget(QMainWindow):
             print(e)
             print('ACMPlot settings are not found. Will use the default instead.')
 
-        # Select Excitation
-        self.list__radioButton4Excitation = [
-            self.ui.radioButton_Excitation_Position,
-            self.ui.radioButton_Excitation_Velocity,
-            self.ui.radioButton_Excitation_SweepFrequency]
-        self.list__checkedExcitation = [radioButton.isChecked() for radioButton in self.list__radioButton4Excitation]
-        for radioButton in self.list__radioButton4Excitation:
-            radioButton.toggled.connect(self.radioChecked_ACMExcitation)
-
         # settings for sweep frequency
         self.ui.radioButton_openLoop.toggled.connect(self.radioChecked_Settings4SweepFrequency)
         self.ui.radioButton_currentLoopOnly.toggled.connect(self.radioChecked_Settings4SweepFrequency)
 
-        '''tab_5: ACMPlot
+
+
+        '''tab_4: ACMPlot
         '''
         self.ui.pushButton_ACMPlotHere.clicked.connect(self.update_ACMPlot)
         # Matplotlib navigation bar to: self or tabWidget
         self.toolbar = NavigationToolbar(self.ui.MplWidget_ACMPlot.canvas, self)
         self.ui.verticalLayout_CBSMplToolBar.addWidget(self.toolbar) # add to tab 2 only
 
+        # this is used to judge when to stop animation
         self.last_no_samples = None
 
-        '''tab_?: Controller Tuning
+
+
+        '''tab_6: Bode Plot
         '''
-        latex_repo = latexdemo.LaTeX_Repo()
-        self.ui.label_qpix_CLKP.setPixmap(latex_repo.qpixmap_CLKP)
-        self.ui.label_qpix_CLKI.setPixmap(latex_repo.qpixmap_CLKI)
-        self.ui.label_qpix_VLKP.setPixmap(latex_repo.qpixmap_VLKP)
-        self.ui.label_qpix_VLKI.setPixmap(latex_repo.qpixmap_VLKI)
-        self.ui.label_qpix_Note1.setPixmap(latex_repo.qpixmap_Note1)
-        self.ui.label_qpix_Note2.setPixmap(latex_repo.qpixmap_Note2)
-        self.ui.pushButton_pidTuner.clicked.connect(self.series_pid_tuner)
-        # self.ui.pushButton_SweepFreq.clicked.connect(self.runCBasedSimulation_SweepFrequnecyAnalysis)
+        self.ui.pushButton_bodePlot.clicked.connect(self.update_BodePlot)
+
 
         '''menu
         '''
@@ -214,7 +237,9 @@ class EmachineryWidget(QMainWindow):
         # Specify your desired speed closed-loop bandwidth
         desired_VLBW_HZ = eval(self.ui.lineEdit_desiredVLBW.text())
 
-        currentPI, speedPI, 上位机电流PI, 上位机速度PI, MagPhaseOmega, BW_in_Hz = tuner.iterate_for_desired_bandwidth(delta, desired_VLBW_HZ, self.motor_dict)
+        print(f'delta={delta}', desired_VLBW_HZ)
+
+        currentPI, speedPI, 上位机电流PI, 上位机速度PI, self.designedMagPhaseOmega, BW_in_Hz = tuner.iterate_for_desired_bandwidth(delta, desired_VLBW_HZ, self.motor_dict)
         currentKp, currentKi     = currentPI
         speedKp, speedKi         = speedPI
         上位机电流KP, 上位机电流KI = 上位机电流PI
@@ -231,7 +256,6 @@ class EmachineryWidget(QMainWindow):
         self.ui.lineEdit_PC_currentKI.setText(f'{上位机电流KI:g}')
         self.ui.lineEdit_PC_speedKP  .setText(f'{上位机速度KP:g}')
         self.ui.lineEdit_PC_speedKI  .setText(f'{上位机速度KI:g}')
-
     def get_control_dict(self):
 
         self.control_dict["currentPI"] = (eval(self.lineEdit_currentKP.text()), eval(self.lineEdit_currentKI.text()))
@@ -247,9 +271,11 @@ class EmachineryWidget(QMainWindow):
         self.list__checkedExcitation = [radioButton.isChecked() for radioButton in self.list__radioButton4Excitation]
         self.control_dict['ExcitationType'] = np.argmax(self.list__checkedExcitation)
 
-        print(self.control_dict, end='\n'*2)
-        return self.control_dict
+        # pass to console
+        self.console_push_variable({'control_dict':self.control_dict})
 
+        # print(self.control_dict, end='\n'*2)
+        return self.control_dict
     def get_sweepFreq_dict(self):
 
         self.sweepFreq_dict["max_freq"] = 2 * eval(self.ui.lineEdit_desiredVLBW.text())
@@ -257,17 +283,115 @@ class EmachineryWidget(QMainWindow):
         self.sweepFreq_dict["SWEEP_FREQ_C2V"] = self.ui.radioButton_openLoop.isChecked()
         self.sweepFreq_dict["SWEEP_FREQ_C2C"] = self.ui.radioButton_currentLoopOnly.isChecked()
 
-        print(self.sweepFreq_dict, end='\n'*2)
-        return self.sweepFreq_dict
+        # pass to console
+        self.console_push_variable({'sweepFreq_dict':self.sweepFreq_dict})
 
+        # print(self.sweepFreq_dict, end='\n'*2)
+        return self.sweepFreq_dict
+    def update_BodePlot(self):
+        dot_dat_file_dir = self.path2acmsimc+'/dat/'+self.data_file_name
+        ret = analyzer.analyze(dot_dat_file_dir, self.motor_dict, self.sweepFreq_dict)
+        if ret is None:
+            msg = QMessageBox()
+            msg.setWindowTitle("Error")
+            msg.setText('Output file: '+dot_dat_file_dir+' does not exist.')
+            msg.setIcon(QMessageBox.Critical)
+            x = msg.exec_()
+        else:
+            # 1. Plot simualted Bode plot
+            dB, Deg, Freq, max_freq = ret
+
+
+            self.ui.MplWidget_bodePlot.canvas.figure.clf()
+            ax = self.ui.MplWidget_bodePlot.canvas.figure.add_subplot(111)
+            ax.plot(Freq, dB, '--.', label=self.data_file_name)
+
+            index, value = analyzer.find_nearest(dB, -3) # find -3dB freq
+            VLBW_Hz = Freq[index]
+            ax.text(VLBW_Hz, -5, f'{VLBW_Hz:.0f} Hz', color='red', fontsize=20)
+            ax.plot([0,max_freq], [-3, -3], 'k--')
+            ax.set_ylabel('Velocity Closed-loop transfer function amplitude [dB]')
+
+            ax.set_xscale('log')
+            ax.set_xlabel('Frequency [Hz]')
+
+            # 2. Plot designed Bode plot
+            mag, phase, omega = self.designedMagPhaseOmega
+            index_max_freq = sum(omega/(2*np.pi) < max_freq)
+            ax.plot((omega/(2*np.pi))[:index_max_freq], 20*np.log10(mag[:index_max_freq]), '-.', label=f'designed:$\\delta={eval(self.lineEdit_dampingFactor_delta.text())}$')
+
+            # # 3. Plot measured Bode plot
+            # fname = r'D:\ISMC\SweepFreq\Jupyter\VLBW_Hz-Data/' + 'BiasSine500rpm' + data_file_name[data_file_name.find(data_file_name_prefix)+len(data_file_name_prefix)+len('-CLOSED-@'):-4]+'.txt'
+            # try:
+            #     CL_VL_TF, list_phase_difference, list_qep_max_frequency, max_freq = Experiment.analyze_experimental_measurements(fname)
+            # except FileNotFoundError as e:
+            #     raise e
+            #     print(str(e))
+            #     pass
+            # except Exception as e:
+            #     raise e
+            # finally:
+            #     index, value = Experiment.find_nearest(CL_VL_TF, -3) # find -3dB freq
+            #     VLBW_Hz = list_qep_max_frequency[index]
+            #     plt.text(VLBW_Hz, -5, f'{VLBW_Hz:.0f} Hz', color='purple', fontsize=20)
+            #     plt.plot(list_qep_max_frequency, CL_VL_TF, '--.', label=fname)
+
+            ax.legend()
+
+        # analyzer.folder(self.data_file_name, self.motor_dict, data_file_name_prefix=self.motor_dict['data_file_name_prefix'])
+
+        # ax.plot(time, signal, '-.', lw=1, label=key)
+        # ax.set_ylabel(self.list__label[i])
+        # ax.legend(loc='lower center')
+
+        # ax.set_xlabel('Time [s]')
+        # ax.set_ylabel('Time [s]')
+
+        # adjust height per number of traces
+        # self.ui.MplWidget_bodePlot.setMinimumSize(QtCore.QSize(500, 200*no_traces))
+
+        self.ui.MplWidget_bodePlot.canvas.draw()
 
     ''' C-based Simulation '''
+    def get_data_file_name(self):
+
+        上位机电流KP = eval(self.ui.lineEdit_PC_currentKP.text())
+        上位机电流KI = eval(self.ui.lineEdit_PC_currentKI.text())
+        上位机速度KP = eval(self.ui.lineEdit_PC_speedKP  .text())
+        上位机速度KI = eval(self.ui.lineEdit_PC_speedKI  .text())
+
+        if not os.path.exists(self.path2acmsimc+'/dat'):
+            os.makedirs(self.path2acmsimc+'/dat')
+
+        # get ExcitationType
+        self.list__checkedExcitation = [radioButton.isChecked() for radioButton in self.list__radioButton4Excitation]
+        self.control_dict['ExcitationType'] = np.argmax(self.list__checkedExcitation)
+
+        if self.control_dict['ExcitationType'] == 2:
+            if not os.path.exists(self.path2acmsimc+'/dat/Closed'):
+                os.makedirs(self.path2acmsimc+'/dat/Closed')
+            if not os.path.exists(self.path2acmsimc+'/dat/Open'):
+                os.makedirs(self.path2acmsimc+'/dat/Open')
+            if self.sweepFreq_dict["SWEEP_FREQ_C2V"]:
+                self.data_file_name = f"../dat/Open/{  self.motor_dict['data_file_name_prefix']}-C2V-@{self.sweepFreq_dict['max_freq']:.0f}Hz-{上位机电流KP:.0f}-{上位机电流KI:.0f}-{上位机速度KP:.0f}-{上位机速度KI:.0f}.dat"
+            else:
+                if self.sweepFreq_dict["SWEEP_FREQ_C2C"]:
+                    self.data_file_name = f"../dat/Closed/{self.motor_dict['data_file_name_prefix']}-C2C-@{self.sweepFreq_dict['max_freq']:.0f}Hz-{上位机电流KP:.0f}-{上位机电流KI:.0f}-{上位机速度KP:.0f}-{上位机速度KI:.0f}.dat"
+                else:
+                    self.data_file_name = f"../dat/Closed/{self.motor_dict['data_file_name_prefix']}-V2V-@{self.sweepFreq_dict['max_freq']:.0f}Hz-{上位机电流KP:.0f}-{上位机电流KI:.0f}-{上位机速度KP:.0f}-{上位机速度KI:.0f}.dat"
+
+        else:
+            # file name with PI coefficients
+            self.data_file_name = f"../dat/{self.motor_dict['data_file_name_prefix']}-{上位机电流KP:.0f}-{上位机电流KI:.0f}-{上位机速度KP:.0f}-{上位机速度KI:.0f}.dat"
+        print('self.data_file_name:', self.data_file_name, end='\n'*2)
+        return self.data_file_name
+
     # read in .dat file for plot
-    def get_data_frame(self, path='.'):
+    def get_dataFrame(self):
 
         # info.dat
-        df_info = pd.read_csv(path+"/dat/info.dat", na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
-        data_file_name = df_info['DATA_FILE_NAME'].values[0].strip()
+        # df_info = pd.read_csv(path+"/dat/info.dat", na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
+        # data_file_name = df_info['DATA_FILE_NAME'].values[0].strip()
 
         # 这个大的数据文件产生有滞后，可能文件还没生成，程序就已经跑到这里开始调用read_csv了！
         # 所以要判断一下，数据文件应该是在info.dat之后生成的。
@@ -280,7 +404,8 @@ class EmachineryWidget(QMainWindow):
         #         break    
 
         # ???.dat
-        df_profiles = pd.read_csv(path+'/dat/'+data_file_name, na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
+        # self.data_file_name = path+'/dat/'+data_file_name
+        df_profiles = pd.read_csv(self.path2acmsimc+'/dat/'+self.data_file_name, na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
         no_samples = df_profiles.shape[0]
         no_traces  = df_profiles.shape[1]
         # print(data_file_name)
@@ -293,11 +418,11 @@ class EmachineryWidget(QMainWindow):
         else:
             self.last_no_samples = no_samples
 
-            print(df_profiles.shape, end='')
-            print('read in', path+'/dat/'+data_file_name)            
+            print(df_profiles.shape, end=' | ')
+            print('read in', self.path2acmsimc+'/dat/'+self.data_file_name)
             # print(df_profiles)
 
-        return df_info, df_profiles, no_samples, no_traces 
+        return df_profiles, no_samples, no_traces 
     # plot as animation
     def update_ACMPlot(self):
         # if(not self.bool_import_ACMPlot):
@@ -306,52 +431,59 @@ class EmachineryWidget(QMainWindow):
 
         def ACMアニメ(i):
             try:
-                df_info, df_profiles, no_samples, no_traces = self.get_data_frame(self.path2acmsimc)
-
-                time = np.arange(1, no_samples+1) * df_info['DOWN_SAMPLE'].values[0] * df_info['CL_TS'].values[0]
-
-                self.ui.MplWidget_ACMPlot.canvas.figure.clf()
-                trace_counter = 0
-                number_of_subplot = len(self.list__number_of_traces_per_subplot)
-                # for i, key in enumerate(df_profiles.keys()):
-                # for i, key in enumerate(self.list__label):
-                first_ax = None
-                for i, number_of_traces_per_subplot in enumerate(self.list__number_of_traces_per_subplot):
-                    ax = self.ui.MplWidget_ACMPlot.canvas.figure.add_subplot(number_of_subplot*100+11+i, sharex=first_ax)
-                    if first_ax is None:
-                        first_ax = ax
-
-                    for j in range(number_of_traces_per_subplot):
-                        key = self.list__detail[trace_counter]
-                        # print('key:', key)
-                        try:
-                            signal = df_profiles[key]
-                        except Exception as e:
-                            print('debug:', df_profiles.keys())
-                            raise e
-                        trace_counter += 1
-                        ax.plot(time, signal, '-.', lw=1, label=key)
-                    ax.set_ylabel(self.list__label[i])
-                    ax.legend(loc='lower center')
-                ax.set_xlabel('Time [s]')
-
-                # adjust height per number of traces
-                self.ui.MplWidget_ACMPlot.setMinimumSize(QtCore.QSize(500, 200*no_traces))
-
-
-
-                # axes = self.ui.MplWidget_ACMPlot.canvas.figure.get_axes()
-
+                df_profiles, no_samples, no_traces = self.get_dataFrame()
             except Exception as e:
                 # could capture an error when a negative sign is just got printed to the file and the file is read by the script.
-                print(str(e))
-                pass
+                print(e)
+                raise e
+
+            time = np.arange(1, no_samples+1) * self.motor_dict['DOWN_SAMPLE'] * self.motor_dict['CL_TS']
+
+            self.ui.MplWidget_ACMPlot.canvas.figure.clf()
+            trace_counter = 0
+            try: 
+                self.list__number_of_traces_per_subplot
+            except Exception as e:
+                self.decode_labelsAndSignals()
+            finally:
+                number_of_subplot = len(self.list__number_of_traces_per_subplot)
+
+            # for i, key in enumerate(df_profiles.keys()):
+            # for i, key in enumerate(self.list__label):
+            first_ax = None
+            for i, number_of_traces_per_subplot in enumerate(self.list__number_of_traces_per_subplot):
+                ax = self.ui.MplWidget_ACMPlot.canvas.figure.add_subplot(number_of_subplot*100+11+i, sharex=first_ax)
+                if first_ax is None:
+                    first_ax = ax
+
+                for j in range(number_of_traces_per_subplot):
+                    key = self.list__detail[trace_counter]
+                    # print('key:', key)
+                    try:
+                        signal = df_profiles[key]
+                    except Exception as e:
+                        print('debug:', df_profiles.keys())
+                        raise e
+                    trace_counter += 1
+                    try:
+                        ax.plot(time, signal, '-.', lw=1, label=key)
+                    except ValueError as e:
+                        print(e) # ValueError: could not convert string to float: '3.33723e-'
+                        pass
+                ax.set_ylabel(self.list__label[i])
+                ax.legend(loc='lower center')
+            ax.set_xlabel('Time [s]')
+
+            # adjust height per number of traces
+            self.ui.MplWidget_ACMPlot.setMinimumSize(QtCore.QSize(500, 200*no_traces))
+
+            # axes = self.ui.MplWidget_ACMPlot.canvas.figure.get_axes()
 
         # plot it once (need to sleep for the data to complete)
         # ACMアニメ(0)
 
         # animate it (it is okay for incomeplete data)
-        self.anim = animation.FuncAnimation(self.ui.MplWidget_ACMPlot.canvas.figure, ACMアニメ, interval=100)
+        self.anim = animation.FuncAnimation(self.ui.MplWidget_ACMPlot.canvas.figure, ACMアニメ, interval=500)
         self.ui.MplWidget_ACMPlot.canvas.draw()
     def radioChecked_ACMExcitation(self):
         # This is not needed as there is an option for radioButton as autoExclusive
@@ -385,19 +517,7 @@ class EmachineryWidget(QMainWindow):
             x = msg.exec_()
             self.ui.radioButton_openLoop.setChecked(False)
             self.ui.radioButton_currentLoopOnly.setChecked(False)
-
-    # save setting, compile .c and run .exe
-    def runCBasedSimulation(self, bool_=True, bool_savePlotSetting=True, bool_updatePlotSetting=True):
-        # why bool_ is always set to False???
-        # print(bool_, bool_savePlotSetting, bool_updatePlotSetting)
-
-        def savePlotSettings():
-            with open(  self.filepath_to_ACMPlotLabels, 'w') as f:
-                f.write(self.ui.plainTextEdit_ACMPlotLabels.toPlainText())
-            with open(  self.filepath_to_ACMPlotSignals, 'w') as f:
-                f.write(self.ui.plainTextEdit_ACMPlotDetails.toPlainText())
-
-        def decode_labelsAndSignals():
+    def decode_labelsAndSignals(self):
             # #define DATA_LABELS
             labels = [el.strip() for el in self.ui.plainTextEdit_ACMPlotLabels.toPlainText().split('\n') if el.strip()!='']
             # avoid using ',' or ';' in label, because comma will be interpreted as new column by pandas
@@ -419,6 +539,16 @@ class EmachineryWidget(QMainWindow):
             self.list__detail = details
             # print(details)
             return details
+    # save setting, compile .c and run .exe
+    def runCBasedSimulation(self, bool_=True, bool_savePlotSetting=True, bool_updatePlotSetting=True):
+        # why bool_ is always set to False???
+        # print(bool_, bool_savePlotSetting, bool_updatePlotSetting)
+
+        def savePlotSettings():
+            with open(  self.filepath_to_ACMPlotLabels, 'w') as f:
+                f.write(self.ui.plainTextEdit_ACMPlotLabels.toPlainText())
+            with open(  self.filepath_to_ACMPlotSignals, 'w') as f:
+                f.write(self.ui.plainTextEdit_ACMPlotDetails.toPlainText())
 
         def updatePlotSettings(path2acmsimc, details):
             self = None
@@ -433,9 +563,9 @@ class EmachineryWidget(QMainWindow):
                 f.writelines(new_lines)
 
         def updateACMConfig(path2acmsimc, motor_dict, control_dict, sweepFreq_dict):
-            self = None
+            # self = None
             NUMBER_OF_STEPS_CL_TS = motor_dict['EndTime']/motor_dict['CL_TS']
-            print('NUMBER_OF_STEPS_CL_TS', NUMBER_OF_STEPS_CL_TS)
+            # print('NUMBER_OF_STEPS_CL_TS', NUMBER_OF_STEPS_CL_TS)
             with open(path2acmsimc+'/c/ACMConfig.h', 'r', encoding='utf-8') as f:
                 new_lines = []
                 for line in f.readlines():
@@ -444,7 +574,7 @@ class EmachineryWidget(QMainWindow):
                     elif '#define CL_TS '          in line: new_lines.append(f'#define CL_TS          ({motor_dict["CL_TS"]:g})\n')
                     elif '#define CL_TS_INVERSE'   in line: new_lines.append(f'#define CL_TS_INVERSE  ({1.0/motor_dict["CL_TS"]:g})\n')
                     elif '#define VL_TS '          in line: new_lines.append(f'#define VL_TS          ({motor_dict["VL_TS"]:g})\n')
-                    elif '#define DATA_FILE_NAME'  in line: new_lines.append(f'#define DATA_FILE_NAME "{"../dat/"+motor_dict["data_fname_prefix"]+".dat"}"\n')
+                    elif '#define DATA_FILE_NAME'  in line: new_lines.append(f'#define DATA_FILE_NAME "{self.get_data_file_name()}"\n')
                     # Load Related Quantities
                     elif '#define LOAD_INERTIA'    in line: new_lines.append(f'#define LOAD_INERTIA    {motor_dict["JLoadRatio"]}\n')
                     elif '#define LOAD_TORQUE'     in line: new_lines.append(f'#define LOAD_TORQUE     {motor_dict["Tload"]}\n')
@@ -488,7 +618,7 @@ class EmachineryWidget(QMainWindow):
         if bool_savePlotSetting: savePlotSettings()
 
         # decode labels and signals for plot
-        details = decode_labelsAndSignals()
+        details = self.decode_labelsAndSignals()
 
         # update path/to/acmsimcv5/c/utility.c
         if bool_updatePlotSetting: updatePlotSettings(self.path2acmsimc, self.list__detail)
@@ -506,90 +636,9 @@ class EmachineryWidget(QMainWindow):
         # print('sleep for .dat file')
         # sleep(2) # it takes time for main.exe to write data into the disk.
         self.update_ACMPlot()
-    def runCBasedSimulation_SweepFrequnecyAnalysis(self):
-
-        self.series_pid_tuner()
-
-        # currentPI, speedPI, 上位机电流PI, 上位机速度PI, MagPhaseOmega = tuner.iterate_for_desired_bandwidth(delta, desired_BW_velocity_HZ)
-        # currentKp, currentKi = currentPI
-        # speedKp, speedKi = speedPI
-        # 上位机电流KP, 上位机电流KI = 上位机电流PI
-        # 上位机速度KP, 上位机速度KI = 上位机速度PI
-        # print(f'\n\n\
-        #     #define CURRENT_KP {currentKp:g}\n\
-        #     #define CURRENT_KI {currentKi:g}\n\
-        #     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)\n\
-        #     #define SPEED_KP {speedKp:g}\n\
-        #     #define SPEED_KI {speedKi:g}\n\
-        #     #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)\n')
-
-        # fig5 = plt.figure(5)
-        # fig5.axes[0].set_ylim([-3, 10]) # -3dB
-        # fig5.axes[1].set_ylim([-90, 0]) # 90 deg
-        # print('------------end of tuner\n\n\n')
-
-        # max_freq = 2*desired_BW_velocity_HZ
-        # init_freq = 2
-
-        # # change to false to save time
-        # if True:
-        #     ad = simulator.acm_designer(work_dir=self.path2acmsimc)
-        #     ad.update_ACMConfig_evaluate_PI_coefficients(currentPI, speedPI, 上位机电流PI, 上位机速度PI, 
-        #                                                  max_freq=max_freq, init_freq=init_freq,
-        #                                                  motor_dict=motor_dict)
-
-        #     self.ui.plainTextEdit_ACMPlotLabels.appendPlainText('\nSweepSpeed [rpm]')
-        #     self.ui.plainTextEdit_ACMPlotDetails.appendPlainText('rpm_speed_command,sm.omg')
-        #     self.runCBasedSimulation(self, bool_savePlotSetting=False, bool_updatePlotSetting=True)
-
-        #     # plt.figure()
-        #     data_file_name = ad.plot_PI_coefficients()
-        #     print('------------end of simulator\n\n\n')
-        #     # plt.show()
+    # def runCBasedSimulation_SweepFrequnecyAnalysis(self):
 
 
-
-
-        # # 1. Ploe simualted Bode plot
-        # dB, Deg, Freq, max_freq = analyzer.analyze(ad.data_fname, max_freq, ad)
-        # plt.figure(4, figsize=(20,8))
-        # plt.plot(Freq, dB, '--.', label=ad.data_fname)
-
-        # index, value = analyzer.find_nearest(dB, -3) # find -3dB freq
-        # VLBW = Freq[index]
-        # plt.text(VLBW, -5, f'{VLBW:.0f} Hz', color='red', fontsize=20)
-        # plt.plot([0,max_freq], [-3, -3], 'k--')
-        # plt.ylabel('Velocity Closed-loop transfer function amplitude [dB]')
-
-        # plt.xscale('log')
-        # plt.xlabel('Frequency [Hz]')
-        # plt.legend()
-
-
-        # # 2. Plot designed Bode plot
-        # # plt.figure(4, figsize=(20,8))
-        # mag, phase, omega = MagPhaseOmega
-        # index_max_freq = sum(omega/(2*np.pi) < max_freq)
-        # plt.plot((omega/(2*np.pi))[:index_max_freq], 20*np.log10(mag[:index_max_freq]), '-.', label=f'designed:$\\delta={delta}$')
-
-        # 3. Plot measured Bode plot
-        # fname = r'D:\ISMC\SweepFreq\Jupyter\VLBW-Data/' + 'BiasSine500rpm' + data_file_name[data_file_name.find(data_fname_prefix)+len(data_fname_prefix)+len('-CLOSED-@'):-4]+'.txt'
-        # try:
-        #     CL_VL_TF, list_phase_difference, list_qep_max_frequency, max_freq = Experiment.analyze_experimental_measurements(fname)
-        # except FileNotFoundError as e:
-        #     raise e
-        #     print(str(e))
-        #     pass
-        # except Exception as e:
-        #     raise e
-        # finally:
-        #     index, value = Experiment.find_nearest(CL_VL_TF, -3) # find -3dB freq
-        #     VLBW = list_qep_max_frequency[index]
-        #     plt.text(VLBW, -5, f'{VLBW:.0f} Hz', color='purple', fontsize=20)
-        #     plt.plot(list_qep_max_frequency, CL_VL_TF, '--.', label=fname)
-
-        # plt.legend()
-        # break        
 
     ''' Optimization Section '''
     # choose machine specification
@@ -598,27 +647,33 @@ class EmachineryWidget(QMainWindow):
     def update_FEAConfig(self):
         pass
 
+
+
     ''' General Information '''
     def comboActivate_namePlateData(self):
-        motor_dict = self.get_motor_dict(self.mj)
-        self.ui.lineEdit_npp         .setText(str(motor_dict['n_pp']))
-        self.ui.lineEdit_RatedCurrent.setText(str(motor_dict['IN']))
-        self.ui.lineEdit_RatedPower  .setText(str(motor_dict['PW']))
-        self.ui.lineEdit_RatedSpeed  .setText(str(motor_dict['RPM']))
+        self.motor_dict = self.get_motor_dict(self.mj)
+        # print('debug main.py', self.motor_dict)
+        self.ui.lineEdit_npp         .setText(str(self.motor_dict['n_pp']))
+        self.ui.lineEdit_RatedCurrent.setText(str(self.motor_dict['IN']))
+        self.ui.lineEdit_RatedPower  .setText(str(self.motor_dict['PW']))
+        self.ui.lineEdit_RatedSpeed  .setText(str(self.motor_dict['RPM']))
 
         # 另一个tab下的LineEdit也同步更新
         self.ui.lineEdit_RO_MachineName.setText(self.ui.comboBox_MachineName.currentText())
     # parameter conversion
+    def console_push_variable(self, d):
+        self.ui.ConsoleWidget.push_vars(d)
+        if self.ui.label_pushedVariables.text() == 'None':
+            self.ui.label_pushedVariables.setText(', '.join(d.keys()))
+        else:
+            self.ui.label_pushedVariables.setText(self.ui.label_pushedVariables.text()+', '+', '.join(d.keys()))
     def update_emy(self):
         self.emy = ElectricMachinery( NUMBER_OF_POLE_PAIRS  = int  (self.ui.lineEdit_npp.text()),
                                       RATED_CURRENT_RMS     = float(self.ui.lineEdit_RatedCurrent.text()),
                                       RATED_POWER_WATT      = float(self.ui.lineEdit_RatedPower.text()),
                                       RATED_SPEED_RPM       = float(self.ui.lineEdit_RatedSpeed.text()),
             )
-        self.ui.ConsoleWidget.push_vars({
-            'emy': self.emy
-            })
-        self.ui.label_pushedVariables.setText('emy')
+        self.console_push_variable({'emy':self.emy})
     # decide which motor is used
     def get_motor_dict(self, mj):
         # read from json file
@@ -635,6 +690,8 @@ class EmachineryWidget(QMainWindow):
         RPM  = motor["额定转速 [rpm]"]
 
         motor_dict = dict()
+        motor_dict['DOWN_SAMPLE'] = 1 # not implemented
+
         motor_dict['n_pp'] = n_pp
         motor_dict['Rs'] = R
         motor_dict['Ld'] = Ld
@@ -647,7 +704,7 @@ class EmachineryWidget(QMainWindow):
 
         # below is by user GUI input
         CL_TS = eval(self.ui.lineEdit_CLTS.text())
-        VL_TS = eval(self.ui.lineEdit_CLTS.text())
+        VL_TS = eval(self.ui.lineEdit_VLTS.text())
         EndTime = eval(self.ui.lineEdit_EndTime.text())
         motor_dict['CL_TS'] = CL_TS
         motor_dict['VL_TS'] = VL_TS
@@ -657,10 +714,15 @@ class EmachineryWidget(QMainWindow):
         motor_dict['Tload']        = eval(self.ui.lineEdit_LoadTorque.text()) #[Nm]
         motor_dict['ViscousCoeff'] = eval(self.ui.lineEdit_ViscousCoefficient.text()) #[Nm/(rad/s)]
 
-        motor_dict['data_fname_prefix'] = self.ui.lineEdit_OutputDataFileName.text()
+        motor_dict['data_file_name_prefix'] = self.ui.lineEdit_OutputDataFileName.text()
+
+        # pass to console
+        self.console_push_variable({'motor_dict':motor_dict})
 
         # this will be passed to C based simulation
         return motor_dict
+
+
 
     ''' plot demo '''
     def update_graph(self):
