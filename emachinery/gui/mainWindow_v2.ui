@@ -820,7 +820,7 @@
                 <item>
                  <widget class="QLineEdit" name="lineEdit_desiredVLBW">
                   <property name="text">
-                   <string>200</string>
+                   <string>100</string>
                   </property>
                  </widget>
                 </item>
@@ -1013,7 +1013,7 @@
                  <item>
                   <widget class="QLineEdit" name="lineEdit_LoadTorque">
                    <property name="text">
-                    <string>0.05</string>
+                    <string>0.0</string>
                    </property>
                   </widget>
                  </item>

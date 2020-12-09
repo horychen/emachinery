@@ -5,6 +5,7 @@ import math
 import os
 # dot_dat_file_dir = os.path.dirname(os.path.realpath(__file__)) + '/'
 
+
 def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
@@ -13,16 +14,21 @@ def find_nearest(array, value):
 def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, key_ref='ACM.rpm_cmd', key_qep='sm.omg_elec*RAD_PER_SEC_2_RPM', bool_use_commanded_freq=True):
 
     if(not os.path.exists(dot_dat_file_dir)):
+        print('Cannot locate:', dot_dat_file_dir)
         return None
 
     # read data as Data Frame and process
     # df_info     = pd.read_csv(dot_dat_file_dir+'dat/info.dat', na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
     df_profiles = pd.read_csv(dot_dat_file_dir, na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
 
+    print(dot_dat_file_dir)
+    print(df_profiles)
+
     no_samples = df_profiles.shape[0]
     no_traces  = df_profiles.shape[1]
 
     Ts = motor_dict['CL_TS']
+    print('Ts =', Ts)
 
     print('Simulated time: %g s.'%(no_samples * Ts * motor_dict['DOWN_SAMPLE']), 'Key list:', sep='\n')
     for key in df_profiles.keys():
@@ -65,22 +71,31 @@ def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, key_ref='ACM.rpm_cmd',
             index_end = -index
             time_end = EndTime - index*Ts
             break
-    #     print('index_begin', index_begin)
-    #     print('index_end', index_end)
-    #     print('time_begin:', time_begin, 's')
-    #     print('time_end', time_end,   's')
-    time  = time [index_begin:index_end]
-    x_ref = x_ref[index_begin:index_end]
-    x_qep = x_qep[index_begin:index_end]
-    plt.figure(100, figsize=(20,4))
-    plt.title('Origianl Signal')
-    plt.xlabel('Time [s]')
-    plt.ylabel('Speed [elec.rad/s]')
-    plt.plot(time, x_ref, label='ref')
-    # plt.figure(101)
-    plt.plot(time, x_qep, label='qep')
-    plt.savefig(r'C:\Users\horyc\Desktop\test.png')
+    # print('index_begin', index_begin)
+    # print('index_end', index_end)
+    # print('time_begin:', time_begin, 's')
+    # print('time_end', time_end,   's')
+    # time  = time [index_begin:index_end]
+    # x_ref = x_ref[index_begin:index_end]
+    # x_qep = x_qep[index_begin:index_end]
+    # plt.figure(100, figsize=(20,4))
+    # plt.title('Origianl Signal')
+    # plt.xlabel('Time [s]')
+    # plt.ylabel('Speed [elec.rad/s]')
+    # plt.plot(time, x_ref, label='ref')
+    # # plt.figure(101)
+    # plt.plot(time, x_qep, label='qep')
+    # plt.show()
+    print('----------------')
+    print('xref')
+    for el in x_ref.values:
+        print(el)
+    print('xqep')
+    for el in x_qep.values:
+        print(el)
+    # # plt.savefig(r'C:\Users\horyc\Desktop\test.png')
     # quit()
+
     #     # plt.xlim([0, 8/target_Hz])
     #     print()
     #     print('Max reference speed:', max(x_ref))
@@ -123,6 +138,10 @@ def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, key_ref='ACM.rpm_cmd',
             ST_time  =  time[index_single_tone_begin:index_single_tone_end]
             ST_x_ref = x_ref[index_single_tone_begin:index_single_tone_end]
             ST_x_qep = x_qep[index_single_tone_begin:index_single_tone_end]
+            # plt.plot(ST_time, ST_x_ref)
+            # plt.plot(ST_time, ST_x_qep)
+
+        # print(freq, index_single_tone_begin, index_single_tone_end)
 
         if(len(ST_x_ref))<1:
             print('sweep frequency too high: no data')

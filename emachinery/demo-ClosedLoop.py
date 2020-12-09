@@ -1,8 +1,7 @@
-import _tuner
 from jsons import ACMInfo
-from _tuner import tuner
-from _simulator import simulator 
-from _analyzer import analyzer
+from acmdesignv2 import tuner
+from acmdesignv2 import simulator 
+from acmdesignv2 import analyzer
 
 # import os 
 from pylab import np, plt, mpl
@@ -28,6 +27,9 @@ if __name__ == '__main__':
     RPM  = motor["额定转速 [rpm]"]
 
     motor_dict = dict()
+
+    motor_dict['DOWN_SAMPLE'] = 1
+
     motor_dict['n_pp'] = n_pp
     motor_dict['Rs'] = R
     motor_dict['Ld'] = L
@@ -63,7 +65,7 @@ if __name__ == '__main__':
         # desired_BW_velocity_HZ = 223
         desired_BW_velocity_HZ = 100
 
-        currentPI, speedPI, 上位机电流PI, 上位机速度PI, MagPhaseOmega \
+        currentPI, speedPI, 上位机电流PI, 上位机速度PI, MagPhaseOmega, BW_in_Hz \
             = tuner.iterate_for_desired_bandwidth(delta, desired_BW_velocity_HZ, motor_dict)
         currentKp, currentKi = currentPI
         speedKp, speedKi = speedPI
@@ -84,7 +86,7 @@ if __name__ == '__main__':
 
 
 
-        motor_dict['data_fname_prefix'] = 'pmsm-pid'
+        motor_dict['data_fname_prefix'] = 'demo-closedLoop'
 
         max_freq = 2*desired_BW_velocity_HZ
         init_freq = 2
@@ -102,7 +104,20 @@ if __name__ == '__main__':
             # plt.show()
 
         # 1. Ploe simualted Bode plot
-        dB, Deg, Freq, max_freq = analyzer.analyze(data_fname, max_freq, ad)
+        dot_dat_file_dir = r'D:/DrH/Codes/acmsimcv5/dat/' + data_fname
+
+        sweepFreq_dict = dict()
+        sweepFreq_dict["max_freq"] = max_freq
+        sweepFreq_dict["init_freq"] = init_freq
+        sweepFreq_dict["SWEEP_FREQ_C2V"] = False
+        sweepFreq_dict["SWEEP_FREQ_C2C"] = False
+
+        print(motor_dict)
+        print(sweepFreq_dict)
+        dB, Deg, Freq, max_freq = analyzer.analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict)
+        # for el in (dB, Deg, Freq, max_freq):
+        #     print(el)
+
         plt.figure(4, figsize=(20,8))
         plt.plot(Freq, dB, '--.', label=data_fname)
 

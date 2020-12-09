@@ -290,6 +290,8 @@ class EmachineryWidget(QMainWindow):
         return self.sweepFreq_dict
     def update_BodePlot(self):
         dot_dat_file_dir = self.path2acmsimc+'/dat/'+self.data_file_name
+        # print(self.motor_dict)
+        # print(self.sweepFreq_dict)
         ret = analyzer.analyze(dot_dat_file_dir, self.motor_dict, self.sweepFreq_dict)
         if ret is None:
             msg = QMessageBox()
@@ -300,7 +302,8 @@ class EmachineryWidget(QMainWindow):
         else:
             # 1. Plot simualted Bode plot
             dB, Deg, Freq, max_freq = ret
-
+            # for el in ret:
+            #     print(el)
 
             self.ui.MplWidget_bodePlot.canvas.figure.clf()
             ax = self.ui.MplWidget_bodePlot.canvas.figure.add_subplot(111)
@@ -710,7 +713,7 @@ class EmachineryWidget(QMainWindow):
         motor_dict['VL_TS'] = VL_TS
         motor_dict['EndTime'] = EndTime
 
-        motor_dict['JLoadRatio']   = eval(self.ui.lineEdit_LoadInertiaPercentage.text()) #[%]
+        motor_dict['JLoadRatio']   = eval(self.ui.lineEdit_LoadInertiaPercentage.text())*0.01 #[%]
         motor_dict['Tload']        = eval(self.ui.lineEdit_LoadTorque.text()) #[Nm]
         motor_dict['ViscousCoeff'] = eval(self.ui.lineEdit_ViscousCoefficient.text()) #[Nm/(rad/s)]
 

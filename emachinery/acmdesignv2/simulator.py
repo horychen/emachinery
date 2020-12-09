@@ -1,5 +1,6 @@
 import subprocess
 import time
+from time import sleep
 import os
 import pandas as pd
 from pylab import np, plt, mpl
@@ -121,12 +122,16 @@ class acm_designer(object):
         with open(self.work_dir+'/c/ACMConfig.h', 'w') as f:
             f.writelines(new_line)        
 
-    def plot_PI_coefficients(self, key_ref='rpm_speed_command', key_qep='sm.omg'):
+    def plot_PI_coefficients(self, key_ref='ACM.rpm_cmd', key_qep='sm.omg_elec*RAD_PER_SEC_2_RPM'):
         # read data and process
         df_info = pd.read_csv(self.work_dir+r"/dat/info.dat", na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
         data_file_name = df_info['DATA_FILE_NAME'].values[0].strip()
-        print(data_file_name)
+        # print(data_file_name)
         df_profiles = pd.read_csv(self.work_dir+'/dat/'+data_file_name, na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
+
+        print(self.work_dir+'/dat/'+data_file_name)
+        print(df_profiles)
+        sleep(3) # wait 3 sec, or else ,analyzer will read in a incomplete .dat file for df_profiles.
 
         no_samples = df_profiles.shape[0]
         no_traces  = df_profiles.shape[1]
@@ -138,7 +143,8 @@ class acm_designer(object):
 
         begin = 0
         end = -1
-        if 'speed' not in key_ref:
+        if 'rpm' not in key_ref:
+            plt.figure(11)
             plt.subplot(311)
             plt.title('[Simulated] Current and Speed Profiles')
             plt.plot(t[begin:end], df_profiles[key_ref].values[begin:end], label=key_ref)
@@ -160,7 +166,7 @@ class acm_designer(object):
                 plt.legend(loc='upper left')
             
         else:
-            plt.figure()
+            plt.figure(11)
             plt.title('[Simulated] Speed Profiles')
             plt.plot(t[begin:end], df_profiles[key_ref].values[begin:end], label=key_ref)
             plt.plot(t[begin:end], df_profiles[key_qep].values[begin:end], '--', label=key_qep, lw=0.9)
