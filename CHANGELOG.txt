@@ -1,1 +1,16 @@
-CHANGELOG.txt
+
+## Changelog
+
+*1.0.8*
+- I was stupid. Version 1.0.7 did not do its job.
+
+*1.0.7*
+- Add the resource "makefile" to the package.
+
+*1.0.6*
+- Remember last user input for path2acmsimcv5 and add config.json to gui/
+- Publish acmsimcv5 along with the package.
+
+*1.0.5*
+- Add sweep-frequency and bode-plot feature.
+- gmake compile .c program, execute .exe, collect .dat, and ggplot.

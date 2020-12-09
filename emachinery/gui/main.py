@@ -171,7 +171,18 @@ class EmachineryWidget(QMainWindow):
 
         '''tab_4: C-based Simulation
         '''
-        self.path2acmsimc = self.ui.lineEdit_path2acmsimc.text()
+        self.filepath_to_configini = pkg_resources.resource_filename(__name__, r'config.json')
+         # Recover last user input
+        try:
+            with open(self.filepath_to_configini, 'r') as f:
+                self.configini = json.load(f)
+                self.path2acmsimc = self.configini['path2acmsimc']
+                self.ui.lineEdit_path2acmsimc.setText(self.path2acmsimc)
+        except Exception as e:
+            raise e
+            self.path2acmsimc = self.ui.lineEdit_path2acmsimc.text()
+        self.ui.lineEdit_path2acmsimc.textChanged[str].connect(self.save_path2acmsimc)
+
         self.data_file_name = self.get_data_file_name()
         self.ui.pushButton_runCBasedSimulation.clicked.connect(self.runCBasedSimulation)
 
@@ -225,10 +236,7 @@ class EmachineryWidget(QMainWindow):
         '''
         todo
         '''
-        # Recover last input
-        # self.lineEdit_npp.textChanged[str].connect(self.doSomething)
         # read in c header file and figure out what are the possible labels
-
 
     ''' PI Regulator Tuning '''
     def series_pid_tuner(self):
@@ -237,7 +245,7 @@ class EmachineryWidget(QMainWindow):
         # Specify your desired speed closed-loop bandwidth
         desired_VLBW_HZ = eval(self.ui.lineEdit_desiredVLBW.text())
 
-        print(f'delta={delta}', desired_VLBW_HZ)
+        # print(f'delta={delta}', desired_VLBW_HZ)
 
         currentPI, speedPI, 上位机电流PI, 上位机速度PI, self.designedMagPhaseOmega, BW_in_Hz = tuner.iterate_for_desired_bandwidth(delta, desired_VLBW_HZ, self.motor_dict)
         currentKp, currentKi     = currentPI
@@ -258,8 +266,8 @@ class EmachineryWidget(QMainWindow):
         self.ui.lineEdit_PC_speedKI  .setText(f'{上位机速度KI:g}')
     def get_control_dict(self):
 
-        self.control_dict["currentPI"] = (eval(self.lineEdit_currentKP.text()), eval(self.lineEdit_currentKI.text()))
-        self.control_dict["speedPI"]   = (eval(self.lineEdit_speedKP.text()),   eval(self.lineEdit_speedKI.text()))
+        self.control_dict["currentPI"] = (eval(self.ui.lineEdit_currentKP.text()), eval(self.ui.lineEdit_currentKI.text()))
+        self.control_dict["speedPI"]   = (eval(self.ui.lineEdit_speedKP.text()),   eval(self.ui.lineEdit_speedKI.text()))
         # print(f'\n\n\
         #     #define CURRENT_KP {currentKp:g}\n\
         #     #define CURRENT_KI {currentKi:g}\n\
@@ -321,7 +329,7 @@ class EmachineryWidget(QMainWindow):
             # 2. Plot designed Bode plot
             mag, phase, omega = self.designedMagPhaseOmega
             index_max_freq = sum(omega/(2*np.pi) < max_freq)
-            ax.plot((omega/(2*np.pi))[:index_max_freq], 20*np.log10(mag[:index_max_freq]), '-.', label=f'designed:$\\delta={eval(self.lineEdit_dampingFactor_delta.text())}$')
+            ax.plot((omega/(2*np.pi))[:index_max_freq], 20*np.log10(mag[:index_max_freq]), '-.', label=f'designed:$\\delta={eval(self.ui.lineEdit_dampingFactor_delta.text())}$')
 
             # # 3. Plot measured Bode plot
             # fname = r'D:\ISMC\SweepFreq\Jupyter\VLBW_Hz-Data/' + 'BiasSine500rpm' + data_file_name[data_file_name.find(data_file_name_prefix)+len(data_file_name_prefix)+len('-CLOSED-@'):-4]+'.txt'
@@ -356,6 +364,11 @@ class EmachineryWidget(QMainWindow):
         self.ui.MplWidget_bodePlot.canvas.draw()
 
     ''' C-based Simulation '''
+    def save_path2acmsimc(self):
+        self.path2acmsimc = self.ui.lineEdit_path2acmsimc.text()
+        self.configini['path2acmsimc'] = self.path2acmsimc
+        with open(self.filepath_to_configini, 'w') as f:
+            json.dump(self.configini, f, ensure_ascii=False, indent=4)
     def get_data_file_name(self):
 
         上位机电流KP = eval(self.ui.lineEdit_PC_currentKP.text())
@@ -388,7 +401,6 @@ class EmachineryWidget(QMainWindow):
             self.data_file_name = f"../dat/{self.motor_dict['data_file_name_prefix']}-{上位机电流KP:.0f}-{上位机电流KI:.0f}-{上位机速度KP:.0f}-{上位机速度KI:.0f}.dat"
         print('self.data_file_name:', self.data_file_name, end='\n'*2)
         return self.data_file_name
-
     # read in .dat file for plot
     def get_dataFrame(self):
 
@@ -521,27 +533,27 @@ class EmachineryWidget(QMainWindow):
             self.ui.radioButton_openLoop.setChecked(False)
             self.ui.radioButton_currentLoopOnly.setChecked(False)
     def decode_labelsAndSignals(self):
-            # #define DATA_LABELS
-            labels = [el.strip() for el in self.ui.plainTextEdit_ACMPlotLabels.toPlainText().split('\n') if el.strip()!='']
-            # avoid using ',' or ';' in label, because comma will be interpreted as new column by pandas
-            # labels = [el.replace(',','|') for el in labels]
-            self.list__label = labels
-            # print(labels)
+        # #define DATA_LABELS
+        labels = [el.strip() for el in self.ui.plainTextEdit_ACMPlotLabels.toPlainText().split('\n') if el.strip()!='']
+        # avoid using ',' or ';' in label, because comma will be interpreted as new column by pandas
+        # labels = [el.replace(',','|') for el in labels]
+        self.list__label = labels
+        # print(labels)
 
-            details = self.ui.plainTextEdit_ACMPlotDetails.toPlainText()
-            # print(details)
+        details = self.ui.plainTextEdit_ACMPlotDetails.toPlainText()
+        # print(details)
 
-            # 每个通道有几条信号？
-            self.list__number_of_traces_per_subplot = []
-            for detail in [el.strip() for el in self.ui.plainTextEdit_ACMPlotDetails.toPlainText().split('\n') if el.strip()!='']:
-                number_of_traces_per_subplot = len( [el.strip() for el in detail.split(',') if el.strip()!=''] )
-                self.list__number_of_traces_per_subplot.append(number_of_traces_per_subplot)
+        # 每个通道有几条信号？
+        self.list__number_of_traces_per_subplot = []
+        for detail in [el.strip() for el in self.ui.plainTextEdit_ACMPlotDetails.toPlainText().split('\n') if el.strip()!='']:
+            number_of_traces_per_subplot = len( [el.strip() for el in detail.split(',') if el.strip()!=''] )
+            self.list__number_of_traces_per_subplot.append(number_of_traces_per_subplot)
 
-            # #define DATA_DETAILS
-            details = [el.strip() for el in re.split('\n|,', details) if el.strip()!='']
-            self.list__detail = details
-            # print(details)
-            return details
+        # #define DATA_DETAILS
+        details = [el.strip() for el in re.split('\n|,', details) if el.strip()!='']
+        self.list__detail = details
+        # print(details)
+        return details
     # save setting, compile .c and run .exe
     def runCBasedSimulation(self, bool_=True, bool_savePlotSetting=True, bool_updatePlotSetting=True):
         # why bool_ is always set to False???

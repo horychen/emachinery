@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__+'/utils')))
 sys.path.append(os.path.dirname(os.path.realpath(__file__+'/jsons')))
 sys.path.append(os.path.dirname(os.path.realpath(__file__+'/acmdesignv2')))
 
-__version__ = '1.0.5'
+__version__ = '1.0.8'
 __description__ = 'A GUI for analysis of electric machinery'
 __author__ = 'Jiahao Chen'
 __author_email__ = 'horychen@qq.com'

@@ -1,1 +1,1 @@
-recursive-include emachinery *.txt *.py *.qss *.ui *.json *.xlsx
+recursive-include emachinery *.txt *.py *.qss *.ui *.json *.xlsx *.c *.h makefile

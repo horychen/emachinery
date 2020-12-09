@@ -21,18 +21,18 @@ def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, key_ref='ACM.rpm_cmd',
     # df_info     = pd.read_csv(dot_dat_file_dir+'dat/info.dat', na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
     df_profiles = pd.read_csv(dot_dat_file_dir, na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
 
-    print(dot_dat_file_dir)
-    print(df_profiles)
+    # print(dot_dat_file_dir)
+    # print(df_profiles)
 
     no_samples = df_profiles.shape[0]
     no_traces  = df_profiles.shape[1]
 
     Ts = motor_dict['CL_TS']
-    print('Ts =', Ts)
+    # print('Ts =', Ts)
 
-    print('Simulated time: %g s.'%(no_samples * Ts * motor_dict['DOWN_SAMPLE']), 'Key list:', sep='\n')
-    for key in df_profiles.keys():
-        print('\t', key)
+    # print('Simulated time: %g s.'%(no_samples * Ts * motor_dict['DOWN_SAMPLE']), 'Key list:', sep='\n')
+    # for key in df_profiles.keys():
+    #     print('\t', key)
 
     t = np.arange(1, no_samples+1) * motor_dict['DOWN_SAMPLE'] * Ts
     # key_ref = 'rpm_speed_command'
@@ -56,7 +56,7 @@ def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, key_ref='ACM.rpm_cmd',
     samplingFreq = 1/Ts
     EndTime = t[-1]
     #     print('End Time:', EndTime, 's')
-    print('Sampling Frequency:', samplingFreq*1e-3, 'kHz')
+    # print('Sampling Frequency:', samplingFreq*1e-3, 'kHz')
     #     # print('Number of Points:', N)
     #     print()
 
@@ -86,14 +86,14 @@ def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, key_ref='ACM.rpm_cmd',
     # # plt.figure(101)
     # plt.plot(time, x_qep, label='qep')
     # plt.show()
-    print('----------------')
-    print('xref')
-    for el in x_ref.values:
-        print(el)
-    print('xqep')
-    for el in x_qep.values:
-        print(el)
-    # # plt.savefig(r'C:\Users\horyc\Desktop\test.png')
+    # print('----------------')
+    # print('xref')
+    # for el in x_ref.values:
+    #     print(el)
+    # print('xqep')
+    # for el in x_qep.values:
+    #     print(el)
+    # # # plt.savefig(r'C:\Users\horyc\Desktop\test.png')
     # quit()
 
     #     # plt.xlim([0, 8/target_Hz])
