@@ -1170,7 +1170,7 @@
              <item>
               <widget class="QLineEdit" name="lineEdit_path2acmsimc">
                <property name="text">
-                <string>D:\DrH\Codes\acmsimcv5</string>
+                <string>D:\DrH\Codes\emachineryTestPYPI\emachinery\acmsimcv5</string>
                </property>
               </widget>
              </item>
