@@ -35,11 +35,14 @@ from emachinery.gui.mainWindow_v2 import Ui_MainWindow
 
 from emachinery.gui import latexdemo
 
-Help = r''' 
-If you want to import a new module (say tuner) in a new directory (acmdesignv2), you need to follow these steps:
+# from emachinery.newcode import newcode
 
-1. Open __init__.py in emachinery folder, and add path to sys.
+Help = r''' 
+If you want to import a new module (say tuner) in a new directory (e.g., acmdesignv2), you need to follow these steps:
+
+1. Open __init__.py in emachinery folder, and add path to new directory to sys.
 2. Create an __init__.py file inside your new directory.
+3. Delete emachinery.egg-info/ and other temporary folders (build, dist) if there are.
 3. Cd to D:\DrH\Codes\emachineryTestPYPI and do: pip install -e .
 4. You will see following message:
     ---------------------------
@@ -54,16 +57,17 @@ If you want to import a new module (say tuner) in a new directory (acmdesignv2),
     Successfully installed emachinery
 
 Or else,
-You are going to see the following error message:
+You are going to see the following error message when running:
     ---------------------------
     Traceback (most recent call last):
       File "D:\DrH\Codes\emachineryTestPYPI\emachinery\gui\main.py", line 28, in <module>
         from emachinery.acmdesignv2 import tuner
     ModuleNotFoundError: No module named 'emachinery.acmdesignv2'
 
-If you see error message similar to:
+5. After you pip install from PyPI, if you see error message similar to:
     'EmachineryWidget' object has no attribute 'lineEdit_path2boptPython'
 this is likely that you should call self.ui.lineEdit_path2boptPython instead of self.lineEdit_path2boptPython.
+This is not a problem if you use load .ui, but it is a problem if you import .py obtained via pyuic5.
 '''
 from emachinery.acmdesignv2 import tuner
 # from emachinery.acmdesignv2 import simulator
