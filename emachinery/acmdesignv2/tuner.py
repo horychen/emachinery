@@ -112,14 +112,14 @@ def iterate_for_desired_bandwidth( delta, desired_VLBW_Hz, motor_dict, CLBW_Hz_i
     # print('DEBUG tuner.py', motor_dict)
 
     R          = motor_dict['Rs']
-    L          = motor_dict['Lq']
+    L          = motor_dict['Ls']
     J_s        = motor_dict['J_s']
     JLoadRatio = motor_dict['JLoadRatio']
     n_pp       = motor_dict['n_pp']
     KE         = motor_dict['KE']
     CL_TS      = motor_dict['CL_TS']
     VL_TS      = motor_dict['VL_TS']
-    J_total = J_s*(1+JLoadRatio) 
+    J_total    = J_s*(1+JLoadRatio) 
 
     CLBW_Hz = CLBW_Hz_initial  #100 # Hz (initial)
     VLBW_Hz = 0  # Hz (initial)

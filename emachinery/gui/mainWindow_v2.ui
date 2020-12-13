@@ -74,12 +74,12 @@
               <widget class="QComboBox" name="comboBox_MachineType">
                <item>
                 <property name="text">
-                 <string>Synchronous Machine</string>
+                 <string>Induction Machine</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>Induction Machine</string>
+                 <string>Synchronous Machine</string>
                 </property>
                </item>
               </widget>
@@ -100,7 +100,7 @@
                     <enum>QFrame::Plain</enum>
                    </property>
                    <property name="text">
-                    <string>Number of Poles</string>
+                    <string>Number of Pole Pairs</string>
                    </property>
                   </widget>
                  </item>
@@ -265,7 +265,7 @@
               <x>0</x>
               <y>370</y>
               <width>811</width>
-              <height>401</height>
+              <height>451</height>
              </rect>
             </property>
             <property name="title">
@@ -277,7 +277,7 @@
                <x>10</x>
                <y>30</y>
                <width>791</width>
-               <height>361</height>
+               <height>411</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -357,6 +357,19 @@
               </item>
               <item>
                <widget class="QLabel" name="label_qpix_Note2">
+                <property name="styleSheet">
+                 <string notr="true">background: rgb(0,0,0)</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="scaledContents">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_qpix_Note3">
                 <property name="styleSheet">
                  <string notr="true">background: rgb(0,0,0)</string>
                 </property>

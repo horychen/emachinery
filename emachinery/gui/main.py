@@ -68,6 +68,9 @@ You are going to see the following error message when running:
     'EmachineryWidget' object has no attribute 'lineEdit_path2boptPython'
 this is likely that you should call self.ui.lineEdit_path2boptPython instead of self.lineEdit_path2boptPython.
 This is not a problem if you use load .ui, but it is a problem if you import .py obtained via pyuic5.
+
+6. 还有一个不方便的地方就是，如果正式安装了emachinery，就没法在本地测试了，因为会优先import库emachinery中的.py文件作为模块。
+换句话说，只能用“pip install -e .”进行本地测试。
 '''
 from emachinery.acmdesignv2 import tuner
 # from emachinery.acmdesignv2 import simulator
@@ -102,9 +105,10 @@ class EmachineryWidget(QMainWindow):
         '''tab: Name Plate Data
         '''
         self.mj = ACMInfo.MotorJson().d
-        self.ui.comboBox_MachineName.addItems(self.mj.keys())
+
         self.ui.comboBox_MachineName.activated.connect(self.comboActivate_namePlateData)
-        self.comboActivate_namePlateData()
+        self.ui.comboBox_MachineType.activated.connect(self.comboActivate_machineType)
+        self.comboActivate_machineType()
 
         self.motor_dict = self.get_motor_dict(self.mj);
 
@@ -167,6 +171,7 @@ class EmachineryWidget(QMainWindow):
         self.ui.label_qpix_VLKI.setPixmap(latex_repo.qpixmap_VLKI)
         self.ui.label_qpix_Note1.setPixmap(latex_repo.qpixmap_Note1)
         self.ui.label_qpix_Note2.setPixmap(latex_repo.qpixmap_Note2)
+        self.ui.label_qpix_Note3.setPixmap(latex_repo.qpixmap_Note3)
         self.ui.pushButton_pidTuner.clicked.connect(self.series_pid_tuner)
         self.series_pid_tuner()
         # self.ui.pushButton_SweepFreq.clicked.connect(self.runCBasedSimulation_SweepFrequnecyAnalysis)
@@ -582,6 +587,30 @@ class EmachineryWidget(QMainWindow):
                 f.writelines(new_lines)
 
         def updateACMConfig(path2acmsimc, motor_dict, control_dict, sweepFreq_dict):
+            def conditions_to_continue(line):
+                # 原来如果有定义这些宏，那就不要了
+                if     '#define IM_NUMBER_OF_POLE_PAIRS' in line \
+                    or '#define IM_STAOTR_RESISTANCE' in line \
+                    or '#define IM_ROTOR_RESISTANCE' in line \
+                    or '#define IM_TOTAL_LEAKAGE_INDUCTANCE' in line \
+                    or '#define IM_MAGNETIZING_INDUCTANCE' in line \
+                    or '#define IM_SHAFT_INERTIA' in line \
+                    or '#define IM_RATED_CURRENT_RMS' in line \
+                    or '#define IM_RATED_POWER_WATT' in line \
+                    or '#define IM_RATED_SPEED_RPM' in line \
+                    or '#define PMSM_NUMBER_OF_POLE_PAIRS' in line \
+                    or '#define PMSM_RESISTANCE' in line \
+                    or '#define PMSM_D_AXIS_INDUCTANCE' in line \
+                    or '#define PMSM_Q_AXIS_INDUCTANCE' in line \
+                    or '#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE' in line \
+                    or '#define PMSM_SHAFT_INERTIA' in line \
+                    or '#define PMSM_RATED_CURRENT_RMS' in line \
+                    or '#define PMSM_RATED_POWER_WATT' in line \
+                    or '#define PMSM_RATED_SPEED_RPM' in line:
+                    return True
+                else:
+                    return False
+
             # self = None
             NUMBER_OF_STEPS_CL_TS = motor_dict['EndTime']/motor_dict['CL_TS']
             # print('NUMBER_OF_STEPS_CL_TS', NUMBER_OF_STEPS_CL_TS)
@@ -589,42 +618,67 @@ class EmachineryWidget(QMainWindow):
                 new_lines = []
                 for line in f.readlines():
                     # Basic Quantities
-                    if   '#define NUMBER_OF_STEPS' in line: new_lines.append(f'#define NUMBER_OF_STEPS {NUMBER_OF_STEPS_CL_TS:.0f}\n')
-                    elif '#define CL_TS '          in line: new_lines.append(f'#define CL_TS          ({motor_dict["CL_TS"]:g})\n')
-                    elif '#define CL_TS_INVERSE'   in line: new_lines.append(f'#define CL_TS_INVERSE  ({1.0/motor_dict["CL_TS"]:g})\n')
-                    elif '#define VL_TS '          in line: new_lines.append(f'#define VL_TS          ({motor_dict["VL_TS"]:g})\n')
-                    elif '#define DATA_FILE_NAME'  in line: new_lines.append(f'#define DATA_FILE_NAME "{self.get_data_file_name()}"\n')
-                    # Load Related Quantities
-                    elif '#define LOAD_INERTIA'    in line: new_lines.append(f'#define LOAD_INERTIA    {motor_dict["JLoadRatio"]}\n')
-                    elif '#define LOAD_TORQUE'     in line: new_lines.append(f'#define LOAD_TORQUE     {motor_dict["Tload"]}\n')
-                    elif '#define VISCOUS_COEFF'   in line: new_lines.append(f'#define VISCOUS_COEFF   {motor_dict["ViscousCoeff"]}\n')
-                    # Machine Parameters
-                    elif '#define PMSM_NUMBER_OF_POLE_PAIRS'          in line: new_lines.append(f'#define PMSM_NUMBER_OF_POLE_PAIRS          {motor_dict["n_pp"]}\n')
-                    elif '#define PMSM_RESISTANCE'                    in line: new_lines.append(f'#define PMSM_RESISTANCE                    {motor_dict["Rs"]}\n')
-                    elif '#define PMSM_D_AXIS_INDUCTANCE'             in line: new_lines.append(f'#define PMSM_D_AXIS_INDUCTANCE             {motor_dict["Ld"]}\n')
-                    elif '#define PMSM_Q_AXIS_INDUCTANCE'             in line: new_lines.append(f'#define PMSM_Q_AXIS_INDUCTANCE             {motor_dict["Lq"]}\n')
-                    elif '#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE' in line: new_lines.append(f'#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE {motor_dict["KE"]}\n')
-                    elif '#define PMSM_SHAFT_INERTIA'                 in line: new_lines.append(f'#define PMSM_SHAFT_INERTIA                 {motor_dict["J_s"]}\n')
-                    elif '#define PMSM_RATED_CURRENT_RMS'             in line: new_lines.append(f'#define PMSM_RATED_CURRENT_RMS             {motor_dict["IN"]}\n')
-                    elif '#define PMSM_RATED_POWER_WATT'              in line: new_lines.append(f'#define PMSM_RATED_POWER_WATT              {motor_dict["PW"]}\n')
-                    elif '#define PMSM_RATED_SPEED_RPM'               in line: new_lines.append(f'#define PMSM_RATED_SPEED_RPM               {motor_dict["RPM"]}\n')
+                    if   '#define NUMBER_OF_STEPS' in line: new_lines.append(f'#define NUMBER_OF_STEPS {NUMBER_OF_STEPS_CL_TS:.0f}\n'); continue
+                    elif '#define CL_TS '          in line: new_lines.append(f'#define CL_TS          ({motor_dict["CL_TS"]:g})\n'); continue
+                    elif '#define CL_TS_INVERSE'   in line: new_lines.append(f'#define CL_TS_INVERSE  ({1.0/motor_dict["CL_TS"]:g})\n'); continue
+                    elif '#define VL_TS '          in line: new_lines.append(f'#define VL_TS          ({motor_dict["VL_TS"]:g})\n'); continue
+                    elif '#define DATA_FILE_NAME'  in line: new_lines.append(f'#define DATA_FILE_NAME "{self.get_data_file_name()}"\n'); continue
+
+                    # Load Related Quantities;
+                    elif '#define LOAD_INERTIA'    in line: new_lines.append(f'#define LOAD_INERTIA    {motor_dict["JLoadRatio"]}\n'); continue
+                    elif '#define LOAD_TORQUE'     in line: new_lines.append(f'#define LOAD_TORQUE     {motor_dict["Tload"]}\n'); continue
+                    elif '#define VISCOUS_COEFF'   in line: new_lines.append(f'#define VISCOUS_COEFF   {motor_dict["ViscousCoeff"]}\n'); continue
+
+                    # Machine Type
+                    if "Induction Machine" in self.ui.comboBox_MachineType.currentText():
+                        if '#define MACHINE_TYPE' in line: 
+                            new_lines.append(f'#define MACHINE_TYPE {11}\n')
+                            # Machine Parameters
+                            new_lines.append(f'\t#define IM_NUMBER_OF_POLE_PAIRS          {motor_dict["n_pp"]}\n')
+                            new_lines.append(f'\t#define IM_STAOTR_RESISTANCE             {motor_dict["Rs"]}\n')
+                            new_lines.append(f'\t#define IM_ROTOR_RESISTANCE              {motor_dict["Rreq"]}\n')
+                            new_lines.append(f'\t#define IM_TOTAL_LEAKAGE_INDUCTANCE      {motor_dict["Lsigma"]}\n')
+                            new_lines.append(f'\t#define IM_MAGNETIZING_INDUCTANCE        {motor_dict["Lmu"]}\n')
+                            new_lines.append(f'\t#define IM_SHAFT_INERTIA                 {motor_dict["J_s"]}\n')
+                            new_lines.append(f'\t#define IM_RATED_CURRENT_RMS             {motor_dict["IN"]}\n')
+                            new_lines.append(f'\t#define IM_RATED_POWER_WATT              {motor_dict["PW"]}\n')
+                            new_lines.append(f'\t#define IM_RATED_SPEED_RPM               {motor_dict["RPM"]}\n')
+                            continue
+                    elif "Synchronous Machine" in self.ui.comboBox_MachineType.currentText():
+                        if '#define MACHINE_TYPE' in line: 
+                            new_lines.append(f'#define MACHINE_TYPE {2}\n')
+                            # Machine Parameters
+                            new_lines.append(f'\t#define PMSM_NUMBER_OF_POLE_PAIRS          {motor_dict["n_pp"]}\n')
+                            new_lines.append(f'\t#define PMSM_RESISTANCE                    {motor_dict["Rs"]}\n')
+                            new_lines.append(f'\t#define PMSM_D_AXIS_INDUCTANCE             {motor_dict["Ld"]}\n')
+                            new_lines.append(f'\t#define PMSM_Q_AXIS_INDUCTANCE             {motor_dict["Lq"]}\n')
+                            new_lines.append(f'\t#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE {motor_dict["KE"]}\n')
+                            new_lines.append(f'\t#define PMSM_SHAFT_INERTIA                 {motor_dict["J_s"]}\n')
+                            new_lines.append(f'\t#define PMSM_RATED_CURRENT_RMS             {motor_dict["IN"]}\n')
+                            new_lines.append(f'\t#define PMSM_RATED_POWER_WATT              {motor_dict["PW"]}\n')
+                            new_lines.append(f'\t#define PMSM_RATED_SPEED_RPM               {motor_dict["RPM"]}\n')
+                            continue
+                    # Ignore old Machiner Parameters macros
+                    if conditions_to_continue(line): continue
+
                     # Control Related Quantities
-                    elif len(control_dict.keys()) > 2: # there could be only ExcitationType assigned
+                    if len(control_dict.keys()) > 2: # there could be the case in which only ExcitationType assigned to control_dict
                         # PID Coefficients
-                        if   '#define CURRENT_KP '     in line: new_lines.append(f'#define CURRENT_KP ({control_dict["currentPI"][0]:g})\n')
-                        elif '#define CURRENT_KI '     in line: new_lines.append(f'#define CURRENT_KI ({control_dict["currentPI"][1]:g})\n')
-                        elif '#define SPEED_KP '       in line: new_lines.append(f'#define SPEED_KP ({  control_dict["speedPI"]  [0]:g})\n')
-                        elif '#define SPEED_KI '       in line: new_lines.append(f'#define SPEED_KI ({  control_dict["speedPI"]  [1]:g})\n')
-                        elif '#define EXCITATION_TYPE' in line: new_lines.append(f'#define EXCITATION_TYPE ({control_dict["ExcitationType"]})\n')
-                        # Sweep Frequency Related Quantities
-                        elif len(sweepFreq_dict.keys()) > 0:
-                            if   '#define SWEEP_FREQ_MAX_FREQ'  in line: new_lines.append(f'#define SWEEP_FREQ_MAX_FREQ {     sweepFreq_dict["max_freq"]:.0f}\n')
-                            elif '#define SWEEP_FREQ_INIT_FREQ' in line: new_lines.append(f'#define SWEEP_FREQ_INIT_FREQ {    sweepFreq_dict["init_freq"]:.0f}\n')
-                            elif '#define SWEEP_FREQ_C2V'       in line: new_lines.append(f'#define SWEEP_FREQ_C2V {"TRUE" if sweepFreq_dict["SWEEP_FREQ_C2V"] else "FALSE"}\n')
-                            elif '#define SWEEP_FREQ_C2C'       in line: new_lines.append(f'#define SWEEP_FREQ_C2C {"TRUE" if sweepFreq_dict["SWEEP_FREQ_C2C"] else "FALSE"}\n')
-                            else: new_lines.append(line)
-                        else: new_lines.append(line)
-                    else: new_lines.append(line)
+                        if   '#define CURRENT_KP '     in line: new_lines.append(f'#define CURRENT_KP ({control_dict["currentPI"][0]:g})\n'); continue
+                        elif '#define CURRENT_KI '     in line: new_lines.append(f'#define CURRENT_KI ({control_dict["currentPI"][1]:g})\n'); continue
+                        elif '#define SPEED_KP '       in line: new_lines.append(f'#define SPEED_KP ({  control_dict["speedPI"]  [0]:g})\n'); continue
+                        elif '#define SPEED_KI '       in line: new_lines.append(f'#define SPEED_KI ({  control_dict["speedPI"]  [1]:g})\n'); continue
+                        elif '#define EXCITATION_TYPE' in line: new_lines.append(f'#define EXCITATION_TYPE ({control_dict["ExcitationType"]})\n'); continue
+
+                    # Sweep Frequency Related Quantities
+                    if len(sweepFreq_dict.keys()) > 0:
+                        if   '#define SWEEP_FREQ_MAX_FREQ'  in line: new_lines.append(f'#define SWEEP_FREQ_MAX_FREQ {     sweepFreq_dict["max_freq"]:.0f}\n'); continue
+                        elif '#define SWEEP_FREQ_INIT_FREQ' in line: new_lines.append(f'#define SWEEP_FREQ_INIT_FREQ {    sweepFreq_dict["init_freq"]:.0f}\n'); continue
+                        elif '#define SWEEP_FREQ_C2V'       in line: new_lines.append(f'#define SWEEP_FREQ_C2V {"TRUE" if sweepFreq_dict["SWEEP_FREQ_C2V"] else "FALSE"}\n'); continue
+                        elif '#define SWEEP_FREQ_C2C'       in line: new_lines.append(f'#define SWEEP_FREQ_C2C {"TRUE" if sweepFreq_dict["SWEEP_FREQ_C2C"] else "FALSE"}\n'); continue
+
+                    # No if-clause is activated, so simply append the line.
+                    new_lines.append(line)
             with open(path2acmsimc+'/c/ACMConfig.h', 'w', encoding='utf-8') as f:
                 f.writelines(new_lines)
 
@@ -669,6 +723,21 @@ class EmachineryWidget(QMainWindow):
 
 
     ''' General Information '''
+    def comboActivate_machineType(self):
+        pmsm_list, im_list = [], []
+        for key, machine in self.mj.items():
+            # Permanent Magnet Motor
+            if '永磁' in machine['基本参数']['电机类型']:
+                pmsm_list.append(key)
+            elif '感应' in machine['基本参数']['电机类型']:
+                im_list.append(key)
+        if 'Synchronous Machine' in self.ui.comboBox_MachineType.currentText():
+            self.ui.comboBox_MachineName.clear()
+            self.ui.comboBox_MachineName.addItems(pmsm_list) #(self.mj.keys())
+        elif 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
+            self.ui.comboBox_MachineName.clear()
+            self.ui.comboBox_MachineName.addItems(im_list) #(self.mj.keys())
+        self.comboActivate_namePlateData()
     def comboActivate_namePlateData(self):
         self.motor_dict = self.get_motor_dict(self.mj)
         # print('debug main.py', self.motor_dict)
@@ -685,7 +754,13 @@ class EmachineryWidget(QMainWindow):
         if self.ui.label_pushedVariables.text() == 'None':
             self.ui.label_pushedVariables.setText(', '.join(d.keys()))
         else:
-            self.ui.label_pushedVariables.setText(self.ui.label_pushedVariables.text()+', '+', '.join(d.keys()))
+            # Duplicated variable names would exist
+            # self.ui.label_pushedVariables.setText(self.ui.label_pushedVariables.text()+', '+', '.join(d.keys()))
+
+            # Avoid duplicated variable names
+            for key in d.keys():
+                if key not in self.ui.label_pushedVariables.text():
+                    self.ui.label_pushedVariables.setText(self.ui.label_pushedVariables.text()+f', {key}')
     def update_emy(self):
         self.emy = ElectricMachinery( NUMBER_OF_POLE_PAIRS  = int  (self.ui.lineEdit_npp.text()),
                                       RATED_CURRENT_RMS     = float(self.ui.lineEdit_RatedCurrent.text()),
@@ -697,37 +772,35 @@ class EmachineryWidget(QMainWindow):
     def get_motor_dict(self, mj):
         # read from json file
         motor = mj[self.ui.comboBox_MachineName.currentText()]["基本参数"]
-
-        n_pp = motor["极对数 [1]"]
-        R    = motor["电机线电阻 [Ohm]"]/2
-        Ld   = motor["电机D轴线电感 [mH]"]/2*1e-3
-        Lq   = motor["电机Q轴线电感 [mH]"]/2*1e-3
-        KE   = motor["转矩常数 [Nm/Arms]"] / 1.5 / n_pp * 1.414
-        J_s  = motor["转动惯量 [kg.cm^2]"]*1e-4
-        IN   = motor["额定电流 [Arms]"]
-        PW   = motor["额定功率 [Watt]"]
-        RPM  = motor["额定转速 [rpm]"]
-
         motor_dict = dict()
-        motor_dict['DOWN_SAMPLE'] = 1 # not implemented
+        motor_dict['DOWN_SAMPLE'] = 1 # set here but not implemented in c-simulation
 
-        motor_dict['n_pp'] = n_pp
-        motor_dict['Rs'] = R
-        motor_dict['Ld'] = Ld
-        motor_dict['Lq'] = Lq
-        motor_dict['KE'] = KE
-        motor_dict['J_s'] = J_s
-        motor_dict['IN'] = IN
-        motor_dict['PW'] = PW
-        motor_dict['RPM'] = RPM
+        motor_dict['n_pp'] = n_pp = motor["极对数 [1]"]
+        motor_dict['IN']   = IN   = motor["额定电流 [Arms]"]
+        motor_dict['PW']   = PW   = motor["额定功率 [Watt]"]
+        motor_dict['RPM']  = RPM  = motor["额定转速 [rpm]"]
+
+        motor_dict['J_s']  = J_s  = motor["转动惯量 [kg.cm^2]"]*1e-4
+
+        if '感应' in motor['电机类型']:
+            motor_dict['Rs']     = Rs     = motor["定子电阻 [Ohm]"]
+            motor_dict['Rreq']   = Rreq   = motor["反伽马转子电阻 [Ohm]"]
+            motor_dict['Lsigma'] = Lsigma = motor["反伽马漏电感 [mH]"]*1e-3
+            motor_dict['Lmu']    = Lmu    = motor["定子D轴电感 [mH]"]*1e-3 - Lsigma
+            motor_dict['KE']     = KE     = motor["额定反电势系数 [Wb]"]
+            motor_dict['Ls']     = Lsigma + Lmu # this will be used in tuner.py for iteration for current BW
+
+        elif '永磁' in motor['电机类型']:
+            motor_dict['Rs'] = R  = motor["定子电阻 [Ohm]"]
+            motor_dict['Ld'] = Ld = motor["定子D轴电感 [mH]"]*1e-3
+            motor_dict['Lq'] = Lq = motor["定子Q轴电感 [mH]"]*1e-3
+            motor_dict['KE'] = KE = motor["额定反电势系数 [Wb]"]
+            motor_dict['Ls'] = Lq  # this will be used in tuner.py for iteration for current BW
 
         # below is by user GUI input
-        CL_TS = eval(self.ui.lineEdit_CLTS.text())
-        VL_TS = eval(self.ui.lineEdit_VLTS.text())
-        EndTime = eval(self.ui.lineEdit_EndTime.text())
-        motor_dict['CL_TS'] = CL_TS
-        motor_dict['VL_TS'] = VL_TS
-        motor_dict['EndTime'] = EndTime
+        motor_dict['CL_TS'] = CL_TS = eval(self.ui.lineEdit_CLTS.text())
+        motor_dict['VL_TS'] = VL_TS = eval(self.ui.lineEdit_VLTS.text())
+        motor_dict['EndTime'] = EndTime = eval(self.ui.lineEdit_EndTime.text())
 
         motor_dict['JLoadRatio']   = eval(self.ui.lineEdit_LoadInertiaPercentage.text())*0.01 #[%]
         motor_dict['Tload']        = eval(self.ui.lineEdit_LoadTorque.text()) #[Nm]
@@ -771,5 +844,5 @@ def main():
     app.exec_()
 
 if __name__ == '__main__':
-    print(os.path.dirname(os.path.realpath(__file__)))
+    # print(os.path.dirname(os.path.realpath(__file__)))
     main()

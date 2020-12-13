@@ -39,7 +39,7 @@ if __name__ == '!__main__':
 
 
 # 读：excel->json
-if __name__ == '!__main__':
+if __name__ == '__main__':
 
     if False: # 显式写法
         df = pandas.read_excel(open('ACMInfo.xlsx', 'rb'), sheet_name=u'基本参数')
@@ -50,11 +50,16 @@ if __name__ == '!__main__':
 
         写硬盘字典 = OrderedDict()
         for k, _ in 基本参数字典.items():
+            # print(k)
             # 写硬盘字典[k] = { '基本参数':基本参数字典[k], 
             #                  '参数辨识':参数辨识字典[k] 
             #                 }
             写硬盘字典[k] = OrderedDict([('基本参数', 基本参数字典[k])])
-            写硬盘字典[k].update(OrderedDict([('参数辨识', 参数辨识字典[k])]))
+            try:
+                写硬盘字典[k].update(OrderedDict([('参数辨识', 参数辨识字典[k])]))
+            except KeyError as e:
+                print(e)
+                print(f'【警告】参数辨识的表里没有{k}这款电机的数据')
 
     else: # 隐式写法
 
@@ -65,8 +70,11 @@ if __name__ == '!__main__':
 
         写硬盘字典 = OrderedDict()
         for k, _ in 基本参数字典.items():
-            写硬盘字典[k] = OrderedDict([ eval(f"('{sheetName}', {sheetName}字典[k])") for sheetName in sheetNameList ])
-
+            print(k)
+            try:
+                写硬盘字典[k] = OrderedDict([ eval(f"('{sheetName}', {sheetName}字典[k])") for sheetName in sheetNameList ])
+            except KeyError as e:
+                print(f'\t【警告】{sheetName}的表里没有“{k}”这款电机的数据。')
 
     with open('machine_specification-auto.json', 'w', encoding='utf-8') as f:
         json.dump(写硬盘字典, f, ensure_ascii=False, indent=4)

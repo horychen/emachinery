@@ -1,5 +1,7 @@
 #include "ACMSim.h"
 
+#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
+
 // 仿真电机结构体变量声明
 struct SynchronousMachineSimulated ACM;
 
@@ -133,7 +135,7 @@ int machine_simulation(){
 
     // 电机转速接口
     ACM.omg_elec = ACM.x[NUMBER_OF_STATES-3]; // 电气转速 [elec. rad/s]
-    ACM.rpm = ACM.x[NUMBER_OF_STATES-3] * 60 / (2 * M_PI * ACM.npp); // 机械转速 [mech. rad/s]
+    ACM.rpm = ACM.x[NUMBER_OF_STATES-3] * 60 / (2 * M_PI * ACM.npp); // 机械转速 [mech. rev/min]
 
     // 简单的程序跑飞检测，比如电机转速无穷大则停止程序
     if(isNumber(ACM.rpm)){
@@ -143,3 +145,5 @@ int machine_simulation(){
         return TRUE;        
     }
 }
+
+#endif

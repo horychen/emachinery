@@ -51,8 +51,9 @@ class LaTeX_Repo(object):
         self.qpixmap_CLKI = mathTex_to_QPixmap(r'${\rm curK}_I = {R}/{L}$', fs=fs, fontcolor=fontcolor)
         self.qpixmap_VLKP = mathTex_to_QPixmap(r'$\mathrm{velK}_P=\frac{\mathrm{curBW}}{\delta}\frac{J_{\mathrm{total}}}{n_{pp}}\frac{1}{\left( \frac{3}{2}n_{pp}K_E \right)}$', fs=fs, fontcolor=fontcolor)
         self.qpixmap_VLKI = mathTex_to_QPixmap(r'$\mathrm{velK}_I=\frac{\mathrm{curBW}}{\delta ^2}$', fs=fs, fontcolor=fontcolor)
-        self.qpixmap_Note1 = mathTex_to_QPixmap(r'$\mathrm{Velocity}~\mathrm{PI}~\mathrm{Regulator}~\mathrm{Input}:~\mathrm{Velocity} \left[ \mathrm{elec}.\mathrm{rad}/\sec \right] $', fs=fs, fontcolor=fontcolor)
-        self.qpixmap_Note2 = mathTex_to_QPixmap(r'$\mathrm{Velocity}~\mathrm{PI}~\mathrm{Regulator}~\mathrm{Output}:~\mathrm{Current} \left[ \mathrm{Apeak} \right] $', fs=fs, fontcolor=fontcolor)
+        self.qpixmap_Note1 = mathTex_to_QPixmap(r'$\mathrm{Velocity}~\mathrm{PI}~\mathrm{Regulator}~\mathrm{Input}:~\mathrm{Velocity~Control~Error}~\left[ \mathrm{elec}.\mathrm{rad}/\sec \right] $', fs=fs, fontcolor=fontcolor)
+        self.qpixmap_Note2 = mathTex_to_QPixmap(r'$\mathrm{Velocity}~\mathrm{PI}~\mathrm{Regulator}~\mathrm{Output}:~\mathrm{Current~Command}~\left[ \mathrm{Apeak} \right] $', fs=fs, fontcolor=fontcolor)
+        self.qpixmap_Note3 = mathTex_to_QPixmap(r'${\rm Series~Type~PI~Regulator}:~i_{q}^{*}=\left( \mathrm{velK}_P+\frac{\mathrm{velK}_P\mathrm{velK}_I}{p} \right) \left( \omega ^*-\omega \right) $', fs=fs, fontcolor=fontcolor)
 
 if __name__ == '__main__':
     

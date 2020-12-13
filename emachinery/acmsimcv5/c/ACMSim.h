@@ -64,8 +64,13 @@ typedef long double float64;
 // 模拟测量环节，可以在此为测量电机添加噪声、温飘等，也可以在此实现类似光电编码器的转速测量环节。
 #define RANDOM ( ((double) rand() / (RAND_MAX))*2 - 1 )
 
-// id, iq, omega, theta_d, theta_d_accum
-#define NUMBER_OF_STATES 5
+
+// 畸变后的定子电压
+#define UAL_C_DIST ACM.ual_c_dist // alpha-component of the distorted phase voltage = sine voltage + distored component
+#define UBE_C_DIST ACM.ube_c_dist
+// 仅畸变部分
+#define DIST_AL ACM.dist_al // alpha-component of the distorted component of the voltage
+#define DIST_BE ACM.dist_be
 
 // Everthing that is configurable is in here
 #include "ACMConfig.h"

@@ -1,11 +1,10 @@
 #ifndef SYNCHRONOUS_MOTOR_H
 #define SYNCHRONOUS_MOTOR_H
 
-
-#define UAL_C_DIST ACM.ual_c_dist // alpha-component of the distorted phase voltage = sine voltage + distored component
-#define UBE_C_DIST ACM.ube_c_dist
-#define DIST_AL ACM.dist_al // alpha-component of the distorted component of the voltage
-#define DIST_BE ACM.dist_be
+// The function name for the dynamics
+#define MACHINE_DYNAMICS SM_Dynamics
+// id, iq, omega, theta_d, theta_d_accum
+#define NUMBER_OF_STATES 5
 
 struct SynchronousMachineSimulated{
 
