@@ -1,63 +1,6 @@
-
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
-
-typedef struct {
-   float32 Ref;
-   float32 Fdb;
-   float32 Err;
-   float32 Kp;
-   float32 Up; // P output
-   float32 Ui; // I output
-   float32 Ud; // D output
-   float32 OutPreSat;
-   float32 OutMax;
-   float32 OutMin;
-   float32 Out;
-   float32 SatErr;
-   float32 Ki;
-   float32 Kc; // Integral correction gain
-   float32 Kd;
-   float32 Up1; // Previous proportional output
-   int16 SatStatus;
-   void (*calc)();
-} PIDREG3;
-typedef PIDREG3 *PIDREG3_handle;
-void pid_reg3_calc(PIDREG3_handle);
-
-extern PIDREG3 pid1_ia;
-extern PIDREG3 pid1_ib;
-extern PIDREG3 pid1_ic;
-
-extern PIDREG3 pid1_id;
-extern PIDREG3 pid1_iq;
-extern PIDREG3 pid1_pos;
-extern PIDREG3 pid1_spd;
-#define PIDREG3_DEFAULTS { \
-  /*Ref;*/ 0.0, \
-  /*Fdb;*/ 0.0, \
-  /*Err;*/ 0.0, \
-  /*Kp;*/  1.0, \
-  /*Up; // P output*/  0.0, \
-  /*Ui; // I output*/  0.0, \
-  /*Ud; // D output*/  0.0, \
-  /*OutPreSat;*/  0.0, \
-  /*OutMax;*/  0.95, \
-  /*OutMin;*/  0.95, \
-  /*Out;*/  0.0, \
-  /*SatErr;*/  0.0, \
-  /*Ki;*/  0.001, \
-  /*Kc; // Integral correction gain*/  0.0, \
-  /*Kd;*/  0.0, \
-  /*Up1; // Previous proportional output*/    0, \
-  /*tStatus;*/  0.0, \
-    (void (*)(Uint32)) pid_reg3_calc \
-}
-
-
-
-
-
+#ifndef PMSM_CONTROLLER_H
+#define PMSM_CONTROLLER_H
+#if MACHINE_TYPE == 2
 
 struct ControllerForExperiment{
 
@@ -130,4 +73,5 @@ void cmd_slow_speed_reversal(double timebase, double instant, double interval, d
 void controller();
 
 
+#endif
 #endif

@@ -30,8 +30,10 @@ void Machine_init(){
     ACM.R  = PMSM_RESISTANCE;
     ACM.Ld = PMSM_D_AXIS_INDUCTANCE;
     ACM.Lq = PMSM_Q_AXIS_INDUCTANCE;
+
+    // 需要把恒幅值变换下的磁链值转换为恒功率变换磁链值
     // PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 是指永磁体磁链的幅值，所以在恒功率坐标系下仿真时要经过恒功率变换，Clarke变换后得到的永磁体磁链向量的长度长于相坐标系下的，所以差一个系数sqrt(1.5)。
-    ACM.KE = PINV2AINV*PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // Vs/rad
+    ACM.KE = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE * AMPL2POW; // Vs/rad 
 
     ACM.npp = PMSM_NUMBER_OF_POLE_PAIRS;
     ACM.npp_inv = 1.0 / ACM.npp;
@@ -51,7 +53,7 @@ void Machine_init(){
     ACM.iq = 0.0;
 }
 
-// 同步电机的动态方程
+// 同步电机的动态方程（恒功率Clarke变换）
 void SM_Dynamics(double t, double *x, double *fx){
     // 记电机的动态方程为 d/dt x = f(x)
     // 本函数内出现的 fx 均表示电机状态的时间导数。
@@ -127,9 +129,9 @@ int machine_simulation(){
     // 将状态变量x[3]和接口变量theta_d的值进行同步
     ACM.x[NUMBER_OF_STATES-2] = ACM.theta_d;
 
-    // 电机电流接口
-    ACM.id  = ACM.x[0];
-    ACM.iq  = ACM.x[1];
+    // 电机电流接口（需要把恒功率变换转换为恒幅值变换）
+    ACM.id  = ACM.x[0] * POW2AMPL;
+    ACM.iq  = ACM.x[1] * POW2AMPL;
     ACM.ial = MT2A(ACM.id, ACM.iq, cos(ACM.theta_d), sin(ACM.theta_d));
     ACM.ibe = MT2B(ACM.id, ACM.iq, cos(ACM.theta_d), sin(ACM.theta_d));
 

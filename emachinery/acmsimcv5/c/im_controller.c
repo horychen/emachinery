@@ -1,79 +1,6 @@
 #include "ACMSim.h"
+#if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
-// 声明控制器结构体变量
-struct ControllerForExperiment CTRL;
-PIDREG3 pid1_id  = PIDREG3_DEFAULTS;
-PIDREG3 pid1_iq  = PIDREG3_DEFAULTS;
-PIDREG3 pid1_pos = PIDREG3_DEFAULTS;
-PIDREG3 pid1_spd = PIDREG3_DEFAULTS;
-PIDREG3 pid1_ia = PIDREG3_DEFAULTS;
-PIDREG3 pid1_ib = PIDREG3_DEFAULTS;
-PIDREG3 pid1_ic = PIDREG3_DEFAULTS;
-
-
-void pid_reg3_calc(PIDREG3 *v){
-    // Error
-    v->Err = v->Ref - v ->Fdb;
-
-    // Proportional regulator
-    v->Up = v->Kp * v->Err;
-
-    // Integral regulator with static clamping
-    if(    ( v->SatStatus== 1 ) && (v->Err<0 ) \
-        || ( v->SatStatus==-1 ) && (v->Err>0 ) \
-        || ( v->SatStatus== 0)
-      ){
-        // Integral regulator
-        v->Ui += v->Ki * v->Err;
-
-        // Clamping
-        if(v->Ui > v->OutMax) v->Ui = v->OutMax;
-        if(v->Ui < v->OutMin) v->Ui = v->OutMin;
-    }
-
-    // Derivative regulator
-    // v->Ud = v->Kd * (v->Up - v->Up1);
-
-    // Saturation
-    v->OutPreSat = v->Up + v->Ui;
-    if( v->OutPreSat > v->OutMax ){
-        v->Out = v->OutMax;
-        v->Ui -= (v->OutPreSat - v->OutMax); // <- Dynamic campling
-        v->SatStatus = 1;
-    }else if( v->OutPreSat < v->OutMin ){
-        v->Out = v->OutMin;
-        v->Ui -= (v->OutPreSat - v->OutMin); // <- Dynamic campling
-        v->SatStatus = -1;
-    }else{
-        v->Out = v->OutPreSat;
-        v->SatStatus = 0;
-    }
-
-    // Staturion difference
-    v->SatErr = v->Out - v->OutPreSat;
-
-    // Update the previous proportional output
-    v->Up1 = v->Up;
-}
-
-// 初始化函数
-void ACMSIMC_PIDTuner(){
-
-    pid1_id.Kp = CURRENT_KP;
-    pid1_iq.Kp = CURRENT_KP;
-    pid1_ia.Kp = CURRENT_KP;
-    pid1_ib.Kp = CURRENT_KP;
-    pid1_ic.Kp = CURRENT_KP;
-
-    pid1_id.Ki = CURRENT_KI_CODE;
-    pid1_iq.Ki = CURRENT_KI_CODE;
-    pid1_ia.Ki = CURRENT_KI_CODE;
-    pid1_ib.Ki = CURRENT_KI_CODE;
-    pid1_ic.Ki = CURRENT_KI_CODE;
-
-    pid1_spd.Kp = SPEED_KP;
-    pid1_spd.Ki = SPEED_KI_CODE;
-}
 void CTRL_init(){
 
     if(SENSORLESS_CONTROL==TRUE){
@@ -262,21 +189,22 @@ struct SweepFreq sf={0.0, 1, SWEEP_FREQ_INIT_FREQ-1, 0.0, 0.0};
 void controller(){
 
     // 位置环
-    REAL position_command = 10*2;
-    if(CTRL.timebase>5){
-        position_command = -10*2; 
-    }
-    REAL position_error = position_command - ACM.theta_d_accum;
-    REAL position_KP = 8;
-    REAL rad_speed_command = position_KP*position_error;
-    REAL rpm_speed_command = rad_speed_command*RAD_PER_SEC_2_RPM;
-    REAL amp_current_command;
-
+    #if EXCITATION_TYPE == 1
+        REAL position_command = 10*2;
+        if(CTRL.timebase>5){
+            position_command = -10*2; 
+        }
+        REAL position_error = position_command - ACM.theta_d_accum;
+        REAL position_KP = 8;
+        REAL rad_speed_command = position_KP*position_error;
+        REAL rpm_speed_command = rad_speed_command*RAD_PER_SEC_2_RPM;
+    #endif
 
     #if EXCITATION_TYPE == 2
         // 扫频建模
         // #define SWEEP_FREQ_AMPL 500 // rpm
         // #define MAX_FREQ SWEEP_FREQ_MAX_FREQ // Hz
+        REAL amp_current_command;
         sf.time += CL_TS;
         if(sf.time > sf.current_freq_end_time){
             // next frequency
@@ -298,11 +226,15 @@ void controller(){
         }
     #endif
 
-    ACM.rpm_cmd = rpm_speed_command; // for plot
+    #if EXCITATION_TYPE == 0
+        // 转速运动模式
+        rpm_speed_command = 500*sin(2*M_PI*88*CTRL.timebase); // overwrite
+    #endif
+
+    // for plot
+    ACM.rpm_cmd = rpm_speed_command;
 
 
-    // 转速运动模式
-    // rpm_speed_command = 500*sin(2*M_PI*88*CTRL.timebase); // overwrite
 
     //（霍尔反馈）
     // CTRL.omg__fb     = sm.omg_elec_hall;
@@ -320,6 +252,8 @@ void controller(){
     // harnefors_scvm();
     // CTRL.omg__fb     = omg_harnefors;
     // CTRL.theta_d__fb = theta_d_harnefors;
+
+
 
     CTRL.cosT = cos(CTRL.theta_d__fb);
     CTRL.sinT = sin(CTRL.theta_d__fb);
@@ -371,3 +305,4 @@ void controller(){
     CTRL.iq_cmd = pid1_iq.Ref;
 }
 
+#endif

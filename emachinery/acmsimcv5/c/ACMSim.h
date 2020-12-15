@@ -76,7 +76,9 @@ typedef long double float64;
 #include "ACMConfig.h"
 
 #include "synchronous_motor.h"
-#include "controller.h"
+#include "pid_regulator.h"
+#include "pmsm_controller.h"
+#include "im_controller.h"
 #include "observer.h"
 #include "inverter.h"
 #include "comm.h"

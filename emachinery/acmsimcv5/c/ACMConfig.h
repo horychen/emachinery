@@ -2,9 +2,9 @@
 #define ACMCONFIG_H
 
 // 指令类型
-#define EXCITATION_VELOCITY 0
-#define EXCITATION_POSITION 1
-#define EXCITATION_SWEEP_FREQUENCY 2
+    #define EXCITATION_VELOCITY 0
+    #define EXCITATION_POSITION 1
+    #define EXCITATION_SWEEP_FREQUENCY 2
 #define EXCITATION_TYPE (2)
 
 #define NULL_D_AXIS_CURRENT_CONTROL -1
@@ -28,12 +28,12 @@
 #define SPEED_LOOP_CEILING (4)
 
 #define CLARKE_TRANS_TORQUE_GAIN (1.5) // consistent with experiment
-#define AINV2PINV (0.816496581) // = 1/sqrt(1.5) power-invariant to aplitude-invariant (the dqn vector becomes shorter to have the same length as the abc vector)
-#define PINV2AINV (1.22474487)
+#define POW2AMPL (0.816496581) // = 1/sqrt(1.5) power-invariant to aplitude-invariant (the dqn vector becomes shorter to have the same length as the abc vector)
+#define AMPL2POW (1.22474487)
 
-#define INDUCTION_MACHINE_CLASSIC_MODEL 1
-#define INDUCTION_MACHINE_FLUX_ONLY_MODEL 11
-#define PM_SYNCHRONOUS_MACHINE 2
+    #define INDUCTION_MACHINE_CLASSIC_MODEL 1
+    #define INDUCTION_MACHINE_FLUX_ONLY_MODEL 11
+    #define PM_SYNCHRONOUS_MACHINE 2
 #define MACHINE_TYPE 2
 	#define PMSM_NUMBER_OF_POLE_PAIRS          4
 	#define PMSM_RESISTANCE                    0.152

@@ -1,13 +1,9 @@
 #include "ACMSim.h"
 // 功能函数
 // 写变量名到文件
-// extern REAL x1;
-// extern REAL Tload_est;
-// extern REAL SM_K;
-
 #define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.rpm_cmd,ACM.x[2]*RAD_PER_SEC_2_RPM,sm.omg_elec*RAD_PER_SEC_2_RPM,CTRL.iq_cmd,ACM.x[1]*AINV2PINV,CTRL.id_cmd,ACM.x[0]*AINV2PINV,ACM.x[3]/M_PI*180\n"
-#define DATA_DETAILS ACM.rpm_cmd,ACM.x[2]*RAD_PER_SEC_2_RPM,sm.omg_elec*RAD_PER_SEC_2_RPM,CTRL.iq_cmd,ACM.x[1]*AINV2PINV,CTRL.id_cmd,ACM.x[0]*AINV2PINV,ACM.x[3]/M_PI*180
+#define DATA_LABELS "ACM.rpm_cmd,ACM.rpm,sm.omg_elec*RAD_PER_SEC_2_RPM,CTRL.iq_cmd,ACM.iq,CTRL.id_cmd,ACM.id,ACM.x[3]/M_PI*180\n"
+#define DATA_DETAILS ACM.rpm_cmd,ACM.rpm,sm.omg_elec*RAD_PER_SEC_2_RPM,CTRL.iq_cmd,ACM.iq,CTRL.id_cmd,ACM.id,ACM.x[3]/M_PI*180
 
 void write_header_to_file(FILE *fw){
     printf("%s\n", DATA_FILE_NAME);

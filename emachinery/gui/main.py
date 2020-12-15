@@ -297,7 +297,7 @@ class EmachineryWidget(QMainWindow):
 
         self.sweepFreq_dict["max_freq"] = 2 * eval(self.ui.lineEdit_desiredVLBW.text())
         self.sweepFreq_dict["init_freq"] = 2
-        self.sweepFreq_dict["SWEEP_FREQ_C2V"] = self.ui.radioButton_openLoop.isChecked()
+        self.sweepFreq_dict["SWEEP_FREQ_C2V"] = self.ui.radioButton_openLoop.isChecked() # speed open loop
         self.sweepFreq_dict["SWEEP_FREQ_C2C"] = self.ui.radioButton_currentLoopOnly.isChecked()
 
         # pass to console

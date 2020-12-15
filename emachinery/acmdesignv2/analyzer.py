@@ -11,7 +11,7 @@ def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return idx, array[idx]
 
-def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, key_ref='ACM.rpm_cmd', key_qep='sm.omg_elec*RAD_PER_SEC_2_RPM', bool_use_commanded_freq=True):
+def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, bool_use_commanded_freq=True):
 
     if(not os.path.exists(dot_dat_file_dir)):
         print('Cannot locate:', dot_dat_file_dir)
@@ -34,22 +34,27 @@ def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, key_ref='ACM.rpm_cmd',
     # for key in df_profiles.keys():
     #     print('\t', key)
 
-    t = np.arange(1, no_samples+1) * motor_dict['DOWN_SAMPLE'] * Ts
-    # key_ref = 'rpm_speed_command'
-    # key_qep = 'sm.omg'
-
     # Unpack as Series
+    t = np.arange(1, no_samples+1) * motor_dict['DOWN_SAMPLE'] * Ts
     time  = t
-    if 'rpm' in key_ref:
+    if sweepFreq_dict["SWEEP_FREQ_C2V"]:
+        # C2V
+        key_ref = 'ACM.iq_cmd'; # note this is q-axis current command instead of measured q-axis current
+        key_qep = 'sm.omg_elec*RAD_PER_SEC_2_RPM';
+        x_ref = df_profiles[key_ref] # [Apk]
+        x_qep = df_profiles[key_qep]/60*2*np.pi*motor_dict["n_pp"] # [rpm] -> [elec.rad/s]
+    elif sweepFreq_dict["SWEEP_FREQ_C2C"]:
+        # C2C
+        key_ref = 'ACM.id_cmd';
+        key_qep = 'ACM.id';
+        x_ref = df_profiles[key_ref] # [Apk] 
+        x_qep = df_profiles[key_qep] # [Apk]
+    else:
+        # V2V
+        key_ref = 'ACM.rpm_cmd';
+        key_qep = 'sm.omg_elec*RAD_PER_SEC_2_RPM';
         x_ref = df_profiles[key_ref] # [rpm] # 闭环系统传递函数分析单时候，输入输出的单位是一样的，求传递函数的时候一除，就算用的是rpm也都无所谓了（虽然理论上是按elec.rad/s设计的）
         x_qep = df_profiles[key_qep] # [rpm]
-    else:
-        if 'id' not in key_qep:
-            x_ref = df_profiles[key_ref] # [Apk]
-            x_qep = df_profiles[key_qep]/60*2*np.pi*motor_dict["n_pp"] # [rpm] -> [elec.rad/s]
-        else:
-            x_ref = df_profiles[key_ref] # [Apk] 
-            x_qep = df_profiles[key_qep] # [Apk]
 
     # Basic DFT parameters
     # N = df.shape[0]
