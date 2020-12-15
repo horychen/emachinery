@@ -196,8 +196,12 @@ class EmachineryWidget(QMainWindow):
         self.ui.pushButton_runCBasedSimulation.clicked.connect(self.runCBasedSimulation)
 
         # Read in ACM Plot Settings
-        self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, self.ui.lineEdit_path2ACMPlotLabels.text())
-        self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, self.ui.lineEdit_path2ACMPlotSignals.text()) 
+        if 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
+            self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, './plot_setting_files/labels_im.txt') # self.ui.lineEdit_path2ACMPlotLabels.text())
+            self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, './plot_setting_files/signals_im.txt') # self.ui.lineEdit_path2ACMPlotSignals.text()) 
+        elif 'Synchronous Machine' in self.ui.comboBox_MachineType.currentText():
+            self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, './plot_setting_files/labels_pmsm.txt')
+            self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, './plot_setting_files/signals_pmsm.txt')
         try:
             with open(self.filepath_to_ACMPlotLabels, 'r') as f:
                 self.ui.plainTextEdit_ACMPlotLabels.clear()
@@ -295,7 +299,7 @@ class EmachineryWidget(QMainWindow):
         return self.control_dict
     def get_sweepFreq_dict(self):
 
-        self.sweepFreq_dict["max_freq"] = 2 * eval(self.ui.lineEdit_desiredVLBW.text())
+        self.sweepFreq_dict["max_freq"] = eval(self.ui.lineEdit_maxFreq2Sweep.text())
         self.sweepFreq_dict["init_freq"] = 2
         self.sweepFreq_dict["SWEEP_FREQ_C2V"] = self.ui.radioButton_openLoop.isChecked() # speed open loop
         self.sweepFreq_dict["SWEEP_FREQ_C2C"] = self.ui.radioButton_currentLoopOnly.isChecked()
@@ -326,12 +330,21 @@ class EmachineryWidget(QMainWindow):
             ax = self.ui.MplWidget_bodePlot.canvas.figure.add_subplot(111)
             ax.plot(Freq, dB, '--.', label=self.data_file_name)
 
-            index, value = analyzer.find_nearest(dB, -3) # find -3dB freq
-            VLBW_Hz = Freq[index]
-            ax.text(VLBW_Hz, -5, f'{VLBW_Hz:.0f} Hz', color='red', fontsize=20)
-            ax.plot([0,max_freq], [-3, -3], 'k--')
-            ax.set_ylabel('Velocity Closed-loop transfer function amplitude [dB]')
-
+            if self.sweepFreq_dict["SWEEP_FREQ_C2V"]:
+                # C2V
+                ax.set_ylabel('Velocity / Current open-loop-tf amplitude [dB] (elec.rad/s/Apk)')
+            else:
+                # Bandwidth@-3dB
+                index, value = analyzer.find_nearest(dB, -3) # find -3dB freq
+                VLBW_Hz = Freq[index]
+                ax.text(VLBW_Hz, -5, f'{VLBW_Hz:.0f} Hz', color='red', fontsize=20)
+                ax.plot([0,max_freq], [-3, -3], 'k--')
+                if self.sweepFreq_dict["SWEEP_FREQ_C2C"]:
+                    # C2C
+                    ax.set_ylabel('Current closed-loop-tf amplitude [dB]')
+                else:
+                    # V2V
+                    ax.set_ylabel('Velocity closed-loop-tf amplitude [dB]')
             ax.set_xscale('log')
             ax.set_xlabel('Frequency [Hz]')
 
@@ -492,7 +505,7 @@ class EmachineryWidget(QMainWindow):
                     try:
                         ax.plot(time, signal, '-.', lw=1, label=key)
                     except ValueError as e:
-                        print(e) # ValueError: could not convert string to float: '3.33723e-'
+                        print('ValueError during ax.plot():', e) # ValueError: could not convert string to float: '3.33723e-'
                         pass
                 ax.set_ylabel(self.list__label[i])
                 ax.legend(loc='lower center')
@@ -734,10 +747,19 @@ class EmachineryWidget(QMainWindow):
         if 'Synchronous Machine' in self.ui.comboBox_MachineType.currentText():
             self.ui.comboBox_MachineName.clear()
             self.ui.comboBox_MachineName.addItems(pmsm_list) #(self.mj.keys())
+
+            # update file path to plot settings
+            self.ui.lineEdit_path2ACMPlotLabels.setText('./plot_setting_files/labels_pmsm.txt')
+            self.ui.lineEdit_path2ACMPlotSignals.setText('./plot_setting_files/signals_pmsm.txt')
         elif 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
             self.ui.comboBox_MachineName.clear()
             self.ui.comboBox_MachineName.addItems(im_list) #(self.mj.keys())
+
+            # update file path to plot settings
+            self.ui.lineEdit_path2ACMPlotLabels.setText('./plot_setting_files/labels_im.txt')
+            self.ui.lineEdit_path2ACMPlotSignals.setText('./plot_setting_files/signals_im.txt')
         self.comboActivate_namePlateData()
+
     def comboActivate_namePlateData(self):
         self.motor_dict = self.get_motor_dict(self.mj)
         # print('debug main.py', self.motor_dict)

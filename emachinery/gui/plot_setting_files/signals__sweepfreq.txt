@@ -1,1 +1,0 @@
-ACM.rpm_cmd, sm.omg*RAD_PER_SEC_2_RPM

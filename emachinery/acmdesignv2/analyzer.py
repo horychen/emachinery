@@ -39,13 +39,13 @@ def analyze(dot_dat_file_dir, motor_dict, sweepFreq_dict, bool_use_commanded_fre
     time  = t
     if sweepFreq_dict["SWEEP_FREQ_C2V"]:
         # C2V
-        key_ref = 'ACM.iq_cmd'; # note this is q-axis current command instead of measured q-axis current
+        key_ref = 'CTRL.iq_cmd'; # note this is q-axis current command instead of measured q-axis current
         key_qep = 'sm.omg_elec*RAD_PER_SEC_2_RPM';
         x_ref = df_profiles[key_ref] # [Apk]
         x_qep = df_profiles[key_qep]/60*2*np.pi*motor_dict["n_pp"] # [rpm] -> [elec.rad/s]
     elif sweepFreq_dict["SWEEP_FREQ_C2C"]:
         # C2C
-        key_ref = 'ACM.id_cmd';
+        key_ref = 'CTRL.id_cmd';
         key_qep = 'ACM.id';
         x_ref = df_profiles[key_ref] # [Apk] 
         x_qep = df_profiles[key_qep] # [Apk]

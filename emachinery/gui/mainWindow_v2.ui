@@ -74,12 +74,12 @@
               <widget class="QComboBox" name="comboBox_MachineType">
                <item>
                 <property name="text">
-                 <string>Induction Machine</string>
+                 <string>Synchronous Machine</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>Synchronous Machine</string>
+                 <string>Induction Machine</string>
                 </property>
                </item>
               </widget>
@@ -1378,7 +1378,7 @@
                <x>0</x>
                <y>20</y>
                <width>391</width>
-               <height>111</height>
+               <height>141</height>
               </rect>
              </property>
              <layout class="QGridLayout" name="gridLayout">
@@ -1426,7 +1426,7 @@
                    <x>10</x>
                    <y>20</y>
                    <width>113</width>
-                   <height>51</height>
+                   <height>87</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1449,6 +1449,39 @@
                      <bool>false</bool>
                     </property>
                    </widget>
+                  </item>
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_13">
+                    <property name="spacing">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_maxFreq2Sweep">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="text">
+                       <string>Max Freq.</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLineEdit" name="lineEdit_maxFreq2Sweep">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="text">
+                       <string>200</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
                   </item>
                  </layout>
                 </widget>

@@ -32,8 +32,8 @@ void measurement(){
     // IS_C(1) = 2.0/3.0 * 0.5*sqrt(3.0) * (ib - ic);
 
     // power-invariant to amplitude-invariant
-    IS_C(0) = ACM.ial/sqrt(CLARKE_TRANS_TORQUE_GAIN);
-    IS_C(1) = ACM.ibe/sqrt(CLARKE_TRANS_TORQUE_GAIN);
+    IS_C(0) = ACM.ial; //* POW2AMPL;
+    IS_C(1) = ACM.ibe; //* POW2AMPL;
 
     // 转速和位置测量
     #define USE_EQEP FALSE
