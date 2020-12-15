@@ -2,3 +2,4 @@ ACM.rpm_cmd, ACM.rpm, sm.omg_elec*RAD_PER_SEC_2_RPM
 CTRL.iq_cmd, ACM.iq
 CTRL.id_cmd, ACM.id
 ACM.x[3]/M_PI*180
+ACM.x[4]/M_PI*180

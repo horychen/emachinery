@@ -1,5 +1,6 @@
-#ifndef SYNCHRONOUS_MOTOR_H
-#define SYNCHRONOUS_MOTOR_H
+#ifndef INDUCTION_MOTOR_H
+#define INDUCTION_MOTOR_H
+#if MACHINE_TYPE == INDUCTION_MACHINE_CLASSIC_MODEL || MACHINE_TYPE == INDUCTION_MACHINE_FLUX_ONLY_MODEL
 
 // The function name for the dynamics
 #if MACHINE_TYPE == INDUCTION_MACHINE_CLASSIC_MODEL
@@ -11,7 +12,9 @@
 #define NUMBER_OF_STATES 6
 
 struct InductionMachineSimulated{
-    double x[13]; ////////////////////////////////
+    double timebase;
+    double x[NUMBER_OF_STATES];
+    double x_dot[NUMBER_OF_STATES];
     double rpm;
     double rpm_cmd;
     double rpm_deriv_cmd;
@@ -48,13 +51,15 @@ struct InductionMachineSimulated{
     double psim;
     double im;
 
-    double iqs;
-    double ids;
-    double iqr;
+    double ids; // d-axis is aligned with alpha-axis
+    double iqs; // q-axis is aligned with beta-axis
     double idr;
+    double iqr;
 
     double ual;
     double ube;
+    double ial;
+    double ibe;
 
     double lst_psim[16];
 
@@ -73,4 +78,5 @@ extern struct InductionMachineSimulated ACM;
 extern int machine_simulation();
 extern void Machine_init();
 
+#endif
 #endif

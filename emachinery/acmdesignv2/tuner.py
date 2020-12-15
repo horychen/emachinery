@@ -193,17 +193,29 @@ def iterate_for_desired_bandwidth( delta, desired_VLBW_Hz, motor_dict, CLBW_Hz_i
 
         speedPI = control.tf([speedKp, speedKp*speedKi], [1, 0])
         Gw_open = dc_motor_motion * Gi_closed * speedPI
-        Gw_closed = Gw_open / (1+Gw_open)
-        # print(Gw_closed)
 
-        fig5 = plt.figure(5)
-        plt.title('Designed Velocity Ref. to Velocity Meas. Transfer Function')
+        # C2C
+        c2c_tf = Gi_closed
+        mag, phase, omega = control.bode_plot(c2c_tf, 2*np.pi*np.logspace(0,4,500), dB=1, Hz=1, deg=1, lw='0.5', label=f'{CLBW_Hz:g} Hz')
+        CLBW_Hz = omega[(np.abs(mag-0.707)).argmin()]/2/np.pi
+        C2C_designedMagPhaseOmega = mag, phase, omega
+
+        # C2V
+        c2v_tf = dc_motor_motion * Gi_closed
+        mag, phase, omega = control.bode_plot(c2v_tf, 2*np.pi*np.logspace(0,4,500), dB=1, Hz=1, deg=1, lw='0.5', label=f'{CLBW_Hz:g} Hz')
+        open_cutoff_frequency_HZ = omega[(np.abs(mag-0.0)).argmin()]/2/np.pi
+        C2V_designedMagPhaseOmega = mag, phase, omega
+
+        # V2V
+        Gw_closed = Gw_open / (1+Gw_open)
         mag, phase, omega = control.bode_plot(Gw_closed, 2*np.pi*np.logspace(0,4,500), dB=1, Hz=1, deg=1, lw='0.5', label=f'{delta:g}')
         VLBW_Hz = omega[(np.abs(mag-0.707)).argmin()]/2/np.pi
+        V2V_designedMagPhaseOmega = mag, phase, omega
+        # print(Gw_closed)
         # print('\tSpeed loop bandwidth:', VLBW_Hz, 'Hz')
     return  (currentKp, currentKi), \
             (speedKp, speedKi), \
             (上位机电流KP, 上位机电流KI), \
             (上位机速度KP, 上位机速度KI), \
-            (mag, phase, omega), \
-            (CLBW_Hz, VLBW_Hz)
+            (C2C_designedMagPhaseOmega, C2V_designedMagPhaseOmega, V2V_designedMagPhaseOmega), \
+            (CLBW_Hz, VLBW_Hz, open_cutoff_frequency_HZ)

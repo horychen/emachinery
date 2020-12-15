@@ -60,13 +60,6 @@ void CTRL_init(){
 
     // PID调谐
     ACMSIMC_PIDTuner();
-    pid1_spd.OutLimit = SPEED_LOOP_LIMIT_AMPERE;
-    pid1_id.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-    pid1_iq.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-    pid1_ia.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-    pid1_ib.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-    pid1_ic.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-
     printf("Speed PID: Kp=%g, Ki=%g, limit=%g Nm\n", pid1_spd.Kp, pid1_spd.Ki/CL_TS, pid1_spd.OutLimit);
     printf("Current PID: Kp=%g, Ki=%g, limit=%g V\n", pid1_id.Kp, pid1_id.Ki/CL_TS, pid1_id.OutLimit);
 }
@@ -163,11 +156,11 @@ struct SweepFreq sf={0.0, 1, SWEEP_FREQ_INIT_FREQ-1, 0.0, 0.0};
 void controller(){
     REAL rpm_speed_command;
 
-    // 位置环
-    #if EXCITATION_TYPE == 1
-        REAL position_command = 10*2;
+    // 位置环 in rad
+    #if EXCITATION_TYPE == 0
+        REAL position_command = 10*M_PI;
         if(CTRL.timebase>5){
-            position_command = -10*2; 
+            position_command = -10*M_PI;
         }
         REAL position_error = position_command - ACM.theta_d_accum;
         REAL position_KP = 8;
@@ -177,8 +170,6 @@ void controller(){
 
     #if EXCITATION_TYPE == 2
         // 扫频建模
-        // #define SWEEP_FREQ_AMPL 500 // rpm
-        // #define MAX_FREQ SWEEP_FREQ_MAX_FREQ // Hz
         REAL amp_current_command;
         sf.time += CL_TS;
         if(sf.time > sf.current_freq_end_time){
@@ -196,14 +187,16 @@ void controller(){
             rpm_speed_command   = SWEEP_FREQ_VELOCITY_AMPL * sin(2*M_PI*sf.current_freq*(sf.time - sf.last_current_freq_end_time));
 
             // open-loop sweep
-            // amp_current_command = (0.05 * PMSM_RATED_CURRENT_RMS*1.414) * sin(2*M_PI*sf.current_freq*(sf.time - sf.last_current_freq_end_time));
             amp_current_command = SWEEP_FREQ_CURRENT_AMPL * sin(2*M_PI*sf.current_freq*(sf.time - sf.last_current_freq_end_time));
         }
     #endif
 
-    #if EXCITATION_TYPE == 0
-        // 转速运动模式
-        rpm_speed_command = 500*sin(2*M_PI*88*CTRL.timebase); // overwrite
+    #if EXCITATION_TYPE == 1
+        // 转速运动模式 in rpm
+        rpm_speed_command = 500;
+        if(CTRL.timebase>5){
+            rpm_speed_command = -500;
+        }
     #endif
 
     // for plot
@@ -236,8 +229,8 @@ void controller(){
     REAL iq_fb = AB2T(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
     REAL omg_elec_fb = CTRL.omg__fb;
 
-    REAL error = rpm_speed_command*RPM_2_RAD_PER_SEC - omg_elec_fb;
-    CTRL.speed_ctrl_err = error;
+    // for plot
+    CTRL.speed_ctrl_err = rpm_speed_command*RPM_2_RAD_PER_SEC - omg_elec_fb;
 
     // Current Commands
     static int vc_count = 0;

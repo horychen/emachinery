@@ -19,8 +19,8 @@ void COMM_init(){
     COMM.timebase = 0.0;
 
     // KE
-    printf("From name plate data: %g Nm, %g Nm/A, %g Vs, %g mV/rpm\n", PMSM_RATED_TORQUE, PMSM_TORQUE_CONSTANT, PMSM_BACK_EMF_CONSTANT, PMSM_BACK_EMF_CONSTANT_mV_PER_RPM);
-    COMM.KE = PMSM_BACK_EMF_CONSTANT;
+    printf("From name plate data: %g Nm, %g Nm/A, %g Vs, %g mV/rpm\n", MOTOR_RATED_TORQUE, MOTOR_TORQUE_CONSTANT, MOTOR_BACK_EMF_CONSTANT, MOTOR_BACK_EMF_CONSTANT_mV_PER_RPM);
+    COMM.KE = MOTOR_BACK_EMF_CONSTANT;
 
     // R
     COMM.current_sum = 0.0;
@@ -157,11 +157,11 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
     ++COMM.counterEntered;
     if(COMM.counterEntered<=1){
         // Current loop tuning (LL, RR, BW_c, delta, JJ, KE, npp)
-        COMM_PI_tuning(1e-3, 0.5, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, PMSM_SHAFT_INERTIA, PMSM_BACK_EMF_CONSTANT, PMSM_NUMBER_OF_POLE_PAIRS);        
+        COMM_PI_tuning(1e-3, 0.5, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, MOTOR_SHAFT_INERTIA, MOTOR_BACK_EMF_CONSTANT, MOTOR_NUMBER_OF_POLE_PAIRS);        
     }
 
     #define RS_ID_NUMBER_OF_STAIRS 10
-    #define RS_ID_MAXIMUM_CURRENT (0.3*(float32)PMSM_RATED_CURRENT_RMS)
+    #define RS_ID_MAXIMUM_CURRENT (0.3*(float32)MOTOR_RATED_CURRENT_RMS)
     float32 current_increase_per_step = RS_ID_MAXIMUM_CURRENT / RS_ID_NUMBER_OF_STAIRS;
 
     COMM.current_command = - RS_ID_MAXIMUM_CURRENT;
@@ -193,7 +193,7 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
         COMM.counterSS = 0;
 
         // check steady state and assign boolean variable
-        if(reachSteadyStateCurrent(pid1_id.Ref-pid1_id.Fdb, PMSM_RATED_CURRENT_RMS)){
+        if(reachSteadyStateCurrent(pid1_id.Ref-pid1_id.Fdb, MOTOR_RATED_CURRENT_RMS)){
 
             COMM.bool_collecting = TRUE;
 
@@ -373,15 +373,15 @@ void COMM_inductanceId_ver3(REAL id_fb, REAL iq_fb){
 
 
 
-        // REAL L_guess = 2*48 * 0.05 / (2*M_PI * PMSM_RATED_SPEED_RPM/60.0*PMSM_NUMBER_OF_POLE_PAIRS * PMSM_RATED_CURRENT_RMS);
-        // REAL R_guess = 2*48 * 0.01 / PMSM_RATED_CURRENT_RMS;
+        // REAL L_guess = 2*48 * 0.05 / (2*M_PI * MOTOR_RATED_SPEED_RPM/60.0*MOTOR_NUMBER_OF_POLE_PAIRS * MOTOR_RATED_CURRENT_RMS);
+        // REAL R_guess = 2*48 * 0.01 / MOTOR_RATED_CURRENT_RMS;
         // printf("L_guess=%g, R_guess=%g\n", L_guess, R_guess);
         // getch();
 
         // Current loop tuning (LL, RR, BW_c, delta, JJ, KE, npp)
-        // COMM_PI_tuning(COMM.L3, COMM.R, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, PMSM_SHAFT_INERTIA, PMSM_BACK_EMF_CONSTANT, PMSM_NUMBER_OF_POLE_PAIRS);
-        COMM_PI_tuning(COMM.L3, COMM.R, 2*3.1415926*CL_TS_INVERSE * 0.025, 400, PMSM_SHAFT_INERTIA, PMSM_BACK_EMF_CONSTANT, PMSM_NUMBER_OF_POLE_PAIRS);
-        // COMM_PI_tuning(COMM.L3, COMM.R, 2*3.1415926*CL_TS_INVERSE * 0.1, 10, PMSM_SHAFT_INERTIA, PMSM_BACK_EMF_CONSTANT, PMSM_NUMBER_OF_POLE_PAIRS);
+        // COMM_PI_tuning(COMM.L3, COMM.R, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, MOTOR_SHAFT_INERTIA, MOTOR_BACK_EMF_CONSTANT, MOTOR_NUMBER_OF_POLE_PAIRS);
+        COMM_PI_tuning(COMM.L3, COMM.R, 2*3.1415926*CL_TS_INVERSE * 0.025, 400, MOTOR_SHAFT_INERTIA, MOTOR_BACK_EMF_CONSTANT, MOTOR_NUMBER_OF_POLE_PAIRS);
+        // COMM_PI_tuning(COMM.L3, COMM.R, 2*3.1415926*CL_TS_INVERSE * 0.1, 10, MOTOR_SHAFT_INERTIA, MOTOR_BACK_EMF_CONSTANT, MOTOR_NUMBER_OF_POLE_PAIRS);
         bool_CL_tuned = TRUE;
     }
 }
@@ -390,8 +390,8 @@ void COMM_inductanceId_ver3(REAL id_fb, REAL iq_fb){
 REAL x1 = 0.0;
 REAL SM_K = 1e-3;
 REAL slidingModeControl(REAL error, REAL Tload_est){
-    // #define SM_GAIN (PMSM_RATED_TORQUE*0.2)
-    // REAL iq_cmd = 1.0 / (CLARKE_TRANS_TORQUE_GAIN*PMSM_NUMBER_OF_POLE_PAIRS*PMSM_BACK_EMF_CONSTANT) * SM_GAIN * sign(S);
+    // #define SM_GAIN (MOTOR_RATED_TORQUE*0.2)
+    // REAL iq_cmd = 1.0 / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT) * SM_GAIN * sign(S);
 
     // #define SM_K (500)  // 过大将导致转速抖动
     #define SM_DELTA 10 // 取值越大，趋近越快，但是其作用是非线性的？
@@ -425,7 +425,7 @@ REAL slidingModeControl(REAL error, REAL Tload_est){
 
     REAL acceleration_cmd = P_output;
     // x1这里不能额外乘系数哦，x1=I_Output
-    // REAL torque_cmd = 0*Tload_est + 0*x1 + acceleration_cmd / (PMSM_NUMBER_OF_POLE_PAIRS/PMSM_SHAFT_INERTIA);
+    // REAL torque_cmd = 0*Tload_est + 0*x1 + acceleration_cmd / (MOTOR_NUMBER_OF_POLE_PAIRS/MOTOR_SHAFT_INERTIA);
     REAL torque_cmd = 0*Tload_est + 0*x1 + acceleration_cmd;
     return torque_cmd;
 }
@@ -435,11 +435,11 @@ REAL smo_eta = 100;
 REAL smo_gamma = 2;
 REAL slidingModeObserver(REAL omg_elec_fb, REAL mu_m, REAL iq_fb){
     REAL est_error = omg_elec_fb - omg_elec_est;
-    omg_elec_est += CL_TS * mu_m * ( PMSM_NUMBER_OF_POLE_PAIRS*PMSM_BACK_EMF_CONSTANT*iq_fb - Tload_est + smo_eta*sign(est_error) );
+    omg_elec_est += CL_TS * mu_m * ( MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT*iq_fb - Tload_est + smo_eta*sign(est_error) );
     Tload_est += - CL_TS * smo_gamma * smo_eta * sign(est_error);
     return Tload_est;
 }
-// #define RPM_2_RAD_PER_SEC ( (2*3.1415926*PMSM_NUMBER_OF_POLE_PAIRS)/60.0 )
+// #define RPM_2_RAD_PER_SEC ( (2*3.1415926*MOTOR_NUMBER_OF_POLE_PAIRS)/60.0 )
 float32 rpm_speed_command = 300;
 REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv){
     return y_tminus1 + CL_TS * time_const_inv * (x - y_tminus1);
@@ -487,18 +487,18 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
             pid1_spd.calc(&pid1_spd);
             pid1_iq.Ref = pid1_spd.Out;
             // REAL torque_cmd = pid1_spd.Out;
-            // pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*PMSM_NUMBER_OF_POLE_PAIRS*PMSM_BACK_EMF_CONSTANT);
-            // if(pid1_iq.Ref > PMSM_RATED_CURRENT_RMS){
-            //     pid1_iq.Ref = PMSM_RATED_CURRENT_RMS;
-            // }else if(pid1_iq.Ref < -PMSM_RATED_CURRENT_RMS){
-            //     pid1_iq.Ref = -PMSM_RATED_CURRENT_RMS;
+            // pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT);
+            // if(pid1_iq.Ref > MOTOR_RATED_CURRENT_RMS){
+            //     pid1_iq.Ref = MOTOR_RATED_CURRENT_RMS;
+            // }else if(pid1_iq.Ref < -MOTOR_RATED_CURRENT_RMS){
+            //     pid1_iq.Ref = -MOTOR_RATED_CURRENT_RMS;
             // }
-            // printf("KT=%g\n", CLARKE_TRANS_TORQUE_GAIN*PMSM_NUMBER_OF_POLE_PAIRS*PMSM_BACK_EMF_CONSTANT);
+            // printf("KT=%g\n", CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT);
             // getch();
         }
     }else{ // PI SMC
 
-        REAL Tload_est = slidingModeObserver(omg_elec_fb, PMSM_NUMBER_OF_POLE_PAIRS/PMSM_BACK_EMF_CONSTANT, iq_fb);
+        REAL Tload_est = slidingModeObserver(omg_elec_fb, MOTOR_NUMBER_OF_POLE_PAIRS/MOTOR_BACK_EMF_CONSTANT, iq_fb);
 
         static int vc_count = 0;
         if(vc_count++ == SPEED_LOOP_CEILING){
@@ -512,7 +512,7 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
             }else if(torque_cmd < -SPEED_LOOP_LIMIT_NEWTON_METER){
                 torque_cmd = -SPEED_LOOP_LIMIT_NEWTON_METER;
             }
-            pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*PMSM_NUMBER_OF_POLE_PAIRS*PMSM_BACK_EMF_CONSTANT);
+            pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT);
         }
     }
 
@@ -540,8 +540,8 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
         COMM.KE = (filtered_voltage - COMM.R*filtered_current) / filtered_omg_elec_fb - COMM.L3 * pid1_id.Ref;
         // COMM.KE *= sqrt(CLARKE_TRANS_TORQUE_GAIN); // 想要在恒幅值变换下拿到和恒功率变换一样的永磁体磁链值，就要乘以这个系数。
     }
-    if(COMM.KE>3*PMSM_BACK_EMF_CONSTANT){
-        COMM.KE = 3*PMSM_BACK_EMF_CONSTANT;
+    if(COMM.KE>3*MOTOR_BACK_EMF_CONSTANT){
+        COMM.KE = 3*MOTOR_BACK_EMF_CONSTANT;
     }else if(COMM.KE<0){
         COMM.KE = 0.0;
     }
@@ -568,7 +568,7 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
             }else{
                 COMM.KE = accumKE / (REAL)countKE;
 
-                printf("KE=%g | ACM.KE=%g | PMSM_PERMANENT_MAGNET_FLUX_LINKAGE=%g | PMSM_BACK_EMF_CONSTANT=%g\n", COMM.KE, ACM.KE, PMSM_PERMANENT_MAGNET_FLUX_LINKAGE, PMSM_BACK_EMF_CONSTANT);
+                printf("KE=%g | ACM.KE=%g | PMSM_PERMANENT_MAGNET_FLUX_LINKAGE=%g | MOTOR_BACK_EMF_CONSTANT=%g\n", COMM.KE, ACM.KE, PMSM_PERMANENT_MAGNET_FLUX_LINKAGE, MOTOR_BACK_EMF_CONSTANT);
                 // getch();
 
                 bool_comm_status = 5;
@@ -605,7 +605,7 @@ void COMM_intertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL om
     t += CL_TS;
     COMM.timebase = t;
 
-    float32 Tem = CLARKE_TRANS_TORQUE_GAIN * PMSM_NUMBER_OF_POLE_PAIRS*( STATOR_CURRENT_ALPHA * -ROTOR_FLUX_BETA + STATOR_CURRENT_BETA * ROTOR_FLUX_ALPHA);
+    float32 Tem = CLARKE_TRANS_TORQUE_GAIN * MOTOR_NUMBER_OF_POLE_PAIRS*( STATOR_CURRENT_ALPHA * -ROTOR_FLUX_BETA + STATOR_CURRENT_BETA * ROTOR_FLUX_ALPHA);
 
     static float32 q0 = 0.0;
     q0 += CL_TS * AWAYA_LAMBDA*( -q0 + Tem);
@@ -615,7 +615,7 @@ void COMM_intertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL om
 
     static float32 q1_dot = 0.0;
     static float32 q1 = 0.0;
-    q1_dot = AWAYA_LAMBDA*( -q1 + filtered_speed/PMSM_NUMBER_OF_POLE_PAIRS );
+    q1_dot = AWAYA_LAMBDA*( -q1 + filtered_speed/MOTOR_NUMBER_OF_POLE_PAIRS );
     q1 += CL_TS * q1_dot;
 
     static double filtered_q0 = 0.0;
@@ -634,9 +634,9 @@ void COMM_intertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL om
 
     // 给定周期转矩指令，产生周期转速响应
     // if(t < TEST_SIGNAL_PERIOD*0.5){
-    //     pid1_iq.Ref = 0.2*PMSM_RATED_CURRENT_RMS;
+    //     pid1_iq.Ref = 0.2*MOTOR_RATED_CURRENT_RMS;
     // }else{
-    //     pid1_iq.Ref = -0.2*PMSM_RATED_CURRENT_RMS;
+    //     pid1_iq.Ref = -0.2*MOTOR_RATED_CURRENT_RMS;
     // }
     pid1_id.Ref = 0.0;
 
@@ -657,11 +657,11 @@ void COMM_intertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL om
             pid1_spd.calc(&pid1_spd);
             pid1_iq.Ref = pid1_spd.Out;
             // REAL torque_cmd = pid1_spd.Out;
-            // pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*PMSM_NUMBER_OF_POLE_PAIRS*COMM.KE);
-            // if(pid1_iq.Ref > PMSM_RATED_CURRENT_RMS){
-            //     pid1_iq.Ref = PMSM_RATED_CURRENT_RMS;
-            // }else if(pid1_iq.Ref < -PMSM_RATED_CURRENT_RMS){
-            //     pid1_iq.Ref = -PMSM_RATED_CURRENT_RMS;
+            // pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*COMM.KE);
+            // if(pid1_iq.Ref > MOTOR_RATED_CURRENT_RMS){
+            //     pid1_iq.Ref = MOTOR_RATED_CURRENT_RMS;
+            // }else if(pid1_iq.Ref < -MOTOR_RATED_CURRENT_RMS){
+            //     pid1_iq.Ref = -MOTOR_RATED_CURRENT_RMS;
             // }
 
             // printf("pid1_iq.Ref=%g\n", pid1_iq.Ref);
@@ -669,7 +669,7 @@ void COMM_intertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL om
 
     }else{ // PI SMC
 
-        REAL Tload_est = slidingModeObserver(omg_elec_fb, PMSM_NUMBER_OF_POLE_PAIRS/PMSM_BACK_EMF_CONSTANT, iq_fb);
+        REAL Tload_est = slidingModeObserver(omg_elec_fb, MOTOR_NUMBER_OF_POLE_PAIRS/MOTOR_BACK_EMF_CONSTANT, iq_fb);
 
         static int vc_count = 0;
         if(vc_count++ == SPEED_LOOP_CEILING){
@@ -683,7 +683,7 @@ void COMM_intertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL om
             }else if(torque_cmd < -SPEED_LOOP_LIMIT_NEWTON_METER){
                 torque_cmd = -SPEED_LOOP_LIMIT_NEWTON_METER;
             }
-            pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*PMSM_NUMBER_OF_POLE_PAIRS*COMM.KE);
+            pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*COMM.KE);
         }
     }
 

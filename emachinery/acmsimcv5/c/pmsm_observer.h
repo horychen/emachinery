@@ -1,5 +1,5 @@
-#ifndef ADD_OBSERVER_H
-#define ADD_OBSERVER_H
+#ifndef ADD_PMSM_OBSERVER_H
+#define ADD_PMSM_OBSERVER_H
 
 /* Macro for External Access Interface */
 #define US(X) sm.us[X]

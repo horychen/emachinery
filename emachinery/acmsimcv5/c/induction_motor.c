@@ -1,16 +1,17 @@
 #include "ACMSim.h"
-
 #if MACHINE_TYPE == INDUCTION_MACHINE_CLASSIC_MODEL || MACHINE_TYPE == INDUCTION_MACHINE_FLUX_ONLY_MODEL
+
+#define IM ACM
 
 // 仿真电机结构体变量声明
 struct InductionMachineSimulated ACM;
 
 // 仿真电机结构体的初始化
 void Machine_init(){
-    #define IM ACM
     int i;
     for(i=0;i<6;++i){
         IM.x[i] = 0.0;
+        IM.x_dot[i] = 0.0;
     }
     // IM.x[4] = 20*RAD_PER_SEC_2_RPM;
     // #ifndef TURN_OFF_TDDA
@@ -40,13 +41,10 @@ void Machine_init(){
 
     IM.Leq    = 0.4482;
     IM.Lls    = 0.0126;
-    #if NO_ROTOR_LEAKAGE
-        IM.Llr= 0.0;
-    #else
-        IM.Llr= 0.0126;
-    #endif
+    IM.Llr= 0.0126;
     IM.Lm     = 0.5*(IM.Leq+sqrt(IM.Leq*IM.Leq+4*IM.Llr*IM.Leq));
     // IM.Lm  = 0.47; // 0.4144
+
     IM.Lm_slash_Lr = IM.Lm/(IM.Lm+IM.Llr);
     IM.Lr_slash_Lm = (IM.Lm+IM.Llr)/IM.Lm;
 
@@ -58,23 +56,14 @@ void Machine_init(){
     IM.Leq_inv= 1.0/IM.Leq;
     IM.rreq   = IM.Leq * IM.alpha;
     IM.Lsigma = IM.Lm + IM.Lls - IM.Leq; // Ls * (1.0 - IM.Lm*IM.Lm/Ls/Lr);
+    IM.LSigmal = 1.0 / (1.0 / IM.Lls + 1.0 / IM.Llr);
     #if NO_ROTOR_LEAKAGE
         IM.LSigmal = 0.0;
-    #else
-        IM.LSigmal = 1.0 / (1.0 / IM.Lls + 1.0 / IM.Llr);
+        IM.Llr= 0.0;
     #endif
-    // IM.Js = 0.017876; // 3000rpm阶跃测转动惯量
-    // IM.Js = im.Js;
+
     IM.Js = 0.0636; // Awaya92 using im.omg
-        // IM.Js  = 0.032; // 感觉0.012是小了一点！
-        // IM.Js  = 0.072; /* for Farza09... it requires a large inertia to reduce the oscillaiton in rotor resistance estimation. */
-        // IM.Js  = 0.172; 
-        // im.Js = IM.Js;
-        // im.Js_inv = 1.0/im.Js;
-        // im.npp = 2.0; // no. of pole pair
-        // im.mu_m = im.npp*im.Js_inv;
-        // im.mu = im.npp*im.mu_m;
-        // printf("im.mu_m = %g; im.mu = %g\n", im.mu_m, im.mu);
+
     IM.npp = 2;
     IM.mu_m = IM.npp/IM.Js;
 
@@ -90,8 +79,6 @@ void Machine_init(){
     IM.dist_be = 0.0;
 
     // IM.cur_offset = CURRENT_OFFSET; 
-
-    #undef IM
 }
 
 // 根据定、转子磁链计算定、转子电流
@@ -194,7 +181,7 @@ void IM_saturated_Dynamics(double t, double *x, double *fx){
 
     /* STEP THREE: mechanical model */
     // IM.Tem = IM.npp*(IM.Lm/(IM.Lm+IM.Llr))*(IM.iqs*x[2]-IM.ids*x[3]); // this is not better 
-    IM.Tem = IM.npp*(IM.iqs*x[0]-IM.ids*x[1]);
+    IM.Tem = CLARKE_TRANS_TORQUE_GAIN * IM.npp * (IM.iqs*x[0]-IM.ids*x[1]);
     fx[4] = (IM.Tem - IM.Tload)*IM.mu_m;
     #undef IM
 }
@@ -241,6 +228,7 @@ void IM_linear_Dynamics(double t, double *x, double *fx){
     // ## STEP THREE: mechanical model
     IM.Tem = IM.Lm_slash_Lr*IM.npp*(x[1]*x[2]-x[0]*x[3]);
     fx[4] = (IM.Tem - IM.Tload)*IM.mu_m;
+    fx[5] = x[4];
     #undef IM
 }
 // 四阶龙格库塔法
@@ -295,7 +283,7 @@ int machine_simulation(){
         ACM.ids = ACM.x[0];
         ACM.iqs = ACM.x[1];
     #elif MACHINE_TYPE == INDUCTION_MACHINE_FLUX_ONLY_MODEL
-        collectCurrents(x);
+        collectCurrents(ACM.x);
     #endif
     ACM.ial = ACM.ids;
     ACM.ibe = ACM.iqs;

@@ -1,5 +1,6 @@
 #ifndef SYNCHRONOUS_MOTOR_H
 #define SYNCHRONOUS_MOTOR_H
+#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
 // The function name for the dynamics
 #define MACHINE_DYNAMICS SM_Dynamics
@@ -69,4 +70,5 @@ extern struct SynchronousMachineSimulated ACM;
 extern int machine_simulation();
 extern void Machine_init();
 
+#endif
 #endif

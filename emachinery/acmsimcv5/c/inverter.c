@@ -58,15 +58,16 @@ void inverter_model(){
         DIST_BE = ACM.ube - CTRL.ube;
 
     #else
-        // 考虑控制器和电机所用Clarke变换不同导致的系数变化
-        ACM.ual = CTRL.ual*sqrt(CLARKE_TRANS_TORQUE_GAIN);
-        ACM.ube = CTRL.ube*sqrt(CLARKE_TRANS_TORQUE_GAIN);
+                            // 考虑控制器和电机所用Clarke变换不同导致的系数变化
+        ACM.ual = CTRL.ual; //*sqrt(CLARKE_TRANS_TORQUE_GAIN); *AMPL2POW
+        ACM.ube = CTRL.ube; //*sqrt(CLARKE_TRANS_TORQUE_GAIN); *AMPL2POW
     #endif
 
-    // 仿真的输入电压是在dq系下的，所以要把alpha-beta系下的电压经过Park变换变为dq系下的电压。
-    ACM.ud = AB2M(ACM.ual, ACM.ube, cos(ACM.theta_d), sin(ACM.theta_d));
-    ACM.uq = AB2T(ACM.ual, ACM.ube, cos(ACM.theta_d), sin(ACM.theta_d));
-
+    #if MACHINE_TYPE == 2
+        // 永磁电机仿真的输入电压是在dq系下的，所以要把alpha-beta系下的电压经过Park变换变为dq系下的电压。
+        ACM.ud = AB2M(ACM.ual, ACM.ube, cos(ACM.theta_d), sin(ACM.theta_d));
+        ACM.uq = AB2T(ACM.ual, ACM.ube, cos(ACM.theta_d), sin(ACM.theta_d));
+    #endif
 
 
 

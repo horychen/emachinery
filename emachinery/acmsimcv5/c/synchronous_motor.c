@@ -1,5 +1,4 @@
 #include "ACMSim.h"
-
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
 // 仿真电机结构体变量声明
@@ -36,9 +35,9 @@ void Machine_init(){
     // ACM.KE = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE * AMPL2POW; // Vs/rad 
     ACM.KE = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // Vs/rad 
 
-    ACM.npp = PMSM_NUMBER_OF_POLE_PAIRS;
+    ACM.npp = MOTOR_NUMBER_OF_POLE_PAIRS;
     ACM.npp_inv = 1.0 / ACM.npp;
-    ACM.Js = PMSM_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
+    ACM.Js = MOTOR_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
     ACM.mu_m = ACM.npp/ACM.Js;
 
     ACM.ual = 0.0;

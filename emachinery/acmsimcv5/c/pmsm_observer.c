@@ -1,4 +1,5 @@
 #include "ACMSim.h"
+#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
 // DSP中用到的同步电机结构体变量声明
 struct SynchronousMachine sm;
@@ -22,7 +23,7 @@ void sm_init(){
         sm.current_bpf_register2[i] = 0;
     }
 
-    sm.npp     = PMSM_NUMBER_OF_POLE_PAIRS;
+    sm.npp     = MOTOR_NUMBER_OF_POLE_PAIRS;
     sm.npp_inv = 1.0/sm.npp;
 
     sm.R      = PMSM_RESISTANCE;
@@ -31,7 +32,7 @@ void sm_init(){
     sm.Lq     = PMSM_Q_AXIS_INDUCTANCE;
     sm.KE     = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // Vs/rad
 
-    sm.Js     = PMSM_SHAFT_INERTIA;
+    sm.Js     = MOTOR_SHAFT_INERTIA;
     sm.Js_inv = 1./sm.Js;
 
     sm.omg_elec = 0.0;
@@ -105,3 +106,4 @@ void harnefors_scvm(){
 }
 
 
+#endif
