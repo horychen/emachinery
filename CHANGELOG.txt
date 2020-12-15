@@ -1,6 +1,12 @@
 
 ## Changelog
 
+*1.0.9*
+- (Video@Bilibili) Demonstrate the effectiveness of the current loop decoupling (PMSM).
+- Allow velocity-open-loop and current-closed-loop for sweep frequency analysis.
+- Automatically add path2acmsimc if the user-specified path does not exist.
+- Remember last user input for C-based simulation.
+
 *1.0.8*
 - I was stupid. Version 1.0.7 did not do its job.
 

@@ -88,7 +88,7 @@ typedef long double float64;
 #include "inverter.h"
 #include "load.h"
 
-#include "comm.h"
+#include "pmsm_comm.h"
 #include "sweep_frequency.h"
 
 

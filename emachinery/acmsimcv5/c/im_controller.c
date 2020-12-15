@@ -206,79 +206,6 @@ void CTRL_init(){
     printf("Current PID: Kp=%g, Ki=%g, limit=%g V\n", pid1_id.Kp, pid1_id.Ki/CL_TS, pid1_id.OutLimit);
 }
 
-// 控制器：输入为电机的转速指令，根据反馈的电流、转速、位置信息，计算电机的电压指令。
-// void control(double speed_cmd, double speed_cmd_dot){
-//     // Input 1 is feedback: estimated speed/position or measured speed/position
-//     #if SENSORLESS_CONTROL
-//         // harnefors_scvm();
-//         CTRL.omg__fb     = omg_harnefors;
-//         // CTRL.theta_d__fb = theta_d_harnefors;
-//     #else
-//         // from measurement() in main.c
-//         CTRL.omg__fb     = sm.omg_elec;
-//         // CTRL.theta_M = sm.theta_d; 
-//     #endif
-
-//     // Input 2 is feedback: measured current 
-//     CTRL.ial__fb = IS_C(0);
-//     CTRL.ibe__fb = IS_C(1);
-
-//     // Input 3 is the flux linkage command 
-//     #if CONTROL_STRATEGY == NULL_D_AXIS_CURRENT_CONTROL
-//         CTRL.rotor_flux_cmd = 0.0;
-//         CTRL.cosT = cos(CTRL.theta_d__fb); 
-//         CTRL.sinT = sin(CTRL.theta_d__fb);
-//     #else
-//         getch("Not Implemented");
-//     #endif
-
-//     // d-axis current command
-//     CTRL.id_cmd = CTRL.rotor_flux_cmd / CTRL.Ld;
-
-//     // q-axis current command
-//     static int vc_count = 0;
-//     if(vc_count++ == SPEED_LOOP_CEILING){
-//         // velocity control loop execution frequency is 40 times slower than current control loop execution frequency
-//         vc_count = 0;
-
-//         pid1_spd.Ref = speed_cmd*RPM_2_RAD_PER_SEC;
-//         pid1_spd.Fdb = CTRL.omg__fb;
-//         pid1_spd.calc(&pid1_spd);
-//         CTRL.iq_cmd = pid1_spd.Out;
-
-//         // for plot
-//         // CTRL.speed_ctrl_err = CTRL.omg_ctrl_err * RAD_PER_SEC_2_RPM;
-//     }
-
-//     // Measured current in d-q frame
-//     CTRL.id__fb = AB2M(CTRL.ial__fb, CTRL.ibe__fb, CTRL.cosT, CTRL.sinT);
-//     CTRL.iq__fb = AB2T(CTRL.ial__fb, CTRL.ibe__fb, CTRL.cosT, CTRL.sinT);
-
-//     // For luenberger position observer for HFSI
-//     CTRL.Tem     = CTRL.npp * (CTRL.KE*CTRL.iq__fb + (CTRL.Ld-CTRL.Lq)*CTRL.id__fb*CTRL.iq__fb);
-//     CTRL.Tem_cmd = CTRL.npp * (CTRL.KE*CTRL.iq_cmd + (CTRL.Ld-CTRL.Lq)*CTRL.id_cmd*CTRL.iq_cmd);
-
-//     // Voltage command in d-q frame
-//     double vd, vq;
-//     pid1_id.Fdb = CTRL.id__fb;
-//     pid1_id.Ref = CTRL.id_cmd;
-//     pid1_id.calc(&pid1_id);
-//     vd = pid1_id.Out;
-//     pid1_iq.Fdb = CTRL.iq__fb;
-//     pid1_iq.Ref = CTRL.iq_cmd;
-//     pid1_iq.calc(&pid1_iq);
-//     vq = pid1_iq.Out;
-
-//     // Current loop decoupling (skipped for now)
-//     CTRL.ud_cmd = vd;
-//     CTRL.uq_cmd = vq;
-
-//     // Voltage command in alpha-beta frame
-//     CTRL.ual = MT2A(CTRL.ud_cmd, CTRL.uq_cmd, CTRL.cosT, CTRL.sinT);
-//     CTRL.ube = MT2B(CTRL.ud_cmd, CTRL.uq_cmd, CTRL.cosT, CTRL.sinT);
-// }
-
-
 // 定义特定的测试指令，如快速反转等
 void cmd_fast_speed_reversal(double timebase, double instant, double interval, double rpm_cmd){
     if(timebase > instant+2*interval){
@@ -293,97 +220,83 @@ void cmd_fast_speed_reversal(double timebase, double instant, double interval, d
 }
 
 
-struct SweepFreq sf={0.0, 1, SWEEP_FREQ_INIT_FREQ-1, 0.0, 0.0};
-
 void controller(){
 
-    // 位置环
-    #if EXCITATION_TYPE == 1
-        REAL position_command = 10*2;
-        if(CTRL.timebase>5){
-            position_command = -10*2; 
-        }
-        REAL position_error = position_command - ACM.x[5];
-        REAL position_KP = 8;
-        REAL rad_speed_command = position_KP*position_error;
-        REAL rpm_speed_command = rad_speed_command*RAD_PER_SEC_2_RPM;
-    #endif
-
-    #if EXCITATION_TYPE == 2
-        // 扫频建模
-        // #define SWEEP_FREQ_AMPL 500 // rpm
-        // #define MAX_FREQ SWEEP_FREQ_MAX_FREQ // Hz
-        REAL amp_current_command;
-        sf.time += CL_TS;
-        if(sf.time > sf.current_freq_end_time){
-            // next frequency
-            sf.current_freq += sf.freq_step_size;
-            // next end time
-            sf.last_current_freq_end_time = sf.current_freq_end_time;
-            sf.current_freq_end_time += 1.0/sf.current_freq; // 1.0 Duration for each frequency
-        }
-        if(sf.current_freq > SWEEP_FREQ_MAX_FREQ){
-            rpm_speed_command = 0.0;
-            amp_current_command = 0.0;
-        }else{
-            // # closed-cloop sweep
-            rpm_speed_command   = SWEEP_FREQ_VELOCITY_AMPL * sin(2*M_PI*sf.current_freq*(sf.time - sf.last_current_freq_end_time));
-
-            // open-loop sweep
-            // amp_current_command = (0.05 * PMSM_RATED_CURRENT_RMS*1.414) * sin(2*M_PI*sf.current_freq*(sf.time - sf.last_current_freq_end_time));
-            amp_current_command = SWEEP_FREQ_CURRENT_AMPL * sin(2*M_PI*sf.current_freq*(sf.time - sf.last_current_freq_end_time));
-        }
-    #endif
-
-    #if EXCITATION_TYPE == 0
-        // 转速运动模式
-        rpm_speed_command = 500*sin(2*M_PI*88*CTRL.timebase); // overwrite
-    #endif
+    // 1. 生成转速指令
+    double rpm_speed_command, amp_current_command;
+    commands(&rpm_speed_command, &amp_current_command);
 
     // for plot
     ACM.rpm_cmd = rpm_speed_command;
 
-
-
-    //（霍尔反馈）
-    // CTRL.omg__fb     = sm.omg_elec_hall;
-    // CTRL.theta_d__fb = sm.theta_d_hall;
-    
-    //（编码器反馈）
-    // CTRL.omg__fb     = qep.omg_elec;
-    // CTRL.theta_d__fb = qep.theta_d;
+    // 2. 电气转子位置和电气转子转速反馈
+        //（编码器反馈）
+        // CTRL.omg__fb     = qep.omg_elec;
+        // CTRL.theta_d__fb = qep.theta_d;
 
     //（实际反馈，实验中不可能）
-    CTRL.omg__fb     = sm.omg_elec;
-    // CTRL.theta_d__fb = sm.theta_d;
+    CTRL.omg__fb     = im.omg_elec;
     
-    //（无感）
-    // harnefors_scvm();
-    // CTRL.omg__fb     = omg_harnefors;
-    // CTRL.theta_d__fb = theta_d_harnefors;
+        //（无感）
+        // harnefors_scvm();
+        // CTRL.omg__fb     = omg_harnefors;
+        // CTRL.theta_d__fb = theta_d_harnefors;
+
+    // for plot
+    CTRL.speed_ctrl_err = rpm_speed_command*RPM_2_RAD_PER_SEC - CTRL.omg__fb;
+
+    // 帕克变换
+    #define THE_FIELD_IS_KNOWN FALSE
+    #if THE_FIELD_IS_KNOWN
+        ob.theta_M = atan2(IM.x[3], IM.x[2]); 
+        ob.cosT = cos(ob.theta_M); 
+        ob.sinT = sin(ob.theta_M);
+    #else
+        // 间接磁场定向第一部分
+        ob.theta_M += TS * CTRL.omega_syn;
+        ob.cosT = cos(ob.theta_M); 
+        ob.sinT = sin(ob.theta_M);
+        if(ob.theta_M > M_PI){
+            ob.theta_M -= 2*M_PI;        
+        }else if(ob.theta_M < -M_PI){
+            ob.theta_M += 2*M_PI; // 反转！
+        }
+    #endif
+    CTRL.iMs = AB2M(IS_C(0), IS_C(1), ob.cosT, ob.sinT);
+    CTRL.iTs = AB2T(IS_C(0), IS_C(1), ob.cosT, ob.sinT);
+    pid1_id.Fdb = CTRL.iMs;
+    pid1_iq.Fdb = CTRL.iTs;
 
 
-
-    CTRL.cosT = cos(CTRL.theta_M);
-    CTRL.sinT = sin(CTRL.theta_M);
-    REAL id_fb = AB2M(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
-    REAL iq_fb = AB2T(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
-    REAL omg_elec_fb = CTRL.omg__fb;
-
-    REAL error = rpm_speed_command*RPM_2_RAD_PER_SEC - omg_elec_fb;
-    CTRL.speed_ctrl_err = error;
-
-    // Current Commands
+    // 转速环
     static int vc_count = 0;
     if(vc_count++ == SPEED_LOOP_CEILING){
         vc_count = 0;
 
         pid1_spd.Ref = rpm_speed_command*RPM_2_RAD_PER_SEC;
-        pid1_spd.Fdb = omg_elec_fb;
+        pid1_spd.Fdb = CTRL.omg__fb;
         pid1_spd.calc(&pid1_spd);
         pid1_iq.Ref = pid1_spd.Out;
-    }
 
+    }
+    CTRL.iTs_cmd = pid1_spd.Out;
+    // 磁链环
+    // double the_dc_part = TAAO_FLUX_COMMAND_VALUE;
+    ob.taao_flux_cmd = 1.0; //TAAO_FluxModulusCommand();
+    if(ob.taao_flux_cmd_on){
+        CTRL.iMs_cmd = the_dc_part * CTRL.Lmu_inv   \
+                       + (   M1*OMG1*cos(OMG1*ob.timebase)  )/ CTRL.rreq; ///////////////////////////////// 
+    }else{
+        CTRL.iMs_cmd = ob.taao_flux_cmd * CTRL.Lmu_inv + (deriv_fluxModCmd)/ CTRL.rreq; 
+        // CTRL.iMs_cmd = ob.taao_flux_cmd * CTRL.Lmu_inv;
+    }
+    pid1_iq.Ref = CTRL.iMs_cmd;
+    CTRL.torque_cmd = CLARKE_TRANS_TORQUE_GAIN * im.npp * CTRL.iTs_cmd * (ob.taao_flux_cmd);
+    // 间接磁场定向第二部分
+    CTRL.omega_sl = CTRL.rreq*CTRL.iTs_cmd/(ob.taao_flux_cmd);
+    CTRL.omega_syn = CTRL.omg__fb + CTRL.omega_sl;
+
+    // 扫频将覆盖上面产生的励磁、转矩电流指令    
     #if SWEEP_FREQ_C2V == TRUE
         pid1_iq.Ref = amp_current_command; 
     #endif
@@ -392,28 +305,31 @@ void controller(){
         pid1_id.Ref = amp_current_command;
     #else
         pid1_id.Ref = 0.0;
-    #endif 
+    #endif
 
 
-    pid1_id.Fdb = id_fb;
-    pid1_iq.Fdb = iq_fb;
 
-    // voltage output
+
+    // 电流环
     pid1_id.calc(&pid1_id);
     pid1_iq.calc(&pid1_iq);
-    // REAL decoupled_d_axis_voltage = pid1_id.Out - pid1_iq.Fdb*CTRL.Lq*CTRL.omg__fb;
-    // REAL decoupled_q_axis_voltage = pid1_iq.Out + (pid1_id.Fdb*CTRL.Ld+CTRL.KE)*CTRL.omg__fb;
-    REAL decoupled_d_axis_voltage = pid1_id.Out;
-    REAL decoupled_q_axis_voltage = pid1_iq.Out;
+    {   // Steady state dynamics based decoupling circuits for current regulation
+        #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
+            // decoupled_d_axis_voltage = vM + (CTRL.rs+CTRL.rreq)*CTRL.iMs + CTRL.Lsigma*(-CTRL.omega_syn*CTRL.iTs) - CTRL.alpha*CTRL.psimod_fb; // Jadot09
+            // decoupled_q_axis_voltage = vT + (CTRL.rs+CTRL.rreq)*CTRL.iTs + CTRL.Lsigma*( CTRL.omega_syn*CTRL.iMs) + CTRL.omg_fb*CTRL.psimod_fb;
+
+            decoupled_d_axis_voltage = pid1_id.Out + (CTRL.Lsigma) * (-CTRL.omega_syn*CTRL.iTs); // Telford03/04
+            // decoupled_q_axis_voltage = vT + CTRL.omega_syn*(ob.taao_flux_cmd + im.Lsigma*CTRL.iMs); // 这个行，但是无速度运行时，会导致M轴电流在转速暂态高频震荡。
+            // decoupled_q_axis_voltage = vT + CTRL.omega_syn*(CTRL.Lsigma+CTRL.Lmu)*CTRL.iMs; // 这个就不行，说明：CTRL.Lmu*iMs != ob.taao_flux_cmd，而是会因iMs的波动在T轴控制上引入波动和不稳定
+            decoupled_q_axis_voltage = pid1_iq.Out;
+        #else
+            decoupled_d_axis_voltage = pid1_id.Out;
+            decoupled_q_axis_voltage = pid1_iq.Out;
+        #endif
+    }
 
     CTRL.ual = MT2A(decoupled_d_axis_voltage, decoupled_q_axis_voltage, CTRL.cosT, CTRL.sinT);
     CTRL.ube = MT2B(decoupled_d_axis_voltage, decoupled_q_axis_voltage, CTRL.cosT, CTRL.sinT);
-
-    // for harnefors observer
-    // CTRL.ud_cmd = pid1_id.Out;
-    // CTRL.uq_cmd = pid1_iq.Out;
-    // CTRL.id_cmd = pid1_id.Ref;
-    // CTRL.iq_cmd = pid1_iq.Ref;
 }
 
 #endif

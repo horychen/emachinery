@@ -90,9 +90,16 @@ void measurement(){
         // // }
     #endif
 
+    #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
     // sm.theta_d  = ACM.x[3]; // + 30.0/180*M_PI;
     // sm.omg_elec = ACM.x[2];
     sm.theta_d  = ACM.theta_d; // + 30.0/180*M_PI;
     sm.omg_elec = ACM.omg_elec;
     sm.omg_mech = sm.omg_elec * sm.npp_inv;
+    #endif
+
+    #if MACHINE_TYPE == INDUCTION_MACHINE_CLASSIC_MODEL || MACHINE_TYPE == INDUCTION_MACHINE_FLUX_ONLY_MODEL
+    im.omg_elec = ACM.omg_elec;
+    im.omg_mech = im.omg_elec * im.npp_inv;    
+    #endif
 }

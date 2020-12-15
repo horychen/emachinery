@@ -1,5 +1,5 @@
 #include "ACMSim.h"
-
+#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
 // 声明参数自整定结构体变量
 struct CommissioningDataStruct COMM;
@@ -810,3 +810,4 @@ void StepByStepCommissioning(){
 
     /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/      
 }
+#endif

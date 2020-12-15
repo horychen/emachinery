@@ -1,5 +1,6 @@
 #ifndef ADD_PMSM_OBSERVER_H
 #define ADD_PMSM_OBSERVER_H
+#if MACHINE_TYPE == 2
 
 /* Macro for External Access Interface */
 #define US(X) sm.us[X]
@@ -85,7 +86,7 @@ struct SynchronousMachine{
 extern struct SynchronousMachine sm;
 
 
-void sm_init();
-
+void acm_init();
 #endif
 
+#endif

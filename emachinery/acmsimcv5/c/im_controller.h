@@ -1,6 +1,6 @@
+#if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 #ifndef IM_CONTROLLER_H
 #define IM_CONTROLLER_H
-#if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
 struct ControllerForExperiment {
 

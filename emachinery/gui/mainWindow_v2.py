@@ -1,3 +1,11 @@
+
+from emachinery.gui.consolewidget import ConsoleWidget
+from emachinery.gui.mplwidget import MplWidget
+from emachinery.gui.qcodeeditor import QCodeEditor
+
+# from consolewidget import ConsoleWidget
+# from mplwidget import MplWidget
+# from qcodeeditor import QCodeEditor
 # -*- coding: utf-8 -*-
 
 # Form implementation generated from reading ui file 'mainWindow_v2.ui'
@@ -114,10 +122,10 @@ class Ui_MainWindow(object):
         self.tab_5 = QtWidgets.QWidget()
         self.tab_5.setObjectName("tab_5")
         self.groupBox_2 = QtWidgets.QGroupBox(self.tab_5)
-        self.groupBox_2.setGeometry(QtCore.QRect(0, 370, 811, 401))
+        self.groupBox_2.setGeometry(QtCore.QRect(0, 370, 811, 451))
         self.groupBox_2.setObjectName("groupBox_2")
         self.verticalLayoutWidget_8 = QtWidgets.QWidget(self.groupBox_2)
-        self.verticalLayoutWidget_8.setGeometry(QtCore.QRect(10, 30, 791, 361))
+        self.verticalLayoutWidget_8.setGeometry(QtCore.QRect(10, 30, 791, 411))
         self.verticalLayoutWidget_8.setObjectName("verticalLayoutWidget_8")
         self.verticalLayout_16 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_8)
         self.verticalLayout_16.setContentsMargins(2, 0, 2, 0)
@@ -159,6 +167,12 @@ class Ui_MainWindow(object):
         self.label_qpix_Note2.setScaledContents(False)
         self.label_qpix_Note2.setObjectName("label_qpix_Note2")
         self.verticalLayout_16.addWidget(self.label_qpix_Note2)
+        self.label_qpix_Note3 = QtWidgets.QLabel(self.verticalLayoutWidget_8)
+        self.label_qpix_Note3.setStyleSheet("background: rgb(0,0,0)")
+        self.label_qpix_Note3.setText("")
+        self.label_qpix_Note3.setScaledContents(False)
+        self.label_qpix_Note3.setObjectName("label_qpix_Note3")
+        self.verticalLayout_16.addWidget(self.label_qpix_Note3)
         self.groupBox_3 = QtWidgets.QGroupBox(self.tab_5)
         self.groupBox_3.setGeometry(QtCore.QRect(410, 240, 321, 131))
         self.groupBox_3.setObjectName("groupBox_3")
@@ -567,7 +581,7 @@ class Ui_MainWindow(object):
         self.groupBox.setCheckable(False)
         self.groupBox.setObjectName("groupBox")
         self.gridLayoutWidget = QtWidgets.QWidget(self.groupBox)
-        self.gridLayoutWidget.setGeometry(QtCore.QRect(0, 20, 391, 111))
+        self.gridLayoutWidget.setGeometry(QtCore.QRect(0, 20, 391, 141))
         self.gridLayoutWidget.setObjectName("gridLayoutWidget")
         self.gridLayout = QtWidgets.QGridLayout(self.gridLayoutWidget)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -588,7 +602,7 @@ class Ui_MainWindow(object):
         self.groupBox_sweepFrequency.setEnabled(True)
         self.groupBox_sweepFrequency.setObjectName("groupBox_sweepFrequency")
         self.verticalLayoutWidget_10 = QtWidgets.QWidget(self.groupBox_sweepFrequency)
-        self.verticalLayoutWidget_10.setGeometry(QtCore.QRect(10, 20, 113, 51))
+        self.verticalLayoutWidget_10.setGeometry(QtCore.QRect(10, 20, 113, 87))
         self.verticalLayoutWidget_10.setObjectName("verticalLayoutWidget_10")
         self.verticalLayout_14 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_10)
         self.verticalLayout_14.setContentsMargins(0, 0, 0, 0)
@@ -601,6 +615,26 @@ class Ui_MainWindow(object):
         self.radioButton_currentLoopOnly.setAutoExclusive(False)
         self.radioButton_currentLoopOnly.setObjectName("radioButton_currentLoopOnly")
         self.verticalLayout_14.addWidget(self.radioButton_currentLoopOnly)
+        self.horizontalLayout_13 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_13.setSpacing(0)
+        self.horizontalLayout_13.setObjectName("horizontalLayout_13")
+        self.label_maxFreq2Sweep = QtWidgets.QLabel(self.verticalLayoutWidget_10)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_maxFreq2Sweep.sizePolicy().hasHeightForWidth())
+        self.label_maxFreq2Sweep.setSizePolicy(sizePolicy)
+        self.label_maxFreq2Sweep.setObjectName("label_maxFreq2Sweep")
+        self.horizontalLayout_13.addWidget(self.label_maxFreq2Sweep)
+        self.lineEdit_maxFreq2Sweep = QtWidgets.QLineEdit(self.verticalLayoutWidget_10)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit_maxFreq2Sweep.sizePolicy().hasHeightForWidth())
+        self.lineEdit_maxFreq2Sweep.setSizePolicy(sizePolicy)
+        self.lineEdit_maxFreq2Sweep.setObjectName("lineEdit_maxFreq2Sweep")
+        self.horizontalLayout_13.addWidget(self.lineEdit_maxFreq2Sweep)
+        self.verticalLayout_14.addLayout(self.horizontalLayout_13)
         self.gridLayout.addWidget(self.groupBox_sweepFrequency, 1, 2, 1, 1)
         self.tabWidget.addTab(self.tab_4, "")
         self.tab_6 = QtWidgets.QWidget()
@@ -842,7 +876,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.comboBox_MachineType.setItemText(0, _translate("MainWindow", "Synchronous Machine"))
         self.comboBox_MachineType.setItemText(1, _translate("MainWindow", "Induction Machine"))
-        self.label_npd.setText(_translate("MainWindow", "Number of Poles"))
+        self.label_npd.setText(_translate("MainWindow", "Number of Pole Pairs"))
         self.label_npd_2.setText(_translate("MainWindow", "Rated Current [Arms]"))
         self.label_npd_3.setText(_translate("MainWindow", "Rated Power [W]"))
         self.label_npd_4.setText(_translate("MainWindow", "Rated Speed [rpm]"))
@@ -919,6 +953,8 @@ class Ui_MainWindow(object):
         self.groupBox_sweepFrequency.setTitle(_translate("MainWindow", "Settings"))
         self.radioButton_openLoop.setText(_translate("MainWindow", "Open loop"))
         self.radioButton_currentLoopOnly.setText(_translate("MainWindow", "Current Loop Only"))
+        self.label_maxFreq2Sweep.setText(_translate("MainWindow", "Max Freq."))
+        self.lineEdit_maxFreq2Sweep.setText(_translate("MainWindow", "200"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), _translate("MainWindow", "C-based Simulation"))
         self.pushButton_bodePlot.setText(_translate("MainWindow", "Bode Plot by Sweep Freuquency"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_6), _translate("MainWindow", "Bode Plot"))
@@ -947,11 +983,6 @@ class Ui_MainWindow(object):
         self.actionLocate.setText(_translate("MainWindow", "Json File"))
         self.actionDark.setText(_translate("MainWindow", "Dark"))
         self.actionLight.setText(_translate("MainWindow", "Light"))
-
-from emachinery.gui.consolewidget import ConsoleWidget
-from emachinery.gui.mplwidget import MplWidget
-from emachinery.gui.qcodeeditor import QCodeEditor
-
 # from consolewidget import ConsoleWidget
 # from mplwidget import MplWidget
 # from qcodeeditor import QCodeEditor

@@ -21,6 +21,8 @@ struct InductionMachineSimulated{
     double Tload;
     double Tem;
 
+    double omg_elec;
+
     double Lsigma;
     double rs;
     double rreq;

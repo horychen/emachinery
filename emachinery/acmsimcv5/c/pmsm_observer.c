@@ -4,7 +4,7 @@
 // DSP中用到的同步电机结构体变量声明
 struct SynchronousMachine sm;
 
-void sm_init(){
+void acm_init(){
     int i;
     for(i=0; i<2; ++i){
         sm.us[i] = 0;

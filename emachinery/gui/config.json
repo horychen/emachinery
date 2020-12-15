@@ -1,3 +1,10 @@
 {
-    "path2acmsimc": "D:\\DrH\\Codes\\emachineryTestPYPI\\emachinery\\acmsimcv5"
+    "path2acmsimc": "D:\\DrH\\Codes\\emachinery\\TestPYPI\\emachinery\\acmsimcv5",
+    "EndTime": "8",
+    "CLTS": "1/20e3",
+    "VLTS": "4/20e3",
+    "LoadTorque": "0.0",
+    "LoadInertiaPercentage": "16",
+    "ViscousCoefficient": "0.7e-4",
+    "OutputDataFileName": "PMSM_SweepFreq"
 }

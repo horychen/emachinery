@@ -1,6 +1,6 @@
-
-#ifndef COMMISSIONING_H
-#define COMMISSIONING_H
+#ifndef PMSM_COMMISSIONING_H
+#define PMSM_COMMISSIONING_H
+#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
 #define COMM_IV_SIZE 100
 struct CommissioningDataStruct{
@@ -78,3 +78,4 @@ void COMM_end(REAL id_fb, REAL iq_fb);
 //             }
 
 //             /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
+#endif

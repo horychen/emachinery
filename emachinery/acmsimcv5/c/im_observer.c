@@ -1,103 +1,49 @@
-#if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 #include "ACMSim.h"
+#if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
-struct InductionMachine{
-    double us[2];
-    double is[2];
-    double us_curr[2];
-    double is_curr[2];
-    double us_prev[2];
-    double is_prev[2];
+struct InductionMachine im;
 
-    double Js;
-    double Js_inv;
-    double npp;
-    double mu_m;
-    double mu;
+void acm_init(){
 
-    double Lm;
-    double Lm_inv;
-    double Lls;
-    double Llr;
-    double Ls;
-    double Lr;
-    double sigma;
-    double rs;
-    double rr;
-    double Tr;
-    double alpha;
-    double Lsigma;
-    double Lsigma_inv;
-    double Leq;
-    double Leq_inv;
-    double rreq;
+    im.us[0] = 0.0;
+    im.us[1] = 0.0;
+    im.is[0] = 0.0;
+    im.is[1] = 0.0;
+    im.us_curr[0] = 0.0;
+    im.us_curr[1] = 0.0;
+    im.is_curr[0] = 0.0;
+    im.is_curr[1] = 0.0;
+    im.us_prev[0] = 0.0;
+    im.us_prev[1] = 0.0;
+    im.is_prev[0] = 0.0;
+    im.is_prev[1] = 0.0;
 
+    // im.Js = 0.017876; // 3000rpm阶跃测转动惯量
+    // im.Js = 0.172; 
+    // im.Js = 0.072; 
+    // im.Js = 0.017876*0.7;
+    im.Js = MOTOR_SHAFT_INERTIA;
+    im.Js_inv = 1.0/im.Js;
+    im.npp = MOTOR_NUMBER_OF_POLE_PAIRS; // no. of pole pair
+    im.npp_inv = 1.0/im.npp; // no. of pole pair
+    im.mu_m = im.npp*im.Js_inv;
+    im.mu = im.npp*im.mu_m;
+    // printf("im.mu_m = %g; im.mu = %g\n", im.mu_m, im.mu);
 
-    double omg;
-};
-extern struct InductionMachine im;
+    im.Lmu = IM_MAGNETIZING_INDUCTANCE;
+    im.Lmu_inv = 1.0/im.Lmu;
+    im.Lsigma = IM_TOTAL_LEAKAGE_INDUCTANCE;
+    im.Lsigma_inv = 1.0/im.Lsigma;
 
-struct ObserverControl{
-    
-    double k_AP_I;
-    double k_AP_P;
-    double k_AP_D;
-    double k_RP_I;
-    double k_RP_P;
-    double k_RP_D;
+    im.Ls = im.Lsigma + im.Lmu;
 
-    double xIs[2];    // \psi_\sigma
-    double xPsiMu[2];       // \psi_\mu
-    double xOmg;
-    double xTL; 
-    double xTL_integral_part_AP; 
-    double xTL_integral_part_RP; 
-    double xTem;
-    // double refined_omg;
-    double actual_iTs;
+    im.rs = IM_STAOTR_RESISTANCE;
+    im.rreq = IM_ROTOR_RESISTANCE;
 
-    double xUps_al[6];     // The alpha component of the filtered regressors
-    double xUps_be[6];     // The beta component of the filtered regressors
-    double xTheta[2]; 
-
-    double mismatch[3];
-    double error[2];
-    double varepsilon_AP;
-    double varepsilon_RP;
-
-    double epsilon_AP; // estimate of varepsilon
-    double varsigma_AP; // estimate of dot varepsilon
-    double epsilon_RP; // estimate of varepsilon
-    double varsigma_RP; // estimate of dot varepsilon
-    double lambda1;
-    double lambda2;
-
-    double taao_alpha; 
-    double taao_omg_integralPart; // 纯积分的自适应律就用不到这个
-    double taao_speed; // 机械速度rpm！再强调一遍，不是电气速度rpm，而是机械速度rpm。
-
-    double timebase;
-    double Ts;
-
-    double omega_e;
-    double Tem;
-
-    double taao_flux_cmd;
-    int taao_flux_cmd_on;
-
-    double cosT;
-    double sinT;
-    double theta_M;
-
-    double actual_flux[2];
-    double actual_TL;
-    double actual_z;
-
-    double k_Gopinath;
-    double k_1minusGopinath_inv;
-    double xXi[2];
-};
-extern struct ObserverControl ob;
-
+    im.alpha = im.rreq/im.Lmu;
+    im.Tr = im.Lmu/im.rreq; 
+    im.omg_elec = 0.0;
+    im.omg_mech = 0.0;
+}
 
 #endif

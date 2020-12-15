@@ -49,4 +49,6 @@ extern PID_REG pid1_ic;
 
 void ACMSIMC_PIDTuner();
 
+void commands(double *p_rpm_speed_command, double *p_amp_current_command);
+
 #endif

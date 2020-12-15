@@ -99,3 +99,53 @@ void ACMSIMC_PIDTuner(){
     pid1_ib.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
     pid1_ic.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
 }
+
+struct SweepFreq sf={0.0, 1, SWEEP_FREQ_INIT_FREQ-1, 0.0, 0.0};
+
+void commands(double *p_rpm_speed_command, double *p_amp_current_command){
+    #define rpm_speed_command (*p_rpm_speed_command)
+    #define amp_current_command (*p_amp_current_command)
+
+    // 位置环 in rad
+    #if EXCITATION_TYPE == 0
+        REAL position_command = 10*M_PI;
+        if(CTRL.timebase>5){
+            position_command = -10*M_PI;
+        }
+        REAL position_error = position_command - ACM.theta_d_accum;
+        REAL position_KP = 8;
+        REAL rad_speed_command = position_KP*position_error;
+        rpm_speed_command = rad_speed_command*RAD_PER_SEC_2_RPM;
+    #endif
+
+    #if EXCITATION_TYPE == 2
+        // 扫频建模
+        // REAL amp_current_command;
+        sf.time += CL_TS;
+        if(sf.time > sf.current_freq_end_time){
+            // next frequency
+            sf.current_freq += sf.freq_step_size;
+            // next end time
+            sf.last_current_freq_end_time = sf.current_freq_end_time;
+            sf.current_freq_end_time += 1.0/sf.current_freq; // 1.0 Duration for each frequency
+        }
+        if(sf.current_freq > SWEEP_FREQ_MAX_FREQ){
+            rpm_speed_command = 0.0;
+            amp_current_command = 0.0;
+        }else{
+            // # closed-cloop sweep
+            rpm_speed_command   = SWEEP_FREQ_VELOCITY_AMPL * sin(2*M_PI*sf.current_freq*(sf.time - sf.last_current_freq_end_time));
+
+            // open-loop sweep
+            amp_current_command = SWEEP_FREQ_CURRENT_AMPL * sin(2*M_PI*sf.current_freq*(sf.time - sf.last_current_freq_end_time));
+        }
+    #endif
+
+    #if EXCITATION_TYPE == 1
+        // 转速运动模式 in rpm
+        rpm_speed_command = 500;
+        if(CTRL.timebase>5){
+            rpm_speed_command = -500;
+        }
+    #endif
+}

@@ -10,8 +10,8 @@ int main(){
     // 初始化
     Machine_init(); // 仿真电机初始化
     CTRL_init(); // 控制器初始化
-    sm_init(); // DSP中用到的电机结构体变量初始化
-    COMM_init(); // 参数自整定初始化
+    acm_init(); // DSP中用到的电机结构体变量初始化
+    // COMM_init(); // 参数自整定初始化
 
     // 声明文件，并将变量名写入文件
     FILE *fw;

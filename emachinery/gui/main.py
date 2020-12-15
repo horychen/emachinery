@@ -78,7 +78,7 @@ from emachinery.acmdesignv2 import analyzer
 
 
 class EmachineryWidget(QMainWindow):
-    def __init__(self):
+    def __init__(self, path2acmsimc):
         QMainWindow.__init__(self)
 
         ''' generate file path within package
@@ -185,33 +185,28 @@ class EmachineryWidget(QMainWindow):
         try:
             with open(self.filepath_to_configini, 'r') as f:
                 self.configini = json.load(f)
+            if os.path.exists(self.configini['path2acmsimc']):
                 self.path2acmsimc = self.configini['path2acmsimc']
-                self.ui.lineEdit_path2acmsimc.setText(self.path2acmsimc)
+            else:
+                print(f'''Path "{self.configini['path2acmsimc']}" does not exist. Will use default C codes instead.''')
+                self.path2acmsimc = path2acmsimc # the default code comes along with the emachinery package
+            self.ui.lineEdit_EndTime.setText(self.configini['EndTime'])
+            self.ui.lineEdit_CLTS.setText(self.configini['CLTS'])
+            self.ui.lineEdit_VLTS.setText(self.configini['VLTS'])
+            self.ui.lineEdit_LoadTorque.setText(self.configini['LoadTorque'])
+            self.ui.lineEdit_LoadInertiaPercentage.setText(self.configini['LoadInertiaPercentage'])
+            self.ui.lineEdit_ViscousCoefficient.setText(self.configini['ViscousCoefficient'])
+            self.ui.lineEdit_OutputDataFileName.setText(self.configini['OutputDataFileName'])
         except Exception as e:
             raise e
-            self.path2acmsimc = self.ui.lineEdit_path2acmsimc.text()
+        self.ui.lineEdit_path2acmsimc.setText(self.path2acmsimc)
         self.ui.lineEdit_path2acmsimc.textChanged[str].connect(self.save_path2acmsimc)
 
         self.data_file_name = self.get_data_file_name()
         self.ui.pushButton_runCBasedSimulation.clicked.connect(self.runCBasedSimulation)
 
-        # Read in ACM Plot Settings
-        if 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
-            self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, './plot_setting_files/labels_im.txt') # self.ui.lineEdit_path2ACMPlotLabels.text())
-            self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, './plot_setting_files/signals_im.txt') # self.ui.lineEdit_path2ACMPlotSignals.text()) 
-        elif 'Synchronous Machine' in self.ui.comboBox_MachineType.currentText():
-            self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, './plot_setting_files/labels_pmsm.txt')
-            self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, './plot_setting_files/signals_pmsm.txt')
-        try:
-            with open(self.filepath_to_ACMPlotLabels, 'r') as f:
-                self.ui.plainTextEdit_ACMPlotLabels.clear()
-                self.ui.plainTextEdit_ACMPlotLabels.appendPlainText(f.read())
-            with open(self.filepath_to_ACMPlotSignals, 'r') as f:
-                self.ui.plainTextEdit_ACMPlotDetails.clear()
-                self.ui.plainTextEdit_ACMPlotDetails.appendPlainText(f.read())
-        except Exception as e:
-            print(e)
-            print('ACMPlot settings are not found. Will use the default instead.')
+        # init
+        self.update_ACMPlotLabels_and_ACMPlotSignals()
 
         # settings for sweep frequency
         self.ui.radioButton_openLoop.toggled.connect(self.radioChecked_Settings4SweepFrequency)
@@ -401,6 +396,35 @@ class EmachineryWidget(QMainWindow):
         self.ui.MplWidget_bodePlot.canvas.draw()
 
     ''' C-based Simulation '''
+    def update_ACMPlotLabels_and_ACMPlotSignals(self):
+        # Read in ACM Plot Settings
+        if 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
+            self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, './plot_setting_files/labels_im.txt') # self.ui.lineEdit_path2ACMPlotLabels.text())
+            self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, './plot_setting_files/signals_im.txt') # self.ui.lineEdit_path2ACMPlotSignals.text()) 
+        elif 'Synchronous Machine' in self.ui.comboBox_MachineType.currentText():
+            self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, './plot_setting_files/labels_pmsm.txt')
+            self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, './plot_setting_files/signals_pmsm.txt')
+        try:
+            with open(self.filepath_to_ACMPlotLabels, 'r') as f:
+                self.ui.plainTextEdit_ACMPlotLabels.clear()
+                self.ui.plainTextEdit_ACMPlotLabels.appendPlainText(f.read())
+            with open(self.filepath_to_ACMPlotSignals, 'r') as f:
+                self.ui.plainTextEdit_ACMPlotDetails.clear()
+                self.ui.plainTextEdit_ACMPlotDetails.appendPlainText(f.read())
+        except Exception as e:
+            raise e
+            print('ACMPlot settings are not found. Will use the default instead.')
+
+    def save_Config4CBasedSimulation(self):
+        self.configini['EndTime'] = self.ui.lineEdit_EndTime.text()
+        self.configini['CLTS'] = self.ui.lineEdit_CLTS.text()
+        self.configini['VLTS'] = self.ui.lineEdit_VLTS.text()
+        self.configini['LoadTorque'] = self.ui.lineEdit_LoadTorque.text()
+        self.configini['LoadInertiaPercentage'] = self.ui.lineEdit_LoadInertiaPercentage.text()
+        self.configini['ViscousCoefficient'] = self.ui.lineEdit_ViscousCoefficient.text()
+        self.configini['OutputDataFileName'] = self.ui.lineEdit_OutputDataFileName.text()
+        with open(self.filepath_to_configini, 'w') as f:
+            json.dump(self.configini, f, ensure_ascii=False, indent=4)
     def save_path2acmsimc(self):
         self.path2acmsimc = self.ui.lineEdit_path2acmsimc.text()
         self.configini['path2acmsimc'] = self.path2acmsimc
@@ -598,6 +622,8 @@ class EmachineryWidget(QMainWindow):
         # why bool_ is always set to False???
         # print(bool_, bool_savePlotSetting, bool_updatePlotSetting)
 
+        self.save_Config4CBasedSimulation()
+
         def savePlotSettings():
             with open(  self.filepath_to_ACMPlotLabels, 'w') as f:
                 f.write(self.ui.plainTextEdit_ACMPlotLabels.toPlainText())
@@ -770,6 +796,7 @@ class EmachineryWidget(QMainWindow):
             # update file path to plot settings
             self.ui.lineEdit_path2ACMPlotLabels.setText('./plot_setting_files/labels_im.txt')
             self.ui.lineEdit_path2ACMPlotSignals.setText('./plot_setting_files/signals_im.txt')
+        self.update_ACMPlotLabels_and_ACMPlotSignals()
         self.comboActivate_namePlateData()
 
     def comboActivate_namePlateData(self):
@@ -873,7 +900,7 @@ class EmachineryWidget(QMainWindow):
 
 def main():
     app = QApplication([])
-    window = EmachineryWidget()
+    window = EmachineryWidget(path2acmsimc=__file__[:-11]+'acmsimcv5')
     window.show()
     app.exec_()
 
