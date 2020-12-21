@@ -3,7 +3,7 @@
 
 typedef struct {
    float32 Ref;
-   float32 Fdb;
+   float32 Fbk;
    float32 Err;
    float32 ErrPrev;
    float32 P_Term; 
@@ -39,8 +39,8 @@ void PID_calc(PID_REG_handle);
   /*Difference between Non-Saturated Output and Saturated Output*/  0.0, \
   (void (*)(Uint32)) PID_calc \
 }
-extern PID_REG pid1_id;
-extern PID_REG pid1_iq;
+extern PID_REG pid1_iM;
+extern PID_REG pid1_iT;
 extern PID_REG pid1_pos;
 extern PID_REG pid1_spd;
 extern PID_REG pid1_ia;

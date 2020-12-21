@@ -44,6 +44,8 @@ struct ControllerForExperiment {
     double psibe_fb;
     double psimod_fb;
     double psimod_fb_inv;
+
+    double rotor_flux_cmd;
     double deriv_fluxModSim;
 
     double rs;

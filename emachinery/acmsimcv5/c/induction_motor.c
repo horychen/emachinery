@@ -284,9 +284,17 @@ int machine_simulation(){
         ACM.iqs = ACM.x[1];
     #elif MACHINE_TYPE == INDUCTION_MACHINE_FLUX_ONLY_MODEL
         collectCurrents(ACM.x);
+
+        ACM.ial = ACM.ids;
+        ACM.ibe = ACM.iqs;
+
+        ACM.theta_M = atan2(ACM.x[3], ACM.x[2]);
+        ACM.cosT = cos(ACM.theta_M); 
+        ACM.sinT = sin(ACM.theta_M);
+
+        ACM.iMs = AB2M(ACM.ial, ACM.ibe, ACM.cosT, ACM.sinT);
+        ACM.iTs = AB2T(ACM.ial, ACM.ibe, ACM.cosT, ACM.sinT);
     #endif
-    ACM.ial = ACM.ids;
-    ACM.ibe = ACM.iqs;
 
     // 电机转速接口
     ACM.omg_elec = ACM.x[4]; // 电气转速 [elec. rad/s]

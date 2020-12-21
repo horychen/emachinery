@@ -21,6 +21,10 @@ struct InductionMachineSimulated{
     double Tload;
     double Tem;
 
+    double theta_M;
+    double cosT; // cosine for Park Transform
+    double sinT; // sine for Park Transform
+
     double omg_elec;
 
     double Lsigma;
@@ -57,6 +61,8 @@ struct InductionMachineSimulated{
     double iqs; // q-axis is aligned with beta-axis
     double idr;
     double iqr;
+    double iMs; // rotor field oritented M-axis current
+    double iTs; // rotor field oritented T-axis current
 
     double ual;
     double ube;

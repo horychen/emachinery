@@ -125,8 +125,8 @@ void controller(){
     CTRL.sinT = sin(CTRL.theta_d__fb);
     CTRL.id__fb = AB2M(CTRL.ial__fb, CTRL.ibe__fb, CTRL.cosT, CTRL.sinT);
     CTRL.iq__fb = AB2T(CTRL.ial__fb, CTRL.ibe__fb, CTRL.cosT, CTRL.sinT);
-    pid1_id.Fdb = AB2M(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
-    pid1_iq.Fdb = AB2T(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
+    pid1_id.Fbk = AB2M(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
+    pid1_iq.Fbk = AB2T(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
 
 
     // 转速环
@@ -135,7 +135,7 @@ void controller(){
         vc_count = 0;
 
         pid1_spd.Ref = rpm_speed_command*RPM_2_RAD_PER_SEC;
-        pid1_spd.Fdb = CTRL.omg__fb;
+        pid1_spd.Fbk = CTRL.omg__fb;
         pid1_spd.calc(&pid1_spd);
         pid1_iq.Ref = pid1_spd.Out;
     }
@@ -166,8 +166,8 @@ void controller(){
     pid1_iq.calc(&pid1_iq);
     // 解耦
     #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT
-        REAL decoupled_d_axis_voltage = pid1_id.Out - pid1_iq.Fdb*CTRL.Lq*CTRL.omg__fb;
-        REAL decoupled_q_axis_voltage = pid1_iq.Out + (pid1_id.Fdb*CTRL.Ld+CTRL.KE)*CTRL.omg__fb;
+        REAL decoupled_d_axis_voltage = pid1_id.Out - pid1_iq.Fbk*CTRL.Lq*CTRL.omg__fb;
+        REAL decoupled_q_axis_voltage = pid1_iq.Out + (pid1_id.Fbk*CTRL.Ld+CTRL.KE)*CTRL.omg__fb;
     #else
         REAL decoupled_d_axis_voltage = pid1_id.Out;
         REAL decoupled_q_axis_voltage = pid1_iq.Out;

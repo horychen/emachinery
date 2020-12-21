@@ -2,8 +2,8 @@
 
 // 声明控制器结构体变量
 struct ControllerForExperiment CTRL;
-PID_REG pid1_id  = PID_REG_DEFAULTS;
-PID_REG pid1_iq  = PID_REG_DEFAULTS;
+PID_REG pid1_iM  = PID_REG_DEFAULTS;
+PID_REG pid1_iT  = PID_REG_DEFAULTS;
 PID_REG pid1_pos = PID_REG_DEFAULTS;
 PID_REG pid1_spd = PID_REG_DEFAULTS;
 PID_REG pid1_ia = PID_REG_DEFAULTS;
@@ -14,7 +14,7 @@ PID_REG pid1_ic = PID_REG_DEFAULTS;
 #if INCREMENTAL_PID
 void PID_calc(PID_Reg *r){
 
-    r->Err = r->Ref - r->Fdb;
+    r->Err = r->Ref - r->Fbk;
     r->Out = r->OutPrev \
              + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki * r->Err;
 
@@ -31,7 +31,7 @@ void PID_calc(PID_REG *r){
     #define DYNAMIC_CLAPMING TRUE
 
     // 误差
-    r->Err = r->Ref - r->Fdb;
+    r->Err = r->Ref - r->Fbk;
 
     // 比例
     r->P_Term = r->Err * r->Kp;
@@ -77,14 +77,14 @@ void PID_calc(PID_REG *r){
 // 初始化函数
 void ACMSIMC_PIDTuner(){
 
-    pid1_id.Kp = CURRENT_KP;
-    pid1_iq.Kp = CURRENT_KP;
+    pid1_iM.Kp = CURRENT_KP;
+    pid1_iT.Kp = CURRENT_KP;
     pid1_ia.Kp = CURRENT_KP;
     pid1_ib.Kp = CURRENT_KP;
     pid1_ic.Kp = CURRENT_KP;
 
-    pid1_id.Ki = CURRENT_KI_CODE;
-    pid1_iq.Ki = CURRENT_KI_CODE;
+    pid1_iM.Ki = CURRENT_KI_CODE;
+    pid1_iT.Ki = CURRENT_KI_CODE;
     pid1_ia.Ki = CURRENT_KI_CODE;
     pid1_ib.Ki = CURRENT_KI_CODE;
     pid1_ic.Ki = CURRENT_KI_CODE;
@@ -93,8 +93,8 @@ void ACMSIMC_PIDTuner(){
     pid1_spd.Ki = SPEED_KI_CODE;
 
     pid1_spd.OutLimit = SPEED_LOOP_LIMIT_AMPERE;
-    pid1_id.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-    pid1_iq.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+    pid1_iM.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+    pid1_iT.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
     pid1_ia.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
     pid1_ib.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
     pid1_ic.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;

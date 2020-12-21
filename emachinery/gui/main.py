@@ -172,8 +172,8 @@ class EmachineryWidget(QMainWindow):
         self.ui.label_qpix_Note1.setPixmap(latex_repo.qpixmap_Note1)
         self.ui.label_qpix_Note2.setPixmap(latex_repo.qpixmap_Note2)
         self.ui.label_qpix_Note3.setPixmap(latex_repo.qpixmap_Note3)
-        self.ui.pushButton_pidTuner.clicked.connect(self.series_pid_tuner)
-        self.series_pid_tuner()
+        self.ui.pushButton_pidTuner.clicked.connect(self.run_series_pid_tuner)
+        self.run_series_pid_tuner()
         # self.ui.pushButton_SweepFreq.clicked.connect(self.runCBasedSimulation_SweepFrequnecyAnalysis)
 
 
@@ -247,13 +247,15 @@ class EmachineryWidget(QMainWindow):
         # read in c header file and figure out what are the possible labels
 
     ''' PI Regulator Tuning '''
-    def series_pid_tuner(self):
+    def run_series_pid_tuner(self):
         # Specify your desired damping factor
         delta = eval(self.ui.lineEdit_dampingFactor_delta.text())
         # Specify your desired speed closed-loop bandwidth
         desired_VLBW_HZ = eval(self.ui.lineEdit_desiredVLBW.text())
 
-        # print(f'delta={delta}', desired_VLBW_HZ)
+        # Update CL_TS and CL_VS
+        self.motor_dict['CL_TS'] = eval(self.ui.lineEdit_CLTS.text())
+        self.motor_dict['VL_TS'] = eval(self.ui.lineEdit_VLTS.text())
 
         currentPI, speedPI, 上位机电流PI, 上位机速度PI, tuple_designedMagPhaseOmega, BW_in_Hz = tuner.iterate_for_desired_bandwidth(delta, desired_VLBW_HZ, self.motor_dict)
 
@@ -649,6 +651,8 @@ class EmachineryWidget(QMainWindow):
                     or '#define IM_ROTOR_RESISTANCE' in line \
                     or '#define IM_TOTAL_LEAKAGE_INDUCTANCE' in line \
                     or '#define IM_MAGNETIZING_INDUCTANCE' in line \
+                    or '#define IM_FLUX_COMMAND_DC_PART' in line \
+                    or '#define IM_FLUX_COMMAND_SINE_PART' in line \
                     or '#define PMSM_RESISTANCE' in line \
                     or '#define PMSM_D_AXIS_INDUCTANCE' in line \
                     or '#define PMSM_Q_AXIS_INDUCTANCE' in line \
@@ -657,7 +661,11 @@ class EmachineryWidget(QMainWindow):
                     or '#define MOTOR_RATED_CURRENT_RMS' in line \
                     or '#define MOTOR_RATED_POWER_WATT' in line \
                     or '#define MOTOR_RATED_SPEED_RPM' in line \
-                    or '#define MOTOR_SHAFT_INERTIA' in line:
+                    or '#define MOTOR_SHAFT_INERTIA' in line \
+                    or '#define INDIRECT_FOC 1' in line \
+                    or '#define NULL_D_AXIS_CURRENT_CONTROL -1' in line \
+                    or '#define MTPA -2' in line \
+                    or '#define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL' in line:
                     return True
                 else:
                     return False
@@ -685,15 +693,22 @@ class EmachineryWidget(QMainWindow):
                         if '#define MACHINE_TYPE' in line: 
                             new_lines.append(f'#define MACHINE_TYPE {11}\n')
                             # Machine Parameters
-                            new_lines.append(f'\t#define IM_STAOTR_RESISTANCE             {motor_dict["Rs"]}\n')
-                            new_lines.append(f'\t#define IM_ROTOR_RESISTANCE              {motor_dict["Rreq"]}\n')
-                            new_lines.append(f'\t#define IM_TOTAL_LEAKAGE_INDUCTANCE      {motor_dict["Lsigma"]}\n')
-                            new_lines.append(f'\t#define IM_MAGNETIZING_INDUCTANCE        {motor_dict["Lmu"]}\n')
-                            new_lines.append(f'\t#define MOTOR_NUMBER_OF_POLE_PAIRS          {motor_dict["n_pp"]}\n')
-                            new_lines.append(f'\t#define MOTOR_RATED_CURRENT_RMS             {motor_dict["IN"]}\n')
-                            new_lines.append(f'\t#define MOTOR_RATED_POWER_WATT              {motor_dict["PW"]}\n')
-                            new_lines.append(f'\t#define MOTOR_RATED_SPEED_RPM               {motor_dict["RPM"]}\n')
-                            new_lines.append(f'\t#define MOTOR_SHAFT_INERTIA                 {motor_dict["J_s"]}\n')
+                            new_lines.append(f'\t#define IM_STAOTR_RESISTANCE        {motor_dict["Rs"]}\n')
+                            new_lines.append(f'\t#define IM_ROTOR_RESISTANCE         {motor_dict["Rreq"]}\n')
+                            new_lines.append(f'\t#define IM_TOTAL_LEAKAGE_INDUCTANCE {motor_dict["Lsigma"]}\n')
+                            new_lines.append(f'\t#define IM_MAGNETIZING_INDUCTANCE   {motor_dict["Lmu"]}\n')
+                            new_lines.append(f'\t#define IM_FLUX_COMMAND_DC_PART     {motor_dict["flux_cmd_dc_part"]}\n')
+                            new_lines.append(f'\t#define IM_FLUX_COMMAND_SINE_PART   {motor_dict["flux_cmd_sine_part"]}\n')
+                            new_lines.append(f'\t#define MOTOR_NUMBER_OF_POLE_PAIRS  {motor_dict["n_pp"]}\n')
+                            new_lines.append(f'\t#define MOTOR_RATED_CURRENT_RMS     {motor_dict["IN"]}\n')
+                            new_lines.append(f'\t#define MOTOR_RATED_POWER_WATT      {motor_dict["PW"]}\n')
+                            new_lines.append(f'\t#define MOTOR_RATED_SPEED_RPM       {motor_dict["RPM"]}\n')
+                            new_lines.append(f'\t#define MOTOR_SHAFT_INERTIA         {motor_dict["J_s"]}\n')
+                            continue
+                        if 'define CONTROL_STRATEGY' in line:
+                            # Control Methods
+                            new_lines.append(f'\t#define INDIRECT_FOC 1\n')
+                            new_lines.append(f'#define CONTROL_STRATEGY INDIRECT_FOC\n')
                             continue
                     elif "Synchronous Machine" in self.ui.comboBox_MachineType.currentText():
                         if '#define MACHINE_TYPE' in line: 
@@ -703,11 +718,17 @@ class EmachineryWidget(QMainWindow):
                             new_lines.append(f'\t#define PMSM_D_AXIS_INDUCTANCE             {motor_dict["Ld"]}\n')
                             new_lines.append(f'\t#define PMSM_Q_AXIS_INDUCTANCE             {motor_dict["Lq"]}\n')
                             new_lines.append(f'\t#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE {motor_dict["KE"]}\n')
-                            new_lines.append(f'\t#define MOTOR_NUMBER_OF_POLE_PAIRS          {motor_dict["n_pp"]}\n')
-                            new_lines.append(f'\t#define MOTOR_RATED_CURRENT_RMS             {motor_dict["IN"]}\n')
-                            new_lines.append(f'\t#define MOTOR_RATED_POWER_WATT              {motor_dict["PW"]}\n')
-                            new_lines.append(f'\t#define MOTOR_RATED_SPEED_RPM               {motor_dict["RPM"]}\n')
-                            new_lines.append(f'\t#define MOTOR_SHAFT_INERTIA                 {motor_dict["J_s"]}\n')
+                            new_lines.append(f'\t#define MOTOR_NUMBER_OF_POLE_PAIRS         {motor_dict["n_pp"]}\n')
+                            new_lines.append(f'\t#define MOTOR_RATED_CURRENT_RMS            {motor_dict["IN"]}\n')
+                            new_lines.append(f'\t#define MOTOR_RATED_POWER_WATT             {motor_dict["PW"]}\n')
+                            new_lines.append(f'\t#define MOTOR_RATED_SPEED_RPM              {motor_dict["RPM"]}\n')
+                            new_lines.append(f'\t#define MOTOR_SHAFT_INERTIA                {motor_dict["J_s"]}\n')
+                            continue
+                        if 'define CONTROL_STRATEGY' in line:
+                            # Control Methods
+                            new_lines.append(f'\t#define NULL_D_AXIS_CURRENT_CONTROL -1')
+                            new_lines.append(f'\t#define MTPA -2 // not supported')
+                            new_lines.append(f'#define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL')
                             continue
                     # Ignore old Machiner Parameters macros
                     if conditions_to_continue(line): continue
@@ -720,6 +741,7 @@ class EmachineryWidget(QMainWindow):
                         elif '#define SPEED_KP '       in line: new_lines.append(f'#define SPEED_KP ({  control_dict["speedPI"]  [0]:g})\n'); continue
                         elif '#define SPEED_KI '       in line: new_lines.append(f'#define SPEED_KI ({  control_dict["speedPI"]  [1]:g})\n'); continue
                         elif '#define EXCITATION_TYPE' in line: new_lines.append(f'#define EXCITATION_TYPE ({control_dict["ExcitationType"]})\n'); continue
+                        elif '#define CURRENT_LOOP_LIMIT_VOLTS' in line: new_lines.append(f'#define CURRENT_LOOP_LIMIT_VOLTS ({motor_dict["Udc"]})\n'); continue
 
                     # Sweep Frequency Related Quantities
                     if len(sweepFreq_dict.keys()) > 0:
@@ -747,21 +769,23 @@ class EmachineryWidget(QMainWindow):
         # update path/to/acmsimcv5/c/utility.c
         if bool_updatePlotSetting: updatePlotSettings(self.path2acmsimc, self.list__detail)
         updateACMConfig(self.path2acmsimc, self.motor_dict, self.control_dict, self.sweepFreq_dict)
+        print('ACMConfig.h is updated.')
 
-        # compile c and run
-        if os.path.exists(self.path2acmsimc+"/dat/info.dat"):
-            os.remove(self.path2acmsimc+"/dat/info.dat")
-        os.system(f"cd /d {self.path2acmsimc}/c && gmake main && start cmd /c main")
-        while not os.path.exists(self.path2acmsimc+"/dat/info.dat"):
-            # print('sleep for info.dat')
-            sleep(0.1)
+        if self.ui.checkBox_compileAndRun.isChecked():
+            # compile c and run
+            if os.path.exists(self.path2acmsimc+"/dat/info.dat"):
+                os.remove(self.path2acmsimc+"/dat/info.dat")
+            os.system(f"cd /d {self.path2acmsimc}/c && gmake main && start cmd /c main")
+            while not os.path.exists(self.path2acmsimc+"/dat/info.dat"):
+                # print('sleep for info.dat')
+                sleep(0.1)
 
-        # Animate ACMPlot
-        # print('sleep for .dat file')
-        # sleep(2) # it takes time for main.exe to write data into the disk.
-        self.update_ACMPlot()
+            # Animate ACMPlot
+            # print('sleep for .dat file')
+            # sleep(2) # it takes time for main.exe to write data into the disk.
+            # but we don't need to use sleep() to wait for that anymore, because we have animated ACMPlot now which works well with incomplete data
+            self.update_ACMPlot()
     # def runCBasedSimulation_SweepFrequnecyAnalysis(self):
-
 
 
     ''' Optimization Section '''
@@ -807,8 +831,9 @@ class EmachineryWidget(QMainWindow):
         self.ui.lineEdit_RatedPower  .setText(str(self.motor_dict['PW']))
         self.ui.lineEdit_RatedSpeed  .setText(str(self.motor_dict['RPM']))
 
-        # 另一个tab下的LineEdit也同步更新
+        # tab "C-based Simulation" 另一个tab下的LineEdit也同步更新
         self.ui.lineEdit_RO_MachineName.setText(self.ui.comboBox_MachineName.currentText())
+        self.ui.lineEdit_DCBusVoltage.setText(str(self.motor_dict['Udc']))
     # parameter conversion
     def console_push_variable(self, d):
         self.ui.ConsoleWidget.push_vars(d)
@@ -842,6 +867,7 @@ class EmachineryWidget(QMainWindow):
         motor_dict['RPM']  = RPM  = motor["额定转速 [rpm]"]
 
         motor_dict['J_s']  = J_s  = motor["转动惯量 [kg.cm^2]"]*1e-4
+        motor_dict['Udc']  = Udc  = motor["母线电压 [Vdc]"]
 
         if '感应' in motor['电机类型']:
             motor_dict['Rs']     = Rs     = motor["定子电阻 [Ohm]"]
@@ -850,6 +876,9 @@ class EmachineryWidget(QMainWindow):
             motor_dict['Lmu']    = Lmu    = motor["定子D轴电感 [mH]"]*1e-3 - Lsigma
             motor_dict['KE']     = KE     = motor["额定反电势系数 [Wb]"]
             motor_dict['Ls']     = Lsigma + Lmu # this will be used in tuner.py for iteration for current BW
+
+            motor_dict['flux_cmd_dc_part'] = KE * eval(self.ui.lineEdit_FluxCmdPercentage.text())/100
+            motor_dict['flux_cmd_sine_part'] = 0.0
 
         elif '永磁' in motor['电机类型']:
             motor_dict['Rs'] = R  = motor["定子电阻 [Ohm]"]

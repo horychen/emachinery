@@ -1,3 +1,6 @@
 Speed [rpm]
-Current [A]
-Position [deg]
+Magnetizing Current [A]
+Torque Current [A]
+Stator Current [A]
+Stator Flux [Wb]
+Rotor Flux [Wb]

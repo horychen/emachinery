@@ -203,7 +203,7 @@ void CTRL_init(){
     // PID调谐
     ACMSIMC_PIDTuner();
     printf("Speed PID: Kp=%g, Ki=%g, limit=%g Nm\n", pid1_spd.Kp, pid1_spd.Ki/CL_TS, pid1_spd.OutLimit);
-    printf("Current PID: Kp=%g, Ki=%g, limit=%g V\n", pid1_id.Kp, pid1_id.Ki/CL_TS, pid1_id.OutLimit);
+    printf("Current PID: Kp=%g, Ki=%g, limit=%g V\n", pid1_iM.Kp, pid1_iM.Ki/CL_TS, pid1_iM.OutLimit);
 }
 
 // 定义特定的测试指令，如快速反转等
@@ -248,24 +248,24 @@ void controller(){
     // 帕克变换
     #define THE_FIELD_IS_KNOWN FALSE
     #if THE_FIELD_IS_KNOWN
-        ob.theta_M = atan2(IM.x[3], IM.x[2]); 
-        ob.cosT = cos(ob.theta_M); 
-        ob.sinT = sin(ob.theta_M);
+        CTRL.theta_M = atan2(IM.x[3], IM.x[2]); 
+        CTRL.cosT = cos(CTRL.theta_M); 
+        CTRL.sinT = sin(CTRL.theta_M);
     #else
         // 间接磁场定向第一部分
-        ob.theta_M += TS * CTRL.omega_syn;
-        ob.cosT = cos(ob.theta_M); 
-        ob.sinT = sin(ob.theta_M);
-        if(ob.theta_M > M_PI){
-            ob.theta_M -= 2*M_PI;        
-        }else if(ob.theta_M < -M_PI){
-            ob.theta_M += 2*M_PI; // 反转！
+        CTRL.theta_M += CL_TS * CTRL.omega_syn;
+        CTRL.cosT = cos(CTRL.theta_M); 
+        CTRL.sinT = sin(CTRL.theta_M);
+        if(CTRL.theta_M > M_PI){
+            CTRL.theta_M -= 2*M_PI;        
+        }else if(CTRL.theta_M < -M_PI){
+            CTRL.theta_M += 2*M_PI; // 反转！
         }
     #endif
-    CTRL.iMs = AB2M(IS_C(0), IS_C(1), ob.cosT, ob.sinT);
-    CTRL.iTs = AB2T(IS_C(0), IS_C(1), ob.cosT, ob.sinT);
-    pid1_id.Fdb = CTRL.iMs;
-    pid1_iq.Fdb = CTRL.iTs;
+    CTRL.iMs = AB2M(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
+    CTRL.iTs = AB2T(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
+    pid1_iM.Fbk = CTRL.iMs;
+    pid1_iT.Fbk = CTRL.iTs;
 
 
     // 转速环
@@ -274,57 +274,58 @@ void controller(){
         vc_count = 0;
 
         pid1_spd.Ref = rpm_speed_command*RPM_2_RAD_PER_SEC;
-        pid1_spd.Fdb = CTRL.omg__fb;
+        pid1_spd.Fbk = CTRL.omg__fb;
         pid1_spd.calc(&pid1_spd);
-        pid1_iq.Ref = pid1_spd.Out;
-
+        pid1_iT.Ref = pid1_spd.Out*0;
+        CTRL.iTs_cmd = pid1_iT.Ref;
     }
-    CTRL.iTs_cmd = pid1_spd.Out;
     // 磁链环
-    // double the_dc_part = TAAO_FLUX_COMMAND_VALUE;
-    ob.taao_flux_cmd = 1.0; //TAAO_FluxModulusCommand();
-    if(ob.taao_flux_cmd_on){
-        CTRL.iMs_cmd = the_dc_part * CTRL.Lmu_inv   \
-                       + (   M1*OMG1*cos(OMG1*ob.timebase)  )/ CTRL.rreq; ///////////////////////////////// 
-    }else{
-        CTRL.iMs_cmd = ob.taao_flux_cmd * CTRL.Lmu_inv + (deriv_fluxModCmd)/ CTRL.rreq; 
-        // CTRL.iMs_cmd = ob.taao_flux_cmd * CTRL.Lmu_inv;
-    }
-    pid1_iq.Ref = CTRL.iMs_cmd;
-    CTRL.torque_cmd = CLARKE_TRANS_TORQUE_GAIN * im.npp * CTRL.iTs_cmd * (ob.taao_flux_cmd);
+    // if(ob.taao_flux_cmd_on){
+    //     CTRL.iMs_cmd = IM_FLUX_COMMAND_DC_PART * CTRL.Lmu_inv   \
+    //                    + (   M1*OMG1*cos(OMG1*ob.timebase)  )/ CTRL.rreq; ///////////////////////////////// 
+    // }else{
+        // CTRL.iMs_cmd =  * CTRL.Lmu_inv + (deriv_fluxModCmd)/ CTRL.rreq; 
+        CTRL.rotor_flux_cmd = IM_FLUX_COMMAND_DC_PART;
+        CTRL.iMs_cmd = CTRL.rotor_flux_cmd * CTRL.Lmu_inv;
+    // }
+    pid1_iM.Ref = CTRL.iMs_cmd;
+    // 计算转矩
+    CTRL.torque_cmd = CLARKE_TRANS_TORQUE_GAIN * im.npp * CTRL.iTs_cmd * (CTRL.rotor_flux_cmd);
     // 间接磁场定向第二部分
-    CTRL.omega_sl = CTRL.rreq*CTRL.iTs_cmd/(ob.taao_flux_cmd);
+    CTRL.omega_sl = CTRL.rreq*CTRL.iTs_cmd/(CTRL.rotor_flux_cmd);
     CTRL.omega_syn = CTRL.omg__fb + CTRL.omega_sl;
 
-    // 扫频将覆盖上面产生的励磁、转矩电流指令    
-    #if SWEEP_FREQ_C2V == TRUE
-        pid1_iq.Ref = amp_current_command; 
+    // 扫频将覆盖上面产生的励磁、转矩电流指令
+    #if EXCITATION_TYPE == EXCITATION_SWEEP_FREQUENCY
+        #if SWEEP_FREQ_C2V == TRUE
+            pid1_iT.Ref = amp_current_command; 
+        #endif
+        #if SWEEP_FREQ_C2C == TRUE
+            pid1_iT.Ref = 0.0;
+            pid1_iM.Ref = amp_current_command;
+        #else
+            pid1_iM.Ref = 0.0;
+        #endif
     #endif
-    #if SWEEP_FREQ_C2C == TRUE
-        pid1_iq.Ref = 0.0;
-        pid1_id.Ref = amp_current_command;
-    #else
-        pid1_id.Ref = 0.0;
-    #endif
-
 
 
 
     // 电流环
-    pid1_id.calc(&pid1_id);
-    pid1_iq.calc(&pid1_iq);
+    REAL decoupled_d_axis_voltage=0.0, decoupled_q_axis_voltage=0.0;
+    pid1_iM.calc(&pid1_iM);
+    pid1_iT.calc(&pid1_iT);
     {   // Steady state dynamics based decoupling circuits for current regulation
         #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
             // decoupled_d_axis_voltage = vM + (CTRL.rs+CTRL.rreq)*CTRL.iMs + CTRL.Lsigma*(-CTRL.omega_syn*CTRL.iTs) - CTRL.alpha*CTRL.psimod_fb; // Jadot09
             // decoupled_q_axis_voltage = vT + (CTRL.rs+CTRL.rreq)*CTRL.iTs + CTRL.Lsigma*( CTRL.omega_syn*CTRL.iMs) + CTRL.omg_fb*CTRL.psimod_fb;
 
-            decoupled_d_axis_voltage = pid1_id.Out + (CTRL.Lsigma) * (-CTRL.omega_syn*CTRL.iTs); // Telford03/04
+            decoupled_d_axis_voltage = pid1_iM.Out + (CTRL.Lsigma) * (-CTRL.omega_syn*CTRL.iTs); // Telford03/04
             // decoupled_q_axis_voltage = vT + CTRL.omega_syn*(ob.taao_flux_cmd + im.Lsigma*CTRL.iMs); // 这个行，但是无速度运行时，会导致M轴电流在转速暂态高频震荡。
             // decoupled_q_axis_voltage = vT + CTRL.omega_syn*(CTRL.Lsigma+CTRL.Lmu)*CTRL.iMs; // 这个就不行，说明：CTRL.Lmu*iMs != ob.taao_flux_cmd，而是会因iMs的波动在T轴控制上引入波动和不稳定
-            decoupled_q_axis_voltage = pid1_iq.Out;
+            decoupled_q_axis_voltage = pid1_iT.Out;
         #else
-            decoupled_d_axis_voltage = pid1_id.Out;
-            decoupled_q_axis_voltage = pid1_iq.Out;
+            decoupled_d_axis_voltage = pid1_iM.Out;
+            decoupled_q_axis_voltage = pid1_iT.Out;
         #endif
     }
 
