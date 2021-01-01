@@ -183,6 +183,8 @@ void IM_saturated_Dynamics(double t, double *x, double *fx){
     // IM.Tem = IM.npp*(IM.Lm/(IM.Lm+IM.Llr))*(IM.iqs*x[2]-IM.ids*x[3]); // this is not better 
     IM.Tem = CLARKE_TRANS_TORQUE_GAIN * IM.npp * (IM.iqs*x[0]-IM.ids*x[1]);
     fx[4] = (IM.Tem - IM.Tload)*IM.mu_m;
+    fx[5] = x[4];
+    fx[6] = x[4];
     #undef IM
 }
 void IM_linear_Dynamics(double t, double *x, double *fx){
@@ -229,6 +231,7 @@ void IM_linear_Dynamics(double t, double *x, double *fx){
     IM.Tem = IM.Lm_slash_Lr*IM.npp*(x[1]*x[2]-x[0]*x[3]);
     fx[4] = (IM.Tem - IM.Tload)*IM.mu_m;
     fx[5] = x[4];
+    fx[6] = x[4];
     #undef IM
 }
 // 四阶龙格库塔法
@@ -299,6 +302,16 @@ int machine_simulation(){
     // 电机转速接口
     ACM.omg_elec = ACM.x[4]; // 电气转速 [elec. rad/s]
     ACM.rpm = ACM.x[4] * 60 / (2 * M_PI * ACM.npp); // 机械转速 [mech. r/min]
+
+
+    // 电机转子位置接口
+    ACM.theta_d = ACM.x[5];
+    ACM.theta_d_accum = ACM.x[6];
+    // 转子（假想）d轴位置限幅
+    if(ACM.theta_d > M_PI) ACM.theta_d -= 2*M_PI;
+    if(ACM.theta_d < -M_PI) ACM.theta_d += 2*M_PI; // 反转！
+    // 将状态变量x[3]和接口变量theta_d的值进行同步
+    ACM.x[5] = ACM.theta_d;
 
     // 简单的程序跑飞检测，比如电机转速无穷大则停止程序
     if(isNumber(ACM.rpm)){

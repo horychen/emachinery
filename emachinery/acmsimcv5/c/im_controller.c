@@ -276,7 +276,7 @@ void controller(){
         pid1_spd.Ref = rpm_speed_command*RPM_2_RAD_PER_SEC;
         pid1_spd.Fbk = CTRL.omg__fb;
         pid1_spd.calc(&pid1_spd);
-        pid1_iT.Ref = pid1_spd.Out*0;
+        pid1_iT.Ref = pid1_spd.Out;
         CTRL.iTs_cmd = pid1_iT.Ref;
     }
     // 磁链环
@@ -311,26 +311,26 @@ void controller(){
 
 
     // 电流环
-    REAL decoupled_d_axis_voltage=0.0, decoupled_q_axis_voltage=0.0;
+    REAL decoupled_M_axis_voltage=0.0, decoupled_T_axis_voltage=0.0;
     pid1_iM.calc(&pid1_iM);
     pid1_iT.calc(&pid1_iT);
     {   // Steady state dynamics based decoupling circuits for current regulation
         #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
-            // decoupled_d_axis_voltage = vM + (CTRL.rs+CTRL.rreq)*CTRL.iMs + CTRL.Lsigma*(-CTRL.omega_syn*CTRL.iTs) - CTRL.alpha*CTRL.psimod_fb; // Jadot09
-            // decoupled_q_axis_voltage = vT + (CTRL.rs+CTRL.rreq)*CTRL.iTs + CTRL.Lsigma*( CTRL.omega_syn*CTRL.iMs) + CTRL.omg_fb*CTRL.psimod_fb;
+            // decoupled_M_axis_voltage = vM + (CTRL.rs+CTRL.rreq)*CTRL.iMs + CTRL.Lsigma*(-CTRL.omega_syn*CTRL.iTs) - CTRL.alpha*CTRL.psimod_fb; // Jadot09
+            // decoupled_T_axis_voltage = vT + (CTRL.rs+CTRL.rreq)*CTRL.iTs + CTRL.Lsigma*( CTRL.omega_syn*CTRL.iMs) + CTRL.omg_fb*CTRL.psimod_fb;
 
-            decoupled_d_axis_voltage = pid1_iM.Out + (CTRL.Lsigma) * (-CTRL.omega_syn*CTRL.iTs); // Telford03/04
-            // decoupled_q_axis_voltage = vT + CTRL.omega_syn*(ob.taao_flux_cmd + im.Lsigma*CTRL.iMs); // 这个行，但是无速度运行时，会导致M轴电流在转速暂态高频震荡。
-            // decoupled_q_axis_voltage = vT + CTRL.omega_syn*(CTRL.Lsigma+CTRL.Lmu)*CTRL.iMs; // 这个就不行，说明：CTRL.Lmu*iMs != ob.taao_flux_cmd，而是会因iMs的波动在T轴控制上引入波动和不稳定
-            decoupled_q_axis_voltage = pid1_iT.Out;
+            decoupled_M_axis_voltage = pid1_iM.Out + (CTRL.Lsigma) * (-CTRL.omega_syn*CTRL.iTs); // Telford03/04
+            // decoupled_T_axis_voltage = pid1_iT.Out + CTRL.omega_syn*(CTRL.rotor_flux_cmd + im.Lsigma*CTRL.iMs); // 这个行，但是无速度运行时，会导致M轴电流在转速暂态高频震荡。
+            // decoupled_T_axis_voltage = vT + CTRL.omega_syn*(CTRL.Lsigma+CTRL.Lmu)*CTRL.iMs; // 这个就不行，说明：CTRL.Lmu*iMs != ob.taao_flux_cmd，而是会因iMs的波动在T轴控制上引入波动和不稳定
+            decoupled_T_axis_voltage = pid1_iT.Out; // 无感用这个
         #else
-            decoupled_d_axis_voltage = pid1_iM.Out;
-            decoupled_q_axis_voltage = pid1_iT.Out;
+            decoupled_M_axis_voltage = pid1_iM.Out;
+            decoupled_T_axis_voltage = pid1_iT.Out;
         #endif
     }
 
-    CTRL.ual = MT2A(decoupled_d_axis_voltage, decoupled_q_axis_voltage, CTRL.cosT, CTRL.sinT);
-    CTRL.ube = MT2B(decoupled_d_axis_voltage, decoupled_q_axis_voltage, CTRL.cosT, CTRL.sinT);
+    CTRL.ual = MT2A(decoupled_M_axis_voltage, decoupled_T_axis_voltage, CTRL.cosT, CTRL.sinT);
+    CTRL.ube = MT2B(decoupled_M_axis_voltage, decoupled_T_axis_voltage, CTRL.cosT, CTRL.sinT);
 }
 
 #endif

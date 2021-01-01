@@ -143,9 +143,16 @@ void commands(double *p_rpm_speed_command, double *p_amp_current_command){
 
     #if EXCITATION_TYPE == 1
         // 转速运动模式 in rpm
-        rpm_speed_command = 500;
-        if(CTRL.timebase>5){
+        if(CTRL.timebase<1){ // note 1 sec is not enough for stator flux to reach steady state.
+            rpm_speed_command = 0;
+        }else if(CTRL.timebase<2){
+            rpm_speed_command = 500;
+        }else if(CTRL.timebase<4){
             rpm_speed_command = -500;
+        }else if(CTRL.timebase<6){
+            rpm_speed_command = 0;
+        }else if(CTRL.timebase<8){
+            rpm_speed_command = 500;
         }
     #endif
 }

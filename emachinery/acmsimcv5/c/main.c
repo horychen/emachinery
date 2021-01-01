@@ -1,11 +1,7 @@
 #include "ACMSim.h"
-// #include <unistd.h> // getcwd
 
 // 主函数
 int main(){
-    // dir
-    // char cwd[1024];
-    // printf(getcwd(cwd, sizeof(cwd)));
 
     // 初始化
     Machine_init(); // 仿真电机初始化

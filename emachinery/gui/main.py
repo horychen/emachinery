@@ -239,7 +239,8 @@ class EmachineryWidget(QMainWindow):
 
         '''MainWindow
         '''
-        self.setWindowTitle("Figure: Electric Machinery")
+        self.setWindowTitle("Electric Machinery")
+        # self.setWindowTitle("Figure: Electric Machinery")
 
         '''
         todo
@@ -293,6 +294,12 @@ class EmachineryWidget(QMainWindow):
 
         # pass to console
         self.console_push_variable({'control_dict':self.control_dict})
+
+        self.console_push_variable({'tuner_trick':
+            ''' (1) A value of damping factor (δ) equal to 1.0 corresponds to the condition where the velocity open-loop gain intercepts 0 dB right at the frequency of the current controller bandwidth. This results in pole/zero cancellation at this frequency with a phase margin of zero. It goes without saying that zero phase margin equals bad things for your system. \n
+                (2) Where "δ" we will define as the damping factor. The larger δ is, the further apart the zero corner frequency and the current loop pole will be. And the further apart they are, the phase margin is allowed to peak to a higher value in-between these frequencies. This improves stability at the expense of speed loop bandwidth. If δ = 1, then the zero corner frequency and the current loop pole are equal, which results in pole/zero cancellation and the system will be unstable. Theoretically, any value of δ > 1 is stable since phase margin > 0. However, values of δ close to 1 result in severely underdamped performance.\n
+                (3) In short, δ > 1 gives positive phase margin and the larger δ gets, the larger the phase margin becomes, and at the same time, the velocity performance would become sluggish (i.e., you will need to increase your current bandwidth to really high to achieve higher velocity bandwidth).\n
+            '''})
 
         # print(self.control_dict, end='\n'*2)
         return self.control_dict

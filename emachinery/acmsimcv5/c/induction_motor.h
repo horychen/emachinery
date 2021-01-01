@@ -9,7 +9,7 @@
     #define MACHINE_DYNAMICS IM_saturated_Dynamics
 #endif
 // 4 elec + 2 mech
-#define NUMBER_OF_STATES 6
+#define NUMBER_OF_STATES 7
 
 struct InductionMachineSimulated{
     double timebase;
@@ -20,6 +20,9 @@ struct InductionMachineSimulated{
     double rpm_deriv_cmd;
     double Tload;
     double Tem;
+
+    double theta_d; // 转子（假想）d轴位置
+    double theta_d_accum; // 转子（假想）d轴位置
 
     double theta_M;
     double cosT; // cosine for Park Transform

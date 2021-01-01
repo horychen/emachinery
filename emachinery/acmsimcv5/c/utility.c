@@ -1,9 +1,9 @@
 #include "ACMSim.h"
 // 功能函数
 // 写变量名到文件
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.rpm_cmd,ACM.rpm,im.omg_elec,CTRL.iMs_cmd,CTRL.iMs,ACM.iMs,CTRL.iTs_cmd,CTRL.iTs,ACM.iTs,ACM.ial,ACM.ibe,ACM.x[0],ACM.x[1],ACM.x[2],ACM.x[3]\n"
-#define DATA_DETAILS ACM.rpm_cmd,ACM.rpm,im.omg_elec,CTRL.iMs_cmd,CTRL.iMs,ACM.iMs,CTRL.iTs_cmd,CTRL.iTs,ACM.iTs,ACM.ial,ACM.ibe,ACM.x[0],ACM.x[1],ACM.x[2],ACM.x[3]
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.rpm_cmd,ACM.rpm,im.omg_elec*RAD_PER_SEC_2_RPM,CTRL.iMs_cmd,CTRL.iMs,ACM.iMs,CTRL.iTs_cmd,CTRL.iTs,ACM.iTs,ACM.ial,ACM.ibe,ACM.x[0],ACM.x[2],ACM.x[6]/M_PI*180\n"
+#define DATA_DETAILS ACM.rpm_cmd,ACM.rpm,im.omg_elec*RAD_PER_SEC_2_RPM,CTRL.iMs_cmd,CTRL.iMs,ACM.iMs,CTRL.iTs_cmd,CTRL.iTs,ACM.iTs,ACM.ial,ACM.ibe,ACM.x[0],ACM.x[2],ACM.x[6]/M_PI*180
 
 void write_header_to_file(FILE *fw){
     printf("%s\n", DATA_FILE_NAME);

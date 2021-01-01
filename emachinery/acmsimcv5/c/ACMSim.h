@@ -100,4 +100,10 @@ void write_data_to_file(FILE *fw);
 int isNumber(double x);
 double sign(double x);
 double fabs(double x);
+
+// #include <unistd.h> // getcwd
+    // dir
+    // char cwd[1024];
+    // printf(getcwd(cwd, sizeof(cwd)));
+
 #endif

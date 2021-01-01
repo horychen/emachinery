@@ -6,5 +6,5 @@
     "LoadTorque": "0.0",
     "LoadInertiaPercentage": "16",
     "ViscousCoefficient": "0.7e-4",
-    "OutputDataFileName": "PMSM_SweepFreq"
+    "OutputDataFileName": "IM_Velocity"
 }

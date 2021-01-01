@@ -1,6 +1,6 @@
-ACM.rpm_cmd, ACM.rpm, im.omg_elec
+ACM.rpm_cmd, ACM.rpm, im.omg_elec*RAD_PER_SEC_2_RPM
 CTRL.iMs_cmd, CTRL.iMs, ACM.iMs
 CTRL.iTs_cmd, CTRL.iTs, ACM.iTs
 ACM.ial, ACM.ibe
-ACM.x[0], ACM.x[1]
-ACM.x[2], ACM.x[3]
+ACM.x[0], ACM.x[2]
+ACM.x[6]/M_PI*180
