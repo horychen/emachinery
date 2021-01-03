@@ -21,7 +21,7 @@ struct SynchronousMachineSimulated{
     double rpm;
     double rpm_cmd;
     double rpm_deriv_cmd;
-    double Tload;
+    double TLoad;
     double Tem;
 
     // Electrical parameter

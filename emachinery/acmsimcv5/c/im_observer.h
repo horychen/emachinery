@@ -112,5 +112,7 @@ extern struct ObserverControl ob;
 
 void acm_init();
 
+void observer_marino2005();
+
 #endif
 #endif

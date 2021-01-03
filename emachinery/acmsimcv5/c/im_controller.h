@@ -4,70 +4,81 @@
 
 struct ControllerForExperiment {
 
-    double timebase;
+    REAL timebase;
 
-    double iMs;
-    double iTs;
-    double iMs_cmd;
-    double iTs_cmd;
-    double torque_cmd;
-    double uMs_cmd;
-    double uTs_cmd;
-    double ual;
-    double ube;
+    REAL iDs;
+    REAL iQs;
+    REAL iDs_cmd;
+    REAL iQs_cmd;
 
-    double speed_ctrl_err;
+    REAL uDs_cmd;
+    REAL uQs_cmd;
+    REAL ual_cmd;
+    REAL ube_cmd;
 
-    double theta_M;
-    double cosT;
-    double sinT;
+    REAL omg_cmd;
+    REAL deriv_omg_cmd;
+    REAL torque_cmd;
 
-    double e_M;
-    double e_T;
+    REAL speed_ctrl_err;
+
+    REAL theta_D;
+    REAL cosT;
+    REAL sinT;
+
+    REAL e_M;
+    REAL e_T;
 
     // struct PI_Reg pi_speed;
     // struct PI_Reg pi_iMs;
     // struct PI_Reg pi_iTs;
 
-    double omega_sl;
-    double omega_syn;
+    REAL omega_sl;
+    REAL omega_syn;
 
-    double tajima_omg;
-    double K_PEM;
 
-    double omg__fb;
-    double ial__fb;
-    double ibe__fb;
+    REAL tajima_omg;
+    REAL K_PEM;
 
-    double speed_fb;
-    double psial_fb;
-    double psibe_fb;
-    double psimod_fb;
-    double psimod_fb_inv;
+    REAL omg__fb;
+    REAL ial__fb;
+    REAL ibe__fb;
 
-    double rotor_flux_cmd;
-    double deriv_fluxModSim;
+    // REAL speed_fb;
+    // REAL psial_fb;
+    // REAL psibe_fb;
+    // REAL psimod_fb;
+    // REAL psimod_fb_inv;
 
-    double rs;
-    double rreq;
-    double Lsigma;
-    double alpha;
-    double Lmu;
-    double Lmu_inv;
+    REAL psi_cmd;
+    REAL psi_cmd_inv;
+    REAL deriv_psi_cmd;
+    REAL m0;
+    REAL m1;
+    REAL omega1;
 
-    double Tload;
+    int npp;
+    REAL rs;
+    REAL rreq;
+    REAL Lsigma;
+    REAL Lsigma_inv;
+    REAL Lmu;
+    REAL Lmu_inv;
+    REAL alpha;
 
-    double Js;
-    double Js_inv;
+    REAL Js;
+    REAL Js_inv;
+
+    REAL TLoad;
 
     
-    double omg_ctrl_err;
-    double gamma_omg_transient;
-    double gamma_omg_transient_shape;
-    double gamma_res_transient;
-    double gamma_res_transient_shape;
-    double gamma_res2_transient;
-    double gamma_res2_transient_shape;
+    REAL omg_ctrl_err;
+    REAL gamma_omg_transient;
+    REAL gamma_omg_transient_shape;
+    REAL gamma_res_transient;
+    REAL gamma_res_transient_shape;
+    REAL gamma_res2_transient;
+    REAL gamma_res2_transient_shape;
     int resistance_id_on;
 
 
@@ -88,57 +99,98 @@ struct ControllerForExperiment {
     int UdcBelowZero;
     int OverModulation;
     // ----------------------VVVF----------------------
-    double Freqmax;          // MCtrlPrm[4]=100 x10
-    double Freqmin;          // MCtrlPrm[6]=5   x10
-    double   DDS;            // Freq Decrease Step
-    double   DIS;            // Freq Increase Step
+    REAL Freqmax;          // MCtrlPrm[4]=100 x10
+    REAL Freqmin;          // MCtrlPrm[6]=5   x10
+    REAL   DDS;            // Freq Decrease Step
+    REAL   DIS;            // Freq Increase Step
 
-    double   FSET;           // For Set, Hz or rpm
-    double   FCUR;           // Freq Current, Hz
-    double   Goal;           // Sp Goal ,rpm  //for Ramp Set //~~~
-    double   Goal_dot;           // Sp Goal ,rpm  //for Ramp Set //~~~
+    REAL   FSET;           // For Set, Hz or rpm
+    REAL   FCUR;           // Freq Current, Hz
+    REAL   Goal;           // Sp Goal ,rpm  //for Ramp Set //~~~
+    REAL   Goal_dot;           // Sp Goal ,rpm  //for Ramp Set //~~~
     int     SpStart;
-    double  SpCount;
+    REAL  SpCount;
 
-    double   Speed;          // Speed
-    double   Wt;             // w1*t, Synchronous angle
-    double   Wht;     //liuhe
-    double   W;
-    double   myIq;
-    double   Ws1;
+    REAL   Speed;          // Speed
+    REAL   Wt;             // w1*t, Synchronous angle
+    REAL   Wht;     //liuhe
+    REAL   W;
+    REAL   myIq;
+    REAL   Ws1;
 
-    double   VCUR;           // Current Voltag Vector Amplify
-    double   VCurPerUnit;    // (2*Current Voltag/Udc), Voltag Vector Amplify
-    double   Cvf0;           // VVVF curve, Cvf0=P07/P05=311/50;  P07-最大输出电压;P05-转折频率
-    double   Udc;
+    REAL   VCUR;           // Current Voltag Vector Amplify
+    REAL   VCurPerUnit;    // (2*Current Voltag/Udc), Voltag Vector Amplify
+    REAL   Cvf0;           // VVVF curve, Cvf0=P07/P05=311/50;  P07-最大输出电压;P05-转折频率
+    REAL   Udc;
 
-    double   lUdc;
-    double   Valfa;          //ab0
-    double   Vbeta;
+    REAL   lUdc;
+    REAL   Valfa;          //ab0
+    REAL   Vbeta;
 
-    double   VaPU;               // 通向PWM的三相电压，以Udc/2标幺化
-    double   VbPU;
-    double   VcPU;
+    REAL   VaPU;               // 通向PWM的三相电压，以Udc/2标幺化
+    REAL   VbPU;
+    REAL   VcPU;
 
     int     CurDrct[PHASE_NUMBER];  //死区补偿
-    double   IAmp;           //输出电流幅值
+    REAL   IAmp;           //输出电流幅值
 
-    double   ITMP;           //计算电流有效值用中间变量
+    REAL   ITMP;           //计算电流有效值用中间变量
     // ----------------------死区补偿----------------------
     Uint16 CmparBeforeCmpnst[PHASE_NUMBER];     //死区补偿前的比较值
     Uint16 CmparAfterCmpnst[PHASE_NUMBER];      //死区补偿后的比较值
 
     // SVPWM
-    double RealSection;
+    REAL RealSection;
 };
 extern struct ControllerForExperiment CTRL;
 
+struct Marino2005{
+    REAL kz;     // zd, zq
+    REAL k_omega; // e_omega
+    REAL kappa;  // e_omega
+    REAL gamma_inv; // TL
+    REAL delta_inv; // alpha
+    REAL lambda_inv; // omega
+
+    REAL xTL_Max;
+    REAL xAlpha_Max;
+    REAL xAlpha_min;
+
+    REAL xRho;
+    REAL xTL;
+    REAL xAlpha;
+    REAL xOmg;
+
+    REAL psi_Dmu;
+    REAL psi_Qmu;
+
+    REAL zD;
+    REAL zQ;
+    REAL e_iDs;
+    REAL e_iQs;
+    REAL e_psi_Dmu;
+    REAL e_psi_Qmu;
+
+    REAL deriv_iD_cmd;
+    REAL deriv_iQ_cmd;
+
+    REAL Gamma_D;
+    REAL Gamma_Q;
+};
+extern struct Marino2005 marino;
+
+struct Holtz2003{
+    REAL psi_D2;
+    REAL psi_Q2;
+};
+extern struct Holtz2003 holtz;
+
 void CTRL_init();
-void control(double speed_cmd, double speed_cmd_dot);
+void control(REAL speed_cmd, REAL speed_cmd_dot);
 
 
-void cmd_fast_speed_reversal(double timebase, double instant, double interval, double rpm_cmd);
-void cmd_slow_speed_reversal(double timebase, double instant, double interval, double rpm_cmd);
+void cmd_fast_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
+void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
 
 
 void controller();

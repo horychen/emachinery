@@ -102,7 +102,7 @@ void ACMSIMC_PIDTuner(){
 
 struct SweepFreq sf={0.0, 1, SWEEP_FREQ_INIT_FREQ-1, 0.0, 0.0};
 
-void commands(double *p_rpm_speed_command, double *p_amp_current_command){
+void commands(REAL *p_rpm_speed_command, REAL *p_amp_current_command){
     #define rpm_speed_command (*p_rpm_speed_command)
     #define amp_current_command (*p_amp_current_command)
 

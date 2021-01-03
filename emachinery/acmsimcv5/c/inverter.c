@@ -43,24 +43,24 @@ void inverter_model(){
 
     // amplitude-invariant to power-invariant
 
-    // 根据给定电压CTRL.ual和实际的电机电流ACM.ial，计算畸变的逆变器输出电压ACM.ual。
+    // 根据给定电压CTRL.ual_cmd和实际的电机电流ACM.ial，计算畸变的逆变器输出电压ACM.ual。
     #if INVERTER_NONLINEARITY
         // 考虑控制器和电机所用Clarke变换不同导致的系数变化
-        InverterNonlinearity_SKSul96(CTRL.ual*sqrt(CLARKE_TRANS_TORQUE_GAIN), \
-                                     CTRL.ube*sqrt(CLARKE_TRANS_TORQUE_GAIN), \
+        InverterNonlinearity_SKSul96(CTRL.ual_cmd*sqrt(CLARKE_TRANS_TORQUE_GAIN), \
+                                     CTRL.ube_cmd*sqrt(CLARKE_TRANS_TORQUE_GAIN), \
                                      ACM.ial, \
                                      ACM.ibe);
         ACM.ual = UAL_C_DIST;
         ACM.ube = UBE_C_DIST;
 
         // 计算畸变电压 = 实际电压 - 给定电压 （仅用于可视化用途）
-        DIST_AL = ACM.ual - CTRL.ual;
-        DIST_BE = ACM.ube - CTRL.ube;
+        DIST_AL = ACM.ual - CTRL.ual_cmd;
+        DIST_BE = ACM.ube - CTRL.ube_cmd;
 
     #else
                             // 考虑控制器和电机所用Clarke变换不同导致的系数变化
-        ACM.ual = CTRL.ual; //*sqrt(CLARKE_TRANS_TORQUE_GAIN); *AMPL2POW
-        ACM.ube = CTRL.ube; //*sqrt(CLARKE_TRANS_TORQUE_GAIN); *AMPL2POW
+        ACM.ual = CTRL.ual_cmd; //*sqrt(CLARKE_TRANS_TORQUE_GAIN); *AMPL2POW
+        ACM.ube = CTRL.ube_cmd; //*sqrt(CLARKE_TRANS_TORQUE_GAIN); *AMPL2POW
     #endif
 
     #if MACHINE_TYPE == 2

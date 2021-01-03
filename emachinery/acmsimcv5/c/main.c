@@ -20,11 +20,8 @@ int main(){
     int dfe_counter=0; // dfe_counter for down frequency execution （降频执行变量）
     for(_=0;_<NUMBER_OF_STEPS*TS_UPSAMPLING_FREQ_EXE_INVERSE;++_){
 
-        // 转速或位置指令 is set in HallFullCLVectorControl();
-        // ACM.rpm_cmd = 0;
-
         // 负载转矩
-        ACM.Tload = load_model();
+        ACM.TLoad = load_model();
 
         // 每隔 MACHINE_TS 调用电机仿真代码一次
         ACM.timebase += MACHINE_TS;

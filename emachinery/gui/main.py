@@ -670,9 +670,9 @@ class EmachineryWidget(QMainWindow):
                     or '#define MOTOR_RATED_SPEED_RPM' in line \
                     or '#define MOTOR_SHAFT_INERTIA' in line \
                     or '#define INDIRECT_FOC 1' in line \
+                    or '#define MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL 2' in line \
                     or '#define NULL_D_AXIS_CURRENT_CONTROL -1' in line \
-                    or '#define MTPA -2' in line \
-                    or '#define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL' in line:
+                    or '#define MTPA -2' in line:
                     return True
                 else:
                     return False
@@ -715,7 +715,8 @@ class EmachineryWidget(QMainWindow):
                         if 'define CONTROL_STRATEGY' in line:
                             # Control Methods
                             new_lines.append(f'\t#define INDIRECT_FOC 1\n')
-                            new_lines.append(f'#define CONTROL_STRATEGY INDIRECT_FOC\n')
+                            new_lines.append(f'\t#define MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL 2\n')
+                            new_lines.append(line)
                             continue
                     elif "Synchronous Machine" in self.ui.comboBox_MachineType.currentText():
                         if '#define MACHINE_TYPE' in line: 

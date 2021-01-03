@@ -18,7 +18,7 @@ struct InductionMachineSimulated{
     double rpm;
     double rpm_cmd;
     double rpm_deriv_cmd;
-    double Tload;
+    double TLoad;
     double Tem;
 
     double theta_d; // 转子（假想）d轴位置
@@ -66,6 +66,8 @@ struct InductionMachineSimulated{
     double iqr;
     double iMs; // rotor field oritented M-axis current
     double iTs; // rotor field oritented T-axis current
+    double psi_Dmu;
+    double psi_Qmu;
 
     double ual;
     double ube;

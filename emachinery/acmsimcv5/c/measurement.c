@@ -17,8 +17,8 @@ void measurement(){
     // 下面出现的US_C，IS_C等，都是全局的宏变量，方便在不同的.c文件内共享。
 
     // 电压测量
-    US_C(0) = CTRL.ual; // 后缀_C表示当前步的电压，C = Current
-    US_C(1) = CTRL.ube;
+    US_C(0) = CTRL.ual_cmd; // 后缀_C表示当前步的电压，C = Current
+    US_C(1) = CTRL.ube_cmd;
     US_P(0) = US_C(0); // 后缀_P表示上一步的电压，P = Previous
     US_P(1) = US_C(1);
 

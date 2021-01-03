@@ -34,7 +34,7 @@ void Machine_init(){
     IM.pis_prev[0] = 0.0;
     IM.pis_prev[1] = 0.0;
 
-    IM.Tload = 0.0;
+    IM.TLoad = 0.0;
     IM.rpm_cmd = 0.0;
     IM.rpm_deriv_cmd = 0.0;
 
@@ -182,7 +182,7 @@ void IM_saturated_Dynamics(double t, double *x, double *fx){
     /* STEP THREE: mechanical model */
     // IM.Tem = IM.npp*(IM.Lm/(IM.Lm+IM.Llr))*(IM.iqs*x[2]-IM.ids*x[3]); // this is not better 
     IM.Tem = CLARKE_TRANS_TORQUE_GAIN * IM.npp * (IM.iqs*x[0]-IM.ids*x[1]);
-    fx[4] = (IM.Tem - IM.Tload)*IM.mu_m;
+    fx[4] = (IM.Tem - IM.TLoad)*IM.mu_m;
     fx[5] = x[4];
     fx[6] = x[4];
     #undef IM
@@ -229,7 +229,7 @@ void IM_linear_Dynamics(double t, double *x, double *fx){
 
     // ## STEP THREE: mechanical model
     IM.Tem = IM.Lm_slash_Lr*IM.npp*(x[1]*x[2]-x[0]*x[3]);
-    fx[4] = (IM.Tem - IM.Tload)*IM.mu_m;
+    fx[4] = (IM.Tem - IM.TLoad)*IM.mu_m;
     fx[5] = x[4];
     fx[6] = x[4];
     #undef IM
@@ -303,7 +303,6 @@ int machine_simulation(){
     ACM.omg_elec = ACM.x[4]; // 电气转速 [elec. rad/s]
     ACM.rpm = ACM.x[4] * 60 / (2 * M_PI * ACM.npp); // 机械转速 [mech. r/min]
 
-
     // 电机转子位置接口
     ACM.theta_d = ACM.x[5];
     ACM.theta_d_accum = ACM.x[6];
@@ -320,6 +319,18 @@ int machine_simulation(){
         printf("ACM.rpm is %g\n", ACM.rpm);
         return TRUE;        
     }
+
+
+    #if PC_SIMULATION
+        // 电机磁链接口
+        #if MACHINE_TYPE == INDUCTION_MACHINE_CLASSIC_MODEL
+            ACM.psi_Dmu = AB2M(ACM.x[2], ACM.x[3], ACM.cosT, ACM.sinT);
+            ACM.psi_Qmu = AB2T(ACM.x[2], ACM.x[3], ACM.cosT, ACM.sinT);
+        #elif MACHINE_TYPE == INDUCTION_MACHINE_FLUX_ONLY_MODEL
+            ACM.psi_Dmu = AB2M(ACM.x[2], ACM.x[3], ACM.cosT, ACM.sinT);
+            ACM.psi_Qmu = AB2T(ACM.x[2], ACM.x[3], ACM.cosT, ACM.sinT);
+        #endif
+    #endif
 }
 
 #endif
