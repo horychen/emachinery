@@ -12,6 +12,7 @@ void CTRL_init(){
 
         /* Parameter (including speed) Adaptation */ 
         CTRL.npp    = IM.npp;
+        CTRL.npp_inv    = 1.0/CTRL.npp;
         CTRL.rs     = IM.rs;
         CTRL.rreq   = IM.rreq;
         CTRL.Lsigma = IM.Lsigma;
@@ -37,6 +38,7 @@ void CTRL_init(){
 
     CTRL.omg_cmd = 0.0;
     CTRL.deriv_omg_cmd;
+    CTRL.dderiv_omg_cmd;
     CTRL.torque_cmd = 0.0;
 
     // CTRL.torque_integralPart = 0.0;
@@ -221,7 +223,7 @@ void CTRL_init(){
 
     // struct Marino2005
     marino.kz         = 700.0; // zd, zq
-    marino.k_omega    = 0.1*60.0;  // e_omega
+    marino.k_omega    = 10*60.0;  // e_omega
     marino.kappa      = 0.05;  // e_omega
     marino.gamma_inv  = 180.0*CTRL.Js_inv; // TL
     marino.delta_inv  = 75.0; // alpha
@@ -237,7 +239,9 @@ void CTRL_init(){
     marino.xAlpha = im.alpha;
     marino.xOmg = 0.0;
 
+    marino.deriv_xTL = 0.0;
     marino.deriv_xAlpha = 0.0;
+    marino.deriv_xOmg = 0.0;
 
     marino.psi_Dmu = 0.0;
     marino.psi_Qmu = 0.0;
@@ -288,7 +292,15 @@ REAL sat_kappa(REAL x){
         return x;
     }
 }
-
+REAL deriv_sat_kappa(REAL x){
+    if(x>marino.kappa){
+        return 0;
+    }else if(x<-marino.kappa){
+        return -0;
+    }else{
+        return 1;
+    }
+}
 void controller_marino2005(){
 
     // Cascaded from other system
@@ -326,13 +338,16 @@ void controller_marino2005(){
     // TODO
     // CTRL.deriv_omg_cmd
     marino.deriv_iD_cmd = 0.0*CTRL.Lmu_inv*(  CTRL.deriv_psi_cmd \
-                                        + CTRL.dderiv_psi_cmd*CTRL.alpha_inv \
-                                        - CTRL.dderiv_psi_cmd*CTRL.alpha_inv*CTRL.alpha_inv*marino.deriv_xAlpha);
-    marino.deriv_iQ_cmd = 0.0;
+                                            + CTRL.dderiv_psi_cmd*CTRL.alpha_inv \
+                                            - CTRL.deriv_psi_cmd*CTRL.alpha_inv*CTRL.alpha_inv*marino.deriv_xAlpha);
+    //TODO 重新写！
+    REAL mu_temp = CTRL.npp*CTRL.Js_inv * CLARKE_TRANS_TORQUE_GAIN*CTRL.npp; 
+    marino.deriv_iQ_cmd =   0.0*(-marino.k_omega*deriv_sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) * (marino.deriv_xOmg - CTRL.deriv_omg_cmd) + CTRL.Js_inv*CTRL.npp*marino.deriv_xTL + CTRL.dderiv_omg_cmd ) / (mu_temp * CTRL.psi_cmd)\
+                          - 0.0*(-marino.k_omega*sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) + CTRL.Js_inv*CTRL.TLoad+CTRL.deriv_omg_cmd) * (CTRL.deriv_psi_cmd/(mu_temp*CTRL.psi_cmd*CTRL.psi_cmd));
 
     // current error quantities
     CTRL.iDs_cmd = ( CTRL.psi_cmd + CTRL.deriv_psi_cmd*CTRL.alpha_inv ) * CTRL.Lmu_inv;
-    CTRL.iQs_cmd = ( CTRL.npp*CTRL.Js_inv *( CTRL.deriv_omg_cmd - marino.k_omega * sat_kappa(CTRL.omg__fb - CTRL.omg_cmd) ) + CTRL.TLoad ) / (CLARKE_TRANS_TORQUE_GAIN*CTRL.npp*CTRL.psi_cmd);
+    CTRL.iQs_cmd = ( CTRL.npp_inv*CTRL.Js *( 1*CTRL.deriv_omg_cmd - marino.k_omega*sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) ) + CTRL.TLoad ) / (CLARKE_TRANS_TORQUE_GAIN*CTRL.npp*CTRL.psi_cmd);
     marino.e_iDs = CTRL.iDs - CTRL.iDs_cmd;
     marino.e_iQs = CTRL.iQs - CTRL.iQs_cmd;
 
@@ -465,19 +480,33 @@ void controller(){
 
     // commands(&rpm_speed_command, &amp_current_command);
 
-    static REAL dc_rpm_cmd = 0.0; 
+    static REAL local_dc_rpm_cmd = 0.0; 
     if(CTRL.timebase>3){
-        rpm_speed_command = 100*sin(2*M_PI*CTRL.timebase) + dc_rpm_cmd;
+        #define OMG1 (2*M_PI*1)
+        rpm_speed_command   = 100          * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd;
+        CTRL.omg_cmd        = (100         * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd)*RPM_2_RAD_PER_SEC;
+        CTRL.deriv_omg_cmd  = 1*100*OMG1     * cos(OMG1*CTRL.timebase)*RPM_2_RAD_PER_SEC;
+        CTRL.dderiv_omg_cmd = 1*100*OMG1*OMG1*-sin(OMG1*CTRL.timebase)*RPM_2_RAD_PER_SEC;
     }else if(CTRL.timebase>2){
-        rpm_speed_command = dc_rpm_cmd;
+        rpm_speed_command   = local_dc_rpm_cmd;
+        CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
+        CTRL.deriv_omg_cmd  = 0;
+        CTRL.dderiv_omg_cmd = 0;
     }else if(CTRL.timebase>1){
+        static REAL last_omg_cmd;
         rpm_speed_command += CL_TS*50;
-        dc_rpm_cmd = rpm_speed_command;
+        local_dc_rpm_cmd = rpm_speed_command;
+        CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
+        CTRL.deriv_omg_cmd  = (CTRL.omg_cmd - last_omg_cmd)*CL_TS_INVERSE; //50*RPM_2_RAD_PER_SEC;
+        CTRL.dderiv_omg_cmd = 0;
+
+        last_omg_cmd = CTRL.omg_cmd;
     }else{
-        rpm_speed_command = 0.0;
+        rpm_speed_command   = 0;
+        CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
+        CTRL.deriv_omg_cmd  = 0;
+        CTRL.dderiv_omg_cmd = 0;
     }
-    CTRL.omg_cmd       = rpm_speed_command*RPM_2_RAD_PER_SEC;
-    CTRL.deriv_omg_cmd = 0; //100*2*M_PI*cos(2*M_PI*CTRL.timebase)*RPM_2_RAD_PER_SEC;
 
     // 2. 生成磁链指令
     if(CTRL.timebase<1){
@@ -490,7 +519,7 @@ void controller(){
         CTRL.psi_cmd     = CTRL.psi_cmd_raw; // _lpf(CTRL.psi_cmd_raw, CTRL.psi_cmd, 5);
         CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
         CTRL.deriv_psi_cmd  = CTRL.m1 * CTRL.omega1 * cos(CTRL.omega1*CTRL.timebase);
-        CTRL.dderiv_psi_cmd = 0.0; //CTRL.m1 * CTRL.omega1 * CTRL.omega1 * -sin(CTRL.omega1*CTRL.timebase);;
+        CTRL.dderiv_psi_cmd = CTRL.m1 * CTRL.omega1 * CTRL.omega1 * -sin(CTRL.omega1*CTRL.timebase);
     }
     CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
 

@@ -18,6 +18,7 @@ struct ControllerForExperiment {
 
     REAL omg_cmd;
     REAL deriv_omg_cmd;
+    REAL dderiv_omg_cmd;
     REAL torque_cmd;
 
     REAL speed_ctrl_err;
@@ -60,6 +61,7 @@ struct ControllerForExperiment {
     REAL omega1;
 
     int npp;
+    REAL npp_inv;
     REAL rs;
     REAL rreq;
     REAL Lsigma;
@@ -164,7 +166,9 @@ struct Marino2005{
     REAL xAlpha;
     REAL xOmg;
 
+    REAL deriv_xTL;
     REAL deriv_xAlpha;
+    REAL deriv_xOmg;
 
     REAL psi_Dmu;
     REAL psi_Qmu;

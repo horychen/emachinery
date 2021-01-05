@@ -129,8 +129,13 @@ void rK4(double hs){
     marino.xRho        += (increment_1[0] + 2*(increment_2[0] + increment_3[0]) + increment_4[0])*0.166666666666667; // 0
     marino.xTL         += (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667; // 1
     marino.xAlpha      += (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667; // 2
-    marino.deriv_xAlpha = (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667 / hs;
     marino.xOmg        += (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667; // 3
+
+    // Also get derivatives:
+    CTRL.omega_syn = marino.xOmg + marino.xAlpha*im.Lmu*CTRL.iQs_cmd*CTRL.psi_cmd_inv;
+    marino.deriv_xTL    = (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667 * CL_TS_INVERSE;
+    marino.deriv_xAlpha = (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667 * CL_TS_INVERSE;
+    marino.deriv_xOmg   = (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667 * CL_TS_INVERSE;
 
     // Projection Algorithm
     // xRho   \in [-M_PI, M_PI]
@@ -149,8 +154,6 @@ void rK4(double hs){
     }
 
 
-    // don't forget to update:
-    CTRL.omega_syn = marino.xOmg + marino.xAlpha*im.Lmu*CTRL.iQs_cmd*CTRL.psi_cmd_inv;
 }
 
 void improved_Holtz_method(){

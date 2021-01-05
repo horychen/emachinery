@@ -99,34 +99,50 @@ void acm_init(){
 
 
 void state_variable_filter(double hs){
+    // output += SVF_POLE_0 * (input - last_output) * hs;
+    // last_output = output;
+    // if input == output:
+    //     derivative of input = SVF_POLE_0 * (input - last_output)
+
     /* State Variable Filter for ob.pis[.] Computed by Standalone RK4 */
     double xxsvf1[2];
     double xxsvf2[2];
     double xxsvf3[2];
     double xxsvf4[2];
     double xsvf_temp[2];
-    // step 1
+    // step 1 @ t
     xxsvf1[0] = SVF_POLE_0 * (IDQ_P(0) - SVF_P(0)) * hs;
     xxsvf1[1] = SVF_POLE_0 * (IDQ_P(1) - SVF_P(1)) * hs;
+    // 新的状态变量的增量 = 该状态变量的导数（上一步的状态的值，其他时变的已知量在t时刻的值） * 数值积分的步长；
     xsvf_temp[0] = SVF_P(0) + xxsvf1[0]*0.5;
     xsvf_temp[1] = SVF_P(1) + xxsvf1[1]*0.5;
-    // step 2
+    // 临时的状态变量 = 上一步的状态变量 + step1增量*0.5；
+
+    // step 2 @ t+hs/2
     IDQ(0) = 0.5*(IDQ_P(0)+IDQ_C(0));
     IDQ(1) = 0.5*(IDQ_P(1)+IDQ_C(1));
     xxsvf2[0] = SVF_POLE_0 * (IDQ(0) - xsvf_temp[0]) * hs;
     xxsvf2[1] = SVF_POLE_0 * (IDQ(1) - xsvf_temp[1]) * hs;
+    // 新的状态变量的增量 = 该状态变量的导数（临时的状态变量的值，其他时变的已知量在t+hs/2时刻的值） * 数值积分的步长；
     xsvf_temp[0] = SVF_P(0) + xxsvf2[0]*0.5;
     xsvf_temp[1] = SVF_P(1) + xxsvf2[1]*0.5;
-    // step 3
+    // 临时的状态变量 = 上一步的状态变量 + step2增量*0.5；
+
+    // step 3 @ t+hs/2
     xxsvf3[0] = SVF_POLE_0 * (IDQ(0) - xsvf_temp[0]) * hs;
     xxsvf3[1] = SVF_POLE_0 * (IDQ(1) - xsvf_temp[1]) * hs;
+    // 新的状态变量的增量 = 该状态变量的导数（临时的状态变量的值，其他时变的已知量在t+hs/2时刻的值） * 数值积分的步长；
     xsvf_temp[0] = SVF_P(0) + xxsvf3[0];
     xsvf_temp[1] = SVF_P(1) + xxsvf3[1];
-    // step 4
+    // 临时的状态变量 = 上一步的状态变量 + step3增量*1.0；
+
+    // step 4 @ t+hs
     xxsvf4[0] = SVF_POLE_0 * (IDQ_C(0) - xsvf_temp[0]) * hs;
     xxsvf4[1] = SVF_POLE_0 * (IDQ_C(1) - xsvf_temp[1]) * hs;
+    // 新的状态变量的增量 = 该状态变量的导数（临时的状态变量的值，其他时变的已知量在t时刻的值） * 数值积分的步长；
     SVF_C(0) += (xxsvf1[0] + 2*(xxsvf2[0] + xxsvf3[0]) + xxsvf4[0])*0.166666666666667; // 0
     SVF_C(1) += (xxsvf1[1] + 2*(xxsvf2[1] + xxsvf3[1]) + xxsvf4[1])*0.166666666666667; // 1    
+    // 数值积分的结果 = （step1增量+2*step2增量+2*step3增量+step4的增量）/6
 
     PIDQ(0) = SVF_POLE_0 * (IDQ_C(0) - SVF_C(0));
     PIDQ(1) = SVF_POLE_0 * (IDQ_C(1) - SVF_C(1));
@@ -176,7 +192,7 @@ void harnefors_scvm(){
     SVF_P(1) = SVF_C(1);
     #define DERIV_ID PIDQ(0)
     #define DERIV_IQ PIDQ(1)
-    #define BOOL_COMPENSATE_PIDQ 0
+    #define BOOL_COMPENSATE_PIDQ 1  
 
     // 计算反电势
     REAL d_axis_emf = CTRL.ud_cmd - CTRL.R*D_AXIS_CURRENT + harnefors.omg_elec*CTRL.Lq*Q_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*CTRL.Ld*DERIV_ID; // eemf
