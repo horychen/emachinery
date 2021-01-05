@@ -80,27 +80,6 @@ void cmd_fast_speed_reversal(double timebase, double instant, double interval, d
 }
 
 
-// double theta_d_harnefors = 0.0;
-// double omg_harnefors = 0.0;
-// void harnefors_scvm(){
-//     #define KE_MISMATCH 1.0 // 0.7
-//     double d_axis_emf;
-//     double q_axis_emf;
-//     #define LAMBDA 2 // 2
-//     #define CJH_TUNING_A 25 // 1
-//     #define CJH_TUNING_B 1 // 1
-//     double lambda_s = LAMBDA * sign(omg_harnefors);
-//     double alpha_bw_lpf = CJH_TUNING_A*0.1*(1500*RPM_2_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabs(omg_harnefors);
-//     // d_axis_emf = CTRL.ud_cmd - 1*CTRL.R*CTRL.id_cmd + omg_harnefors*1.0*CTRL.Lq*CTRL.iq_cmd; // If Ld=Lq.
-//     // q_axis_emf = CTRL.uq_cmd - 1*CTRL.R*CTRL.iq_cmd - omg_harnefors*1.0*CTRL.Ld*CTRL.id_cmd; // If Ld=Lq.
-//     d_axis_emf = CTRL.ud_cmd - 1*CTRL.R*CTRL.id_cmd + omg_harnefors*1.0*CTRL.Lq*CTRL.iq_cmd; // eemf
-//     q_axis_emf = CTRL.uq_cmd - 1*CTRL.R*CTRL.iq_cmd - omg_harnefors*1.0*CTRL.Lq*CTRL.id_cmd; // eemf
-//     // Note it is bad habit to write numerical integration explictly like this. The states on the right may be accencidentally modified on the run.
-//     theta_d_harnefors += CL_TS * omg_harnefors;
-//     omg_harnefors += CL_TS * alpha_bw_lpf * ( (q_axis_emf - lambda_s*d_axis_emf)/(CTRL.KE*KE_MISMATCH+(CTRL.Ld-CTRL.Lq)*CTRL.id_cmd) - omg_harnefors );
-//     while(theta_d_harnefors>M_PI) theta_d_harnefors-=2*M_PI;
-//     while(theta_d_harnefors<-M_PI) theta_d_harnefors+=2*M_PI;   
-// }
 void controller(){
 
     // 1. 生成转速指令

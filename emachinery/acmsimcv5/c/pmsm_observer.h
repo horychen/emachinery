@@ -89,9 +89,30 @@ extern struct SynchronousMachine sm;
 void acm_init();
 void harnefors_scvm();
 
+
+#define SVF_POLE_0_VALUE (2000*2*M_PI) /* 定子电阻在高速不准确，就把SVF极点加大！加到3000反而比20000要差。*/
+#define SVF_POLE_0 harnefors.svf_p0 
+#define SVF_C(X)   harnefors.xSVF_curr[X]
+#define SVF_P(X)   harnefors.xSVF_prev[X]
+#define IDQ(X)     harnefors.is_dq[X]
+#define IDQ_C(X)   harnefors.is_dq_curr[X]
+#define IDQ_P(X)   harnefors.is_dq_prev[X]
+#define PIDQ(X)    harnefors.pis_dq[X]
 struct Harnefors2006{
     REAL theta_d;
     REAL omg_elec;
+
+    REAL deriv_id;
+    REAL deriv_iq;
+
+    // SVF for d/q current derivative
+    REAL svf_p0;
+    REAL xSVF_curr[2];
+    REAL xSVF_prev[2];
+    REAL is_dq[2];
+    REAL is_dq_curr[2];
+    REAL is_dq_prev[2];
+    REAL pis_dq[2];
 };
 extern struct Harnefors2006 harnefors;
 

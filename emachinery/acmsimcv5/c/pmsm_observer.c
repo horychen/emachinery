@@ -81,53 +81,116 @@ void acm_init(){
 
     harnefors.theta_d = 0.0;
     harnefors.omg_elec = 0.0;
+
+    harnefors.svf_p0 = SVF_POLE_0_VALUE;
+    harnefors.xSVF_curr[0] = 0.0;
+    harnefors.xSVF_curr[1] = 0.0;
+    harnefors.xSVF_prev[0] = 0.0;
+    harnefors.xSVF_prev[1] = 0.0;
+    harnefors.is_dq[0] = 0.0;
+    harnefors.is_dq[1] = 0.0;
+    harnefors.is_dq_curr[0] = 0.0;
+    harnefors.is_dq_curr[1] = 0.0;
+    harnefors.is_dq_prev[0] = 0.0;
+    harnefors.is_dq_prev[1] = 0.0;
+    harnefors.pis_dq[0] = 0.0;
+    harnefors.pis_dq[1] = 0.0;
 }
 
 
+void state_variable_filter(double hs){
+    /* State Variable Filter for ob.pis[.] Computed by Standalone RK4 */
+    double xxsvf1[2];
+    double xxsvf2[2];
+    double xxsvf3[2];
+    double xxsvf4[2];
+    double xsvf_temp[2];
+    // step 1
+    xxsvf1[0] = SVF_POLE_0 * (IDQ_P(0) - SVF_P(0)) * hs;
+    xxsvf1[1] = SVF_POLE_0 * (IDQ_P(1) - SVF_P(1)) * hs;
+    xsvf_temp[0] = SVF_P(0) + xxsvf1[0]*0.5;
+    xsvf_temp[1] = SVF_P(1) + xxsvf1[1]*0.5;
+    // step 2
+    IDQ(0) = 0.5*(IDQ_P(0)+IDQ_C(0));
+    IDQ(1) = 0.5*(IDQ_P(1)+IDQ_C(1));
+    xxsvf2[0] = SVF_POLE_0 * (IDQ(0) - xsvf_temp[0]) * hs;
+    xxsvf2[1] = SVF_POLE_0 * (IDQ(1) - xsvf_temp[1]) * hs;
+    xsvf_temp[0] = SVF_P(0) + xxsvf2[0]*0.5;
+    xsvf_temp[1] = SVF_P(1) + xxsvf2[1]*0.5;
+    // step 3
+    xxsvf3[0] = SVF_POLE_0 * (IDQ(0) - xsvf_temp[0]) * hs;
+    xxsvf3[1] = SVF_POLE_0 * (IDQ(1) - xsvf_temp[1]) * hs;
+    xsvf_temp[0] = SVF_P(0) + xxsvf3[0];
+    xsvf_temp[1] = SVF_P(1) + xxsvf3[1];
+    // step 4
+    xxsvf4[0] = SVF_POLE_0 * (IDQ_C(0) - xsvf_temp[0]) * hs;
+    xxsvf4[1] = SVF_POLE_0 * (IDQ_C(1) - xsvf_temp[1]) * hs;
+    SVF_C(0) += (xxsvf1[0] + 2*(xxsvf2[0] + xxsvf3[0]) + xxsvf4[0])*0.166666666666667; // 0
+    SVF_C(1) += (xxsvf1[1] + 2*(xxsvf2[1] + xxsvf3[1]) + xxsvf4[1])*0.166666666666667; // 1    
+
+    PIDQ(0) = SVF_POLE_0 * (IDQ_C(0) - SVF_C(0));
+    PIDQ(1) = SVF_POLE_0 * (IDQ_C(1) - SVF_C(1));
+}
+
 // Harnefors 2006
+#define LAMBDA 2
 void harnefors_scvm(){
-    #define LAMBDA 2 // 2
-    #define CJH_TUNING_C 0
+
+    // 这一组参数很适合伺尔沃的400W，也可以用于100W和200W（delta=6.5，VLBW=50Hz）
+        // #define CJH_TUNING_A  25 // low voltage servo motor (<48 Vdc)
+        // #define CJH_TUNING_B  1  // low voltage servo motor (<48 Vdc)
+        // #define CJH_TUNING_C 1
+    // 为NTU的伺服调试的参数（delta=3，VLBW=40Hz）
+        #define CJH_TUNING_A  1 // low voltage servo motor (<48 Vdc)
+        #define CJH_TUNING_B  1  // low voltage servo motor (<48 Vdc)
+        #define CJH_TUNING_C 0.2 // [0.2， 0.5]
+    // 可调参数壹
     REAL lambda_s = CJH_TUNING_C * LAMBDA * sign(harnefors.omg_elec);
+    // 可调参数贰
+    REAL alpha_bw_lpf = CJH_TUNING_A*0.1*(1500*RPM_2_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabs(harnefors.omg_elec);
 
-    // #define CJH_TUNING_A  25 // low voltage servo motor (<48 Vdc)
-    // #define CJH_TUNING_B  1  // low voltage servo motor (<48 Vdc)
-    // REAL alpha_bw_lpf = CJH_TUNING_A*0.1*(1500*RPM_2_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabs(harnefors.omg_elec);
 
-    #define CJH_TUNING_A  10 // low voltage servo motor (<48 Vdc)
-    #define CJH_TUNING_B  1  // low voltage servo motor (<48 Vdc)
-    REAL alpha_bw_lpf = CJH_TUNING_A*0.1*(750*RPM_2_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabs(harnefors.omg_elec);
-
+    // 一阶差分计算DQ电流的导数
     static REAL last_id = 0.0;
     static REAL last_iq = 0.0;
-
     // #define D_AXIS_CURRENT CTRL.id_cmd
     // #define Q_AXIS_CURRENT CTRL.iq_cmd
-    // REAL deriv_id = (CTRL.id_cmd - last_id) * CL_TS_INVERSE;
-    // REAL deriv_iq = (CTRL.iq_cmd - last_iq) * CL_TS_INVERSE;
+    // harnefors.deriv_id = (CTRL.id_cmd - last_id) * CL_TS_INVERSE;
+    // harnefors.deriv_iq = (CTRL.iq_cmd - last_iq) * CL_TS_INVERSE;
     // last_id = CTRL.id_cmd;
     // last_iq = CTRL.iq_cmd;
-
     #define D_AXIS_CURRENT CTRL.id__fb
     #define Q_AXIS_CURRENT CTRL.iq__fb
-    REAL deriv_id = (CTRL.id__fb - last_id) * CL_TS_INVERSE;
-    REAL deriv_iq = (CTRL.iq__fb - last_iq) * CL_TS_INVERSE;
+    harnefors.deriv_id = (CTRL.id__fb - last_id) * CL_TS_INVERSE;
+    harnefors.deriv_iq = (CTRL.iq__fb - last_iq) * CL_TS_INVERSE;
     last_id = CTRL.id__fb;
     last_iq = CTRL.iq__fb;
 
-    REAL d_axis_emf = CTRL.ud_cmd - 1*CTRL.R*D_AXIS_CURRENT + harnefors.omg_elec*1.0*CTRL.Lq*Q_AXIS_CURRENT - 1.0*CTRL.Ld*deriv_id; // eemf
-    REAL q_axis_emf = CTRL.uq_cmd - 1*CTRL.R*Q_AXIS_CURRENT - harnefors.omg_elec*1.0*CTRL.Ld*D_AXIS_CURRENT - 1.0*CTRL.Lq*deriv_iq; // eemf
+    // 用SVF计算DQ电流的导数
+    IDQ_C(0) = D_AXIS_CURRENT;
+    IDQ_C(1) = Q_AXIS_CURRENT;
+    state_variable_filter(CL_TS);
+    IDQ_P(0) = IDQ_C(0); // used in SVF 
+    IDQ_P(1) = IDQ_C(1); // used in SVF 
+    SVF_P(0) = SVF_C(0);
+    SVF_P(1) = SVF_C(1);
+    #define DERIV_ID PIDQ(0)
+    #define DERIV_IQ PIDQ(1)
+    #define BOOL_COMPENSATE_PIDQ 0
 
-    // printf("%g: %g, %g\n", CTRL.timebase, CTRL.Ld*deriv_id, CTRL.Lq*deriv_iq);
+    // 计算反电势
+    REAL d_axis_emf = CTRL.ud_cmd - CTRL.R*D_AXIS_CURRENT + harnefors.omg_elec*CTRL.Lq*Q_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*CTRL.Ld*DERIV_ID; // eemf
+    REAL q_axis_emf = CTRL.uq_cmd - CTRL.R*Q_AXIS_CURRENT - harnefors.omg_elec*CTRL.Ld*D_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*CTRL.Lq*DERIV_IQ; // eemf
 
-    // Note it is bad habit to write numerical integration explictly like this. The states on the right may be accencidentally modified on the run.
+    // 数值积分获得转速和转子位置
+        // Note it is bad habit to write numerical integration explictly like this. The states on the right may be accencidentally modified on the run.
     #define KE_MISMATCH 1.0 // 0.7
     harnefors.theta_d += CL_TS * harnefors.omg_elec;
     harnefors.omg_elec += CL_TS * alpha_bw_lpf * ( (q_axis_emf - lambda_s*d_axis_emf)/(CTRL.KE*KE_MISMATCH+(CTRL.Ld-CTRL.Lq)*D_AXIS_CURRENT) - harnefors.omg_elec );
 
+    // 转子位置周期限幅
     while(harnefors.theta_d>M_PI) harnefors.theta_d-=2*M_PI;
     while(harnefors.theta_d<-M_PI) harnefors.theta_d+=2*M_PI;
 }
-
 
 #endif
