@@ -23,7 +23,7 @@ void Machine_init(){
     ACM.rpm = 0.0;
     ACM.rpm_cmd = 0.0;
     ACM.rpm_deriv_cmd = 0.0;
-    ACM.Tload = 0.0;
+    ACM.TLoad = 0.0;
     ACM.Tem = 0.0;
 
     ACM.R  = PMSM_RESISTANCE;
@@ -70,7 +70,7 @@ void SM_Dynamics(double t, double *x, double *fx){
     // 机械子系统
     // 电磁转矩 Tem 计算
     ACM.Tem = CLARKE_TRANS_TORQUE_GAIN * ACM.npp * (x[1]*ACM.KE + (ACM.Ld - ACM.Lq)*x[0]*x[1]); // AMPL2POW*AMPL2POW = CLARKE_TRANS_TORQUE_GAIN
-    fx[2] = (ACM.Tem - ACM.Tload)*ACM.mu_m; // elec. angular rotor speed
+    fx[2] = (ACM.Tem - ACM.TLoad)*ACM.mu_m; // elec. angular rotor speed
     fx[3] = x[2];                           // elec. angular rotor position (bounded)
     fx[4] = x[2];                           // elec. angular rotor position (accumulated)
 }

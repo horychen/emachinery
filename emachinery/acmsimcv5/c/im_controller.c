@@ -19,6 +19,7 @@ void CTRL_init(){
         CTRL.Lmu    = IM.Leq;
         CTRL.Lmu_inv = 1.0/IM.Leq;
         CTRL.alpha  = CTRL.rreq/CTRL.Lmu;
+        CTRL.alpha_inv = 1.0/CTRL.alpha;
         CTRL.Js     = IM.Js;
         CTRL.Js_inv = 1.0/IM.Js;
 
@@ -71,8 +72,10 @@ void CTRL_init(){
     // CTRL.psimod_fb_inv = 1.0;
     // CTRL.deriv_fluxModSim = 0.0;
     
-    CTRL.psi_cmd = 0.0;
-    CTRL.deriv_psi_cmd = 0.0;
+    CTRL.psi_cmd_raw    = 0.0;
+    CTRL.psi_cmd        = 0.0;
+    CTRL.dderiv_psi_cmd = 0.0;
+    CTRL.deriv_psi_cmd  = 0.0;
     CTRL.m0 = IM_FLUX_COMMAND_DC_PART;
     CTRL.m1 = IM_FLUX_COMMAND_SINE_PART;
     CTRL.omega1 = 2*M_PI*IM_FLUX_COMMAND_SINE_HERZ;
@@ -217,21 +220,24 @@ void CTRL_init(){
     printf("Current PID: Kp=%g, Ki=%g, limit=%g V\n", pid1_iM.Kp, pid1_iM.Ki/CL_TS, pid1_iM.OutLimit);
 
     // struct Marino2005
-    marino.kz = 700.0;     // zd, zq
-    marino.k_omega = 60.0; // e_omega
-    marino.kappa = 24.0;  // e_omega
-    marino.gamma_inv = 180.0*CTRL.Js_inv; // TL
-    marino.delta_inv = 75.0; // alpha
-    marino.lambda_inv = 6000.0; // omega
+    marino.kz         = 700.0; // zd, zq
+    marino.k_omega    = 0.1*60.0;  // e_omega
+    marino.kappa      = 0.05;  // e_omega
+    marino.gamma_inv  = 180.0*CTRL.Js_inv; // TL
+    marino.delta_inv  = 75.0; // alpha
+    marino.lambda_inv = 0.1*6000.0; // omega
 
     marino.xTL_Max = 8.0;
-    marino.xAlpha_Max = 18.0;
+    marino.xAlpha_Max = 7.0;
     marino.xAlpha_min = 3.0;
+    printf("alpha: %g in [%g, %g]?\n", im.alpha, marino.xAlpha_min, marino.xAlpha_Max);
 
     marino.xRho = 0.0;
     marino.xTL = 0.0;
-    marino.xAlpha = 0.0;
+    marino.xAlpha = im.alpha;
     marino.xOmg = 0.0;
+
+    marino.deriv_xAlpha = 0.0;
 
     marino.psi_Dmu = 0.0;
     marino.psi_Qmu = 0.0;
@@ -248,6 +254,8 @@ void CTRL_init(){
 
     marino.Gamma_D = 0.0;
     marino.Gamma_Q = 0.0;
+
+    marino.torque = 0.0;
 
     // struct Holtz2003
     holtz.psi_D2 = 0.0;
@@ -284,15 +292,30 @@ REAL sat_kappa(REAL x){
 void controller_marino2005(){
 
     // Cascaded from other system
+    /* VM based Flux Est. */
+    // Akatsu_RrId();
+    improved_Holtz_method();
+    // flux feedback
     marino.psi_Dmu = holtz.psi_D2;
     marino.psi_Qmu = holtz.psi_Q2;
+    // flux error quantities
+    marino.e_psi_Dmu = marino.psi_Dmu - CTRL.psi_cmd;
+    marino.e_psi_Qmu = marino.psi_Qmu - 0.0;
 
-    // API to observer and identifier
+    // API to the fourth-order system of observer and identifiers
     observer_marino2005();
     CTRL.theta_D = marino.xRho;
     CTRL.omg__fb = marino.xOmg;
     CTRL.alpha   = marino.xAlpha;
     CTRL.TLoad   = marino.xTL;
+
+    // debug
+    CTRL.theta_D = ACM.theta_M;
+    CTRL.omg__fb = im.omg_elec;
+    CTRL.alpha   = ACM.alpha;
+    CTRL.TLoad   = ACM.TLoad;
+
+    CTRL.alpha_inv = 1.0/CTRL.alpha;
 
     // αβ to DQ
     CTRL.cosT = cos(CTRL.theta_D);
@@ -301,27 +324,32 @@ void controller_marino2005(){
     CTRL.iQs = AB2T(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
 
     // TODO
-    CTRL.deriv_omg_cmd  = 0.0;
-    marino.deriv_iD_cmd = 0.0;
+    // CTRL.deriv_omg_cmd
+    marino.deriv_iD_cmd = 0.0*CTRL.Lmu_inv*(  CTRL.deriv_psi_cmd \
+                                        + CTRL.dderiv_psi_cmd*CTRL.alpha_inv \
+                                        - CTRL.dderiv_psi_cmd*CTRL.alpha_inv*CTRL.alpha_inv*marino.deriv_xAlpha);
     marino.deriv_iQ_cmd = 0.0;
 
-    CTRL.iDs_cmd = (CTRL.psi_cmd + CTRL.psi_cmd/CTRL.alpha) * CTRL.Lmu_inv;
+    // current error quantities
+    CTRL.iDs_cmd = ( CTRL.psi_cmd + CTRL.deriv_psi_cmd*CTRL.alpha_inv ) * CTRL.Lmu_inv;
     CTRL.iQs_cmd = ( CTRL.npp*CTRL.Js_inv *( CTRL.deriv_omg_cmd - marino.k_omega * sat_kappa(CTRL.omg__fb - CTRL.omg_cmd) ) + CTRL.TLoad ) / (CLARKE_TRANS_TORQUE_GAIN*CTRL.npp*CTRL.psi_cmd);
     marino.e_iDs = CTRL.iDs - CTRL.iDs_cmd;
     marino.e_iQs = CTRL.iQs - CTRL.iQs_cmd;
 
-    marino.e_psi_Dmu = marino.psi_Dmu - CTRL.psi_cmd;
-    marino.e_psi_Qmu = marino.psi_Qmu;
+    marino.torque = CTRL.iQs_cmd * (CLARKE_TRANS_TORQUE_GAIN*CTRL.npp*CTRL.psi_cmd);
 
+
+    // linear combination of error
     marino.zD = marino.e_iDs + CTRL.Lsigma_inv*marino.e_psi_Dmu;
     marino.zQ = marino.e_iQs + CTRL.Lsigma_inv*marino.e_psi_Qmu;
 
+    // known signals to cancel
     marino.Gamma_D = CTRL.Lsigma_inv * (-CTRL.rs*CTRL.iDs -CTRL.alpha*CTRL.Lmu*CTRL.iDs_cmd +CTRL.alpha  *CTRL.psi_cmd +CTRL.omega_syn*marino.e_psi_Qmu) +CTRL.omega_syn*CTRL.iQs - marino.deriv_iD_cmd;
-    marino.Gamma_Q = CTRL.Lsigma_inv * (-CTRL.rs*CTRL.iQs -CTRL.alpha*CTRL.Lmu*CTRL.iQs_cmd -CTRL.omg__fb*CTRL.psi_cmd -CTRL.omega_syn*marino.e_psi_Dmu) +CTRL.omega_syn*CTRL.iDs - marino.deriv_iQ_cmd;
+    marino.Gamma_Q = CTRL.Lsigma_inv * (-CTRL.rs*CTRL.iQs -CTRL.alpha*CTRL.Lmu*CTRL.iQs_cmd -CTRL.omg__fb*CTRL.psi_cmd -CTRL.omega_syn*marino.e_psi_Dmu) -CTRL.omega_syn*CTRL.iDs - marino.deriv_iQ_cmd;
 
+    // voltage commands
     CTRL.uDs_cmd = CTRL.Lsigma * (-(marino.kz+0.25*CTRL.Lsigma*CTRL.Lmu*marino.xAlpha_Max)*marino.zD - marino.Gamma_D);
     CTRL.uQs_cmd = CTRL.Lsigma * (-(marino.kz+0.25*CTRL.Lsigma*CTRL.Lmu*marino.xAlpha_Max)*marino.zQ - marino.Gamma_Q);
-
     CTRL.ual_cmd = MT2A(CTRL.uDs_cmd, CTRL.uQs_cmd, CTRL.cosT, CTRL.sinT);
     CTRL.ube_cmd = MT2B(CTRL.uDs_cmd, CTRL.uQs_cmd, CTRL.cosT, CTRL.sinT);
 }
@@ -433,14 +461,38 @@ void controller_IFOC(){
 void controller(){
 
     // 1. 生成转速指令
-    REAL rpm_speed_command, amp_current_command;
-    commands(&rpm_speed_command, &amp_current_command);
-    CTRL.omg_cmd = rpm_speed_command*RPM_2_RAD_PER_SEC;
+    static REAL rpm_speed_command=0.0, amp_current_command=0.0;
+
+    // commands(&rpm_speed_command, &amp_current_command);
+
+    static REAL dc_rpm_cmd = 0.0; 
+    if(CTRL.timebase>3){
+        rpm_speed_command = 100*sin(2*M_PI*CTRL.timebase) + dc_rpm_cmd;
+    }else if(CTRL.timebase>2){
+        rpm_speed_command = dc_rpm_cmd;
+    }else if(CTRL.timebase>1){
+        rpm_speed_command += CL_TS*50;
+        dc_rpm_cmd = rpm_speed_command;
+    }else{
+        rpm_speed_command = 0.0;
+    }
+    CTRL.omg_cmd       = rpm_speed_command*RPM_2_RAD_PER_SEC;
+    CTRL.deriv_omg_cmd = 0; //100*2*M_PI*cos(2*M_PI*CTRL.timebase)*RPM_2_RAD_PER_SEC;
 
     // 2. 生成磁链指令
-    CTRL.psi_cmd = CTRL.m0 + CTRL.m1 * sin(CTRL.omega1*CTRL.timebase);
-    CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd_inv;
-    CTRL.deriv_psi_cmd = CTRL.m1 * CTRL.omega1 * cos(CTRL.omega1*CTRL.timebase);
+    if(CTRL.timebase<1){
+        CTRL.psi_cmd_raw += CL_TS*CTRL.m0;
+        CTRL.psi_cmd     = CTRL.psi_cmd_raw;
+        CTRL.deriv_psi_cmd  = CTRL.m0;
+        CTRL.dderiv_psi_cmd = 0.0;
+    }else{
+        CTRL.psi_cmd_raw = CTRL.m0 + CTRL.m1 * sin(CTRL.omega1*CTRL.timebase);
+        CTRL.psi_cmd     = CTRL.psi_cmd_raw; // _lpf(CTRL.psi_cmd_raw, CTRL.psi_cmd, 5);
+        CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
+        CTRL.deriv_psi_cmd  = CTRL.m1 * CTRL.omega1 * cos(CTRL.omega1*CTRL.timebase);
+        CTRL.dderiv_psi_cmd = 0.0; //CTRL.m1 * CTRL.omega1 * CTRL.omega1 * -sin(CTRL.omega1*CTRL.timebase);;
+    }
+    CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
 
 
     #if CONTROL_STRATEGY == INDIRECT_FOC
@@ -451,7 +503,7 @@ void controller(){
 
     // for plot
     ACM.rpm_cmd = rpm_speed_command;
-    CTRL.speed_ctrl_err = CTRL.omg__fb - CTRL.omg_cmd;
+    CTRL.speed_ctrl_err = (CTRL.omg__fb - CTRL.omg_cmd)*RAD_PER_SEC_2_RPM;
 }
 
 #endif

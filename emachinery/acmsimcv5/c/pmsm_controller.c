@@ -16,8 +16,8 @@ void CTRL_init(){
 
     CTRL.timebase = 0.0;
 
-    CTRL.ual = 0.0;
-    CTRL.ube = 0.0;
+    CTRL.ual_cmd = 0.0;
+    CTRL.ube_cmd = 0.0;
 
     CTRL.R  = ACM.R;
     CTRL.KE = ACM.KE;
@@ -80,25 +80,42 @@ void cmd_fast_speed_reversal(double timebase, double instant, double interval, d
 }
 
 
-
+// double theta_d_harnefors = 0.0;
+// double omg_harnefors = 0.0;
+// void harnefors_scvm(){
+//     #define KE_MISMATCH 1.0 // 0.7
+//     double d_axis_emf;
+//     double q_axis_emf;
+//     #define LAMBDA 2 // 2
+//     #define CJH_TUNING_A 25 // 1
+//     #define CJH_TUNING_B 1 // 1
+//     double lambda_s = LAMBDA * sign(omg_harnefors);
+//     double alpha_bw_lpf = CJH_TUNING_A*0.1*(1500*RPM_2_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabs(omg_harnefors);
+//     // d_axis_emf = CTRL.ud_cmd - 1*CTRL.R*CTRL.id_cmd + omg_harnefors*1.0*CTRL.Lq*CTRL.iq_cmd; // If Ld=Lq.
+//     // q_axis_emf = CTRL.uq_cmd - 1*CTRL.R*CTRL.iq_cmd - omg_harnefors*1.0*CTRL.Ld*CTRL.id_cmd; // If Ld=Lq.
+//     d_axis_emf = CTRL.ud_cmd - 1*CTRL.R*CTRL.id_cmd + omg_harnefors*1.0*CTRL.Lq*CTRL.iq_cmd; // eemf
+//     q_axis_emf = CTRL.uq_cmd - 1*CTRL.R*CTRL.iq_cmd - omg_harnefors*1.0*CTRL.Lq*CTRL.id_cmd; // eemf
+//     // Note it is bad habit to write numerical integration explictly like this. The states on the right may be accencidentally modified on the run.
+//     theta_d_harnefors += CL_TS * omg_harnefors;
+//     omg_harnefors += CL_TS * alpha_bw_lpf * ( (q_axis_emf - lambda_s*d_axis_emf)/(CTRL.KE*KE_MISMATCH+(CTRL.Ld-CTRL.Lq)*CTRL.id_cmd) - omg_harnefors );
+//     while(theta_d_harnefors>M_PI) theta_d_harnefors-=2*M_PI;
+//     while(theta_d_harnefors<-M_PI) theta_d_harnefors+=2*M_PI;   
+// }
 void controller(){
 
     // 1. 生成转速指令
     double rpm_speed_command, amp_current_command;
     commands(&rpm_speed_command, &amp_current_command);
 
-    // for plot
-    ACM.rpm_cmd = rpm_speed_command;
-
 
     // 2. 电气转子位置和电气转子转速反馈
+    harnefors_scvm();
+    // harnefors.omg_elec = omg_harnefors;
+    // harnefors.theta_d = theta_d_harnefors;
     #if SENSORLESS_CONTROL
         //（无感）
-        harnefors_scvm();
-        CTRL.omg__fb     = omg_harnefors;
-        CTRL.theta_d__fb = theta_d_harnefors;
-        CTRL.omg__fb     = omg_harnefors;
-        CTRL.theta_d__fb = theta_d_harnefors;
+        CTRL.omg__fb     = harnefors.omg_elec;
+        CTRL.theta_d__fb = harnefors.theta_d;
     #else
         //（霍尔反馈）
         // CTRL.omg__fb     = sm.omg_elec_hall;
@@ -114,19 +131,14 @@ void controller(){
     #endif
 
 
-    // for plot
-    CTRL.speed_ctrl_err = rpm_speed_command*RPM_2_RAD_PER_SEC - CTRL.omg__fb;
-
     // 帕克变换
     // Input 2 is feedback: measured current 
-    CTRL.ial__fb = IS_C(0);
-    CTRL.ibe__fb = IS_C(1);
     CTRL.cosT = cos(CTRL.theta_d__fb);
     CTRL.sinT = sin(CTRL.theta_d__fb);
     CTRL.id__fb = AB2M(CTRL.ial__fb, CTRL.ibe__fb, CTRL.cosT, CTRL.sinT);
     CTRL.iq__fb = AB2T(CTRL.ial__fb, CTRL.ibe__fb, CTRL.cosT, CTRL.sinT);
-    pid1_id.Fbk = AB2M(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
-    pid1_iq.Fbk = AB2T(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
+    pid1_id.Fbk = CTRL.id__fb;
+    pid1_iq.Fbk = CTRL.iq__fb;
 
 
     // 转速环
@@ -166,22 +178,26 @@ void controller(){
     pid1_iq.calc(&pid1_iq);
     // 解耦
     #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT
-        REAL decoupled_d_axis_voltage = pid1_id.Out - pid1_iq.Fbk*CTRL.Lq*CTRL.omg__fb;
-        REAL decoupled_q_axis_voltage = pid1_iq.Out + (pid1_id.Fbk*CTRL.Ld+CTRL.KE)*CTRL.omg__fb;
+        REAL decoupled_d_axis_voltage = pid1_id.Out -             pid1_iq.Fbk*CTRL.Lq *CTRL.omg__fb;
+        REAL decoupled_q_axis_voltage = pid1_iq.Out + ( CTRL.KE + pid1_id.Fbk*CTRL.Ld)*CTRL.omg__fb;
     #else
         REAL decoupled_d_axis_voltage = pid1_id.Out;
         REAL decoupled_q_axis_voltage = pid1_iq.Out;
     #endif
 
     // 反帕克变换
-    CTRL.ual = MT2A(decoupled_d_axis_voltage, decoupled_q_axis_voltage, CTRL.cosT, CTRL.sinT);
-    CTRL.ube = MT2B(decoupled_d_axis_voltage, decoupled_q_axis_voltage, CTRL.cosT, CTRL.sinT);
+    CTRL.ual_cmd = MT2A(decoupled_d_axis_voltage, decoupled_q_axis_voltage, CTRL.cosT, CTRL.sinT);
+    CTRL.ube_cmd = MT2B(decoupled_d_axis_voltage, decoupled_q_axis_voltage, CTRL.cosT, CTRL.sinT);
 
     // for harnefors observer
-    CTRL.ud_cmd = pid1_id.Out;
-    CTRL.uq_cmd = pid1_iq.Out;
+    CTRL.ud_cmd = decoupled_d_axis_voltage; //pid1_id.Out;
+    CTRL.uq_cmd = decoupled_q_axis_voltage; //pid1_iq.Out;
     CTRL.id_cmd = pid1_id.Ref;
     CTRL.iq_cmd = pid1_iq.Ref;
+
+    // for plot
+    ACM.rpm_cmd = rpm_speed_command;
+    CTRL.speed_ctrl_err = rpm_speed_command*RPM_2_RAD_PER_SEC - CTRL.omg__fb;
 }
 
 #endif

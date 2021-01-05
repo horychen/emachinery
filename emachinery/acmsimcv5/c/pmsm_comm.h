@@ -5,31 +5,31 @@
 #define COMM_IV_SIZE 100
 struct CommissioningDataStruct{
 
-    float32 timebase;
+    REAL timebase;
     int32 counterEntered;
     int16 i;
 
-    float32 R;
-    float32 L;
-    float32 R3;
-    float32 L3;
-    float32 KE;
-    float32 Js; // shaft inertia
+    REAL R;
+    REAL L;
+    REAL R3;
+    REAL L3;
+    REAL KE;
+    REAL Js; // shaft inertia
 
     // R
-    float32 current_command;
-    float32 current_sum;
-    float32 voltage_sum;
+    REAL current_command;
+    REAL current_sum;
+    REAL voltage_sum;
     int32 counterSS;
     int16 bool_collecting;
-    float32 i_data[COMM_IV_SIZE];
-    float32 v_data[COMM_IV_SIZE];
-    float32 inverter_voltage_drop;
+    REAL i_data[COMM_IV_SIZE];
+    REAL v_data[COMM_IV_SIZE];
+    REAL inverter_voltage_drop;
 
     // L
-    float32 last_voltage_command;
-    float32 id_prev;
-    float32 iq_prev;
+    REAL last_voltage_command;
+    REAL id_prev;
+    REAL iq_prev;
 };
 extern struct CommissioningDataStruct COMM;
 extern int16 bool_comm_status;

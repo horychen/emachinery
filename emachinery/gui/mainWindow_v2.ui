@@ -54,7 +54,7 @@
            <string notr="true"/>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -74,12 +74,12 @@
               <widget class="QComboBox" name="comboBox_MachineType">
                <item>
                 <property name="text">
-                 <string>Induction Machine</string>
+                 <string>Synchronous Machine</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>Synchronous Machine</string>
+                 <string>Induction Machine</string>
                 </property>
                </item>
               </widget>
@@ -773,7 +773,7 @@
                <x>10</x>
                <y>20</y>
                <width>321</width>
-               <height>131</height>
+               <height>137</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_17">
@@ -833,7 +833,7 @@
                 <item>
                  <widget class="QLineEdit" name="lineEdit_desiredVLBW">
                   <property name="text">
-                   <string>100</string>
+                   <string>40</string>
                   </property>
                  </widget>
                 </item>
@@ -1043,7 +1043,7 @@
                  <item>
                   <widget class="QLineEdit" name="lineEdit_EndTime">
                    <property name="text">
-                    <string>10</string>
+                    <string>4</string>
                    </property>
                   </widget>
                  </item>

@@ -118,8 +118,8 @@ void commands(REAL *p_rpm_speed_command, REAL *p_amp_current_command){
         rpm_speed_command = rad_speed_command*RAD_PER_SEC_2_RPM;
     #endif
 
+    // 扫频建模
     #if EXCITATION_TYPE == 2
-        // 扫频建模
         // REAL amp_current_command;
         sf.time += CL_TS;
         if(sf.time > sf.current_freq_end_time){
@@ -141,18 +141,19 @@ void commands(REAL *p_rpm_speed_command, REAL *p_amp_current_command){
         }
     #endif
 
+    // 转速运动模式 in rpm
     #if EXCITATION_TYPE == 1
-        // 转速运动模式 in rpm
+        #define RPM1 100
         if(CTRL.timebase<1){ // note 1 sec is not enough for stator flux to reach steady state.
             rpm_speed_command = 0;
         }else if(CTRL.timebase<2){
-            rpm_speed_command = 500;
+            rpm_speed_command = RPM1;
         }else if(CTRL.timebase<4){
-            rpm_speed_command = -500;
+            rpm_speed_command = -RPM1;
         }else if(CTRL.timebase<6){
             rpm_speed_command = 0;
         }else if(CTRL.timebase<8){
-            rpm_speed_command = 500;
+            rpm_speed_command = RPM1;
         }
     #endif
 }

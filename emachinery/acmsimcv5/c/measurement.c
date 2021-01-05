@@ -34,6 +34,8 @@ void measurement(){
     // power-invariant to amplitude-invariant
     IS_C(0) = ACM.ial; //* POW2AMPL;
     IS_C(1) = ACM.ibe; //* POW2AMPL;
+    CTRL.ial__fb = ACM.ial;
+    CTRL.ibe__fb = ACM.ibe;
 
     // 转速和位置测量
     #define USE_EQEP FALSE

@@ -50,8 +50,10 @@ struct ControllerForExperiment {
     // REAL psimod_fb;
     // REAL psimod_fb_inv;
 
+    REAL psi_cmd_raw;
     REAL psi_cmd;
     REAL psi_cmd_inv;
+    REAL dderiv_psi_cmd;
     REAL deriv_psi_cmd;
     REAL m0;
     REAL m1;
@@ -65,6 +67,7 @@ struct ControllerForExperiment {
     REAL Lmu;
     REAL Lmu_inv;
     REAL alpha;
+    REAL alpha_inv;
 
     REAL Js;
     REAL Js_inv;
@@ -161,6 +164,8 @@ struct Marino2005{
     REAL xAlpha;
     REAL xOmg;
 
+    REAL deriv_xAlpha;
+
     REAL psi_Dmu;
     REAL psi_Qmu;
 
@@ -176,6 +181,8 @@ struct Marino2005{
 
     REAL Gamma_D;
     REAL Gamma_Q;
+
+    REAL torque;
 };
 extern struct Marino2005 marino;
 

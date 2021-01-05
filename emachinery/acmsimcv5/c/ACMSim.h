@@ -22,7 +22,8 @@ typedef unsigned long long Uint64;
 typedef float float32;
 typedef long double float64;
 #endif
-#define REAL float32
+// typedef float32 REAL;
+typedef double REAL;
 
 #define CONST_PI_OVER_180 (0.0174533)
 #define CONST_180_OVER_PI (57.2958)
@@ -100,6 +101,7 @@ void write_data_to_file(FILE *fw);
 int isNumber(double x);
 double sign(double x);
 double fabs(double x);
+REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv);
 
 // #include <unistd.h> // getcwd
     // dir

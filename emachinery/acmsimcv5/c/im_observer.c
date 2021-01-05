@@ -126,10 +126,11 @@ void rK4(double hs){
     rhs_func_marino2005( increment_4, *(p_x_temp+0), *(p_x_temp+1), *(p_x_temp+2), *(p_x_temp+3), hs );
     // \+=[^\n]*1\[(\d+)\][^\n]*2\[(\d+)\][^\n]*3\[(\d+)\][^\n]*4\[(\d+)\][^\n]*/ ([\d]+)
     // +=   (increment_1[$5] + 2*(increment_2[$5] + increment_3[$5]) + increment_4[$5])*0.166666666666667; // $5
-    marino.xRho   += (increment_1[0] + 2*(increment_2[0] + increment_3[0]) + increment_4[0])*0.166666666666667; // 0
-    marino.xTL    += (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667; // 1
-    marino.xAlpha += (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667; // 2
-    marino.xOmg   += (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667; // 3
+    marino.xRho        += (increment_1[0] + 2*(increment_2[0] + increment_3[0]) + increment_4[0])*0.166666666666667; // 0
+    marino.xTL         += (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667; // 1
+    marino.xAlpha      += (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667; // 2
+    marino.deriv_xAlpha = (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667 / hs;
+    marino.xOmg        += (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667; // 3
 
     // Projection Algorithm
     // xRho   \in [-M_PI, M_PI]
@@ -141,7 +142,15 @@ void rK4(double hs){
     // xTL    \in [-xTL_Max, xTL_Max]
     ;
     // xAlpha \in [-xAlpha_min, xAlpha_Max]
-    ;
+    if(marino.xAlpha > marino.xAlpha_Max){
+        marino.xAlpha = marino.xAlpha_Max;
+    }else if(marino.xAlpha < marino.xAlpha_min){
+        marino.xAlpha = marino.xAlpha_min;
+    }
+
+
+    // don't forget to update:
+    CTRL.omega_syn = marino.xOmg + marino.xAlpha*im.Lmu*CTRL.iQs_cmd*CTRL.psi_cmd_inv;
 }
 
 void improved_Holtz_method(){
@@ -149,10 +158,6 @@ void improved_Holtz_method(){
     holtz.psi_Q2 = ACM.psi_Qmu;
 }
 void observer_marino2005(){
-
-    /* VM based Flux Est. */
-    // Akatsu_RrId();
-    improved_Holtz_method();
 
     /* OBSERVATION */
     rK4(1*CL_TS);

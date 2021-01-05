@@ -6,8 +6,8 @@ struct ControllerForExperiment{
 
     double timebase;
 
-    double ual;
-    double ube;
+    double ual_cmd;
+    double ube_cmd;
 
     double R;
     double KE;

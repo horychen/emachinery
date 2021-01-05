@@ -290,14 +290,13 @@ int machine_simulation(){
 
         ACM.ial = ACM.ids;
         ACM.ibe = ACM.iqs;
-
-        ACM.theta_M = atan2(ACM.x[3], ACM.x[2]);
-        ACM.cosT = cos(ACM.theta_M); 
-        ACM.sinT = sin(ACM.theta_M);
-
-        ACM.iMs = AB2M(ACM.ial, ACM.ibe, ACM.cosT, ACM.sinT);
-        ACM.iTs = AB2T(ACM.ial, ACM.ibe, ACM.cosT, ACM.sinT);
     #endif
+    // get M-T frame quantities for fun
+    ACM.theta_M = atan2(ACM.x[3], ACM.x[2]);
+    ACM.cosT = cos(ACM.theta_M); 
+    ACM.sinT = sin(ACM.theta_M);
+    ACM.iMs = AB2M(ACM.ial, ACM.ibe, ACM.cosT, ACM.sinT);
+    ACM.iTs = AB2T(ACM.ial, ACM.ibe, ACM.cosT, ACM.sinT);
 
     // 电机转速接口
     ACM.omg_elec = ACM.x[4]; // 电气转速 [elec. rad/s]
@@ -312,15 +311,6 @@ int machine_simulation(){
     // 将状态变量x[3]和接口变量theta_d的值进行同步
     ACM.x[5] = ACM.theta_d;
 
-    // 简单的程序跑飞检测，比如电机转速无穷大则停止程序
-    if(isNumber(ACM.rpm)){
-        return FALSE;
-    }else{
-        printf("ACM.rpm is %g\n", ACM.rpm);
-        return TRUE;        
-    }
-
-
     #if PC_SIMULATION
         // 电机磁链接口
         #if MACHINE_TYPE == INDUCTION_MACHINE_CLASSIC_MODEL
@@ -331,6 +321,14 @@ int machine_simulation(){
             ACM.psi_Qmu = AB2T(ACM.x[2], ACM.x[3], ACM.cosT, ACM.sinT);
         #endif
     #endif
+
+    // 简单的程序跑飞检测，比如电机转速无穷大则停止程序
+    if(isNumber(ACM.rpm)){
+        return FALSE;
+    }else{
+        printf("ACM.rpm is %g\n", ACM.rpm);
+        return TRUE;        
+    }
 }
 
 #endif

@@ -1,5 +1,6 @@
 Speed [rpm]
+Absolute Position [deg]
 $i_q^*,~i_q$ [A]
 $i_d^*,~i_d$ [A]
 Position [deg]
-Absolute Position [deg]
+Voltage [V]

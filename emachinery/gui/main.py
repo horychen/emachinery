@@ -734,9 +734,10 @@ class EmachineryWidget(QMainWindow):
                             continue
                         if 'define CONTROL_STRATEGY' in line:
                             # Control Methods
-                            new_lines.append(f'\t#define NULL_D_AXIS_CURRENT_CONTROL -1')
-                            new_lines.append(f'\t#define MTPA -2 // not supported')
-                            new_lines.append(f'#define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL')
+                            new_lines.append(f'\t#define NULL_D_AXIS_CURRENT_CONTROL -1\n')
+                            new_lines.append(f'\t#define MTPA -2 // not supported\n')
+                            new_lines.append(line)
+                            # new_lines.append(f'#define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL')
                             continue
                     # Ignore old Machiner Parameters macros
                     if conditions_to_continue(line): continue

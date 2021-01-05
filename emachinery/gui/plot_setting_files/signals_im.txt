@@ -1,6 +1,7 @@
-ACM.rpm_cmd, ACM.rpm, im.omg_elec*RAD_PER_SEC_2_RPM
-CTRL.iDs_cmd, CTRL.iDs, ACM.iMs
-CTRL.iQs_cmd, CTRL.iQs, ACM.iTs
-ACM.ial, ACM.ibe
-ACM.x[0], ACM.x[2]
-ACM.x[6]/M_PI*180
+ACM.Tem, ACM.TLoad, marino.torque
+ACM.rpm_cmd, ACM.rpm, marino.xOmg*RAD_PER_SEC_2_RPM
+CTRL.psi_cmd, marino.psi_Dmu
+marino.e_psi_Dmu, marino.e_psi_Qmu
+CTRL.iDs_cmd, ACM.iMs, CTRL.iDs
+CTRL.iQs_cmd, ACM.iTs, CTRL.iQs
+CTRL.uDs_cmd, CTRL.uQs_cmd

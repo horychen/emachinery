@@ -87,6 +87,16 @@ extern struct SynchronousMachine sm;
 
 
 void acm_init();
+void harnefors_scvm();
+
+struct Harnefors2006{
+    REAL theta_d;
+    REAL omg_elec;
+};
+extern struct Harnefors2006 harnefors;
+
+
+
 #endif
 
 #endif

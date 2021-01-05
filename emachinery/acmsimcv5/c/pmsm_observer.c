@@ -3,6 +3,7 @@
 
 // DSP中用到的同步电机结构体变量声明
 struct SynchronousMachine sm;
+struct Harnefors2006 harnefors;
 
 void acm_init(){
     int i;
@@ -61,48 +62,71 @@ void acm_init(){
 
 
 
-    REAL hall_speedRad = 0;
-    REAL hall_speedRad_pre = 0;
-    REAL hall_speedRad_tmp = 0;
+    // REAL hall_speedRad = 0;
+    // REAL hall_speedRad_pre = 0;
+    // REAL hall_speedRad_tmp = 0;
 
-    Uint32 hall_speed_cnt = 0;
-    Uint32 hall_speed_cnt_pre = 65535;
+    // Uint32 hall_speed_cnt = 0;
+    // Uint32 hall_speed_cnt_pre = 65535;
 
-    REAL hall_change_cnt = 1;
-    REAL hall_change_angle = 330;
+    // REAL hall_change_cnt = 1;
+    // REAL hall_change_angle = 330;
 
-    REAL hall_angle_est = 0;
-    REAL hall_angle_est_tmp = 0;
+    // REAL hall_angle_est = 0;
+    // REAL hall_angle_est_tmp = 0;
 
-    Uint32 hall_previous_previous_angle = 0;
-    Uint32 hall_previous_angle = 0;
-    Uint32 hall_current_angle = 300;
+    // Uint32 hall_previous_previous_angle = 0;
+    // Uint32 hall_previous_angle = 0;
+    // Uint32 hall_current_angle = 300;
+
+    harnefors.theta_d = 0.0;
+    harnefors.omg_elec = 0.0;
 }
 
 
-
-
 // Harnefors 2006
-double theta_d_harnefors = 0.0;
-double omg_harnefors = 0.0;
 void harnefors_scvm(){
-    #define KE_MISMATCH 1.0 // 0.7
-    double d_axis_emf;
-    double q_axis_emf;
     #define LAMBDA 2 // 2
-    #define CJH_TUNING_A 25 // 1
-    #define CJH_TUNING_B 1 // 1
-    double lambda_s = LAMBDA * sign(omg_harnefors);
-    double alpha_bw_lpf = CJH_TUNING_A*0.1*(1500*RPM_2_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabs(omg_harnefors);
-    // d_axis_emf = CTRL.ud_cmd - 1*CTRL.R*CTRL.id_cmd + omg_harnefors*1.0*CTRL.Lq*CTRL.iq_cmd; // If Ld=Lq.
-    // q_axis_emf = CTRL.uq_cmd - 1*CTRL.R*CTRL.iq_cmd - omg_harnefors*1.0*CTRL.Ld*CTRL.id_cmd; // If Ld=Lq.
-    d_axis_emf = CTRL.ud_cmd - 1*CTRL.R*CTRL.id_cmd + omg_harnefors*1.0*CTRL.Lq*CTRL.iq_cmd; // eemf
-    q_axis_emf = CTRL.uq_cmd - 1*CTRL.R*CTRL.iq_cmd - omg_harnefors*1.0*CTRL.Ld*CTRL.id_cmd; // eemf
+    #define CJH_TUNING_C 0
+    REAL lambda_s = CJH_TUNING_C * LAMBDA * sign(harnefors.omg_elec);
+
+    // #define CJH_TUNING_A  25 // low voltage servo motor (<48 Vdc)
+    // #define CJH_TUNING_B  1  // low voltage servo motor (<48 Vdc)
+    // REAL alpha_bw_lpf = CJH_TUNING_A*0.1*(1500*RPM_2_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabs(harnefors.omg_elec);
+
+    #define CJH_TUNING_A  10 // low voltage servo motor (<48 Vdc)
+    #define CJH_TUNING_B  1  // low voltage servo motor (<48 Vdc)
+    REAL alpha_bw_lpf = CJH_TUNING_A*0.1*(750*RPM_2_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabs(harnefors.omg_elec);
+
+    static REAL last_id = 0.0;
+    static REAL last_iq = 0.0;
+
+    // #define D_AXIS_CURRENT CTRL.id_cmd
+    // #define Q_AXIS_CURRENT CTRL.iq_cmd
+    // REAL deriv_id = (CTRL.id_cmd - last_id) * CL_TS_INVERSE;
+    // REAL deriv_iq = (CTRL.iq_cmd - last_iq) * CL_TS_INVERSE;
+    // last_id = CTRL.id_cmd;
+    // last_iq = CTRL.iq_cmd;
+
+    #define D_AXIS_CURRENT CTRL.id__fb
+    #define Q_AXIS_CURRENT CTRL.iq__fb
+    REAL deriv_id = (CTRL.id__fb - last_id) * CL_TS_INVERSE;
+    REAL deriv_iq = (CTRL.iq__fb - last_iq) * CL_TS_INVERSE;
+    last_id = CTRL.id__fb;
+    last_iq = CTRL.iq__fb;
+
+    REAL d_axis_emf = CTRL.ud_cmd - 1*CTRL.R*D_AXIS_CURRENT + harnefors.omg_elec*1.0*CTRL.Lq*Q_AXIS_CURRENT - 1.0*CTRL.Ld*deriv_id; // eemf
+    REAL q_axis_emf = CTRL.uq_cmd - 1*CTRL.R*Q_AXIS_CURRENT - harnefors.omg_elec*1.0*CTRL.Ld*D_AXIS_CURRENT - 1.0*CTRL.Lq*deriv_iq; // eemf
+
+    // printf("%g: %g, %g\n", CTRL.timebase, CTRL.Ld*deriv_id, CTRL.Lq*deriv_iq);
+
     // Note it is bad habit to write numerical integration explictly like this. The states on the right may be accencidentally modified on the run.
-    theta_d_harnefors += CL_TS * omg_harnefors;
-    omg_harnefors += CL_TS * alpha_bw_lpf * ( (q_axis_emf - lambda_s*d_axis_emf)/(CTRL.KE*KE_MISMATCH+(CTRL.Ld-CTRL.Lq)*CTRL.id_cmd) - omg_harnefors );
-    while(theta_d_harnefors>M_PI) theta_d_harnefors-=2*M_PI;
-    while(theta_d_harnefors<-M_PI) theta_d_harnefors+=2*M_PI;   
+    #define KE_MISMATCH 1.0 // 0.7
+    harnefors.theta_d += CL_TS * harnefors.omg_elec;
+    harnefors.omg_elec += CL_TS * alpha_bw_lpf * ( (q_axis_emf - lambda_s*d_axis_emf)/(CTRL.KE*KE_MISMATCH+(CTRL.Ld-CTRL.Lq)*D_AXIS_CURRENT) - harnefors.omg_elec );
+
+    while(harnefors.theta_d>M_PI) harnefors.theta_d-=2*M_PI;
+    while(harnefors.theta_d<-M_PI) harnefors.theta_d+=2*M_PI;
 }
 
 

@@ -10,8 +10,8 @@ int16 bool_VL_tuned = FALSE;
 int16 bool_PL_tuned = FALSE;
 
 
-#define UD_OUTPUT CTRL.ual
-#define UQ_OUTPUT CTRL.ube
+#define UD_OUTPUT CTRL.ual_cmd
+#define UQ_OUTPUT CTRL.ube_cmd
 
 
 // 自整定初始化
@@ -167,7 +167,7 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
     COMM.current_command = - RS_ID_MAXIMUM_CURRENT;
     COMM.current_command += current_increase_per_step*COMM.i;
 
-    pid1_id.Fdb = id_fb;
+    pid1_id.Fbk = id_fb;
     pid1_id.Ref = COMM.current_command;
     pid1_id.calc(&pid1_id);
     UD_OUTPUT = pid1_id.Out;
@@ -193,7 +193,7 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
         COMM.counterSS = 0;
 
         // check steady state and assign boolean variable
-        if(reachSteadyStateCurrent(pid1_id.Ref-pid1_id.Fdb, MOTOR_RATED_CURRENT_RMS)){
+        if(reachSteadyStateCurrent(pid1_id.Ref-pid1_id.Fbk, MOTOR_RATED_CURRENT_RMS)){
 
             COMM.bool_collecting = TRUE;
 
@@ -290,7 +290,7 @@ void COMM_inductanceId_ver2(REAL id_fb, REAL iq_fb){
     if(COMM.counterEntered == COMM_FAST_SWITCH_MOD+1 || COMM.counterEntered == 1){
         id_avg = id_fb + COMM.id_prev;
 
-        pid1_id.Fdb = id_avg;
+        pid1_id.Fbk = id_avg;
         pid1_id.Ref = COMM.current_command;
         pid1_id.calc(&pid1_id);
 
@@ -441,9 +441,9 @@ REAL slidingModeObserver(REAL omg_elec_fb, REAL mu_m, REAL iq_fb){
 }
 // #define RPM_2_RAD_PER_SEC ( (2*3.1415926*MOTOR_NUMBER_OF_POLE_PAIRS)/60.0 )
 float32 rpm_speed_command = 300;
-REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv){
-    return y_tminus1 + CL_TS * time_const_inv * (x - y_tminus1);
-}
+// REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv){
+//     return y_tminus1 + CL_TS * time_const_inv * (x - y_tminus1);
+// }
 REAL filtered_voltage = 0.0;
 REAL filtered_current = 0.0;
 REAL filtered_omg_elec_fb = 0.0;
@@ -483,7 +483,7 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
             // }
 
             pid1_spd.Ref = rpm_speed_command*RPM_2_RAD_PER_SEC;
-            pid1_spd.Fdb = omg_elec_fb;
+            pid1_spd.Fbk = omg_elec_fb;
             pid1_spd.calc(&pid1_spd);
             pid1_iq.Ref = pid1_spd.Out;
             // REAL torque_cmd = pid1_spd.Out;
@@ -517,12 +517,12 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
     }
 
     // put this before _lpf(...)
-    pid1_id.Fdb = id_fb;
-    pid1_iq.Fdb = iq_fb;
+    pid1_id.Fbk = id_fb;
+    pid1_iq.Fbk = iq_fb;
 
     // put this before pid1_iq.calc(&pid1_iq);
     filtered_voltage     = _lpf(pid1_iq.Out, filtered_voltage, 5);
-    filtered_current     = _lpf(pid1_iq.Fdb, filtered_current, 5);
+    filtered_current     = _lpf(pid1_iq.Fbk, filtered_current, 5);
     filtered_omg_elec_fb = _lpf(omg_elec_fb, filtered_omg_elec_fb, 5);
 
     // voltage output
@@ -653,7 +653,7 @@ void COMM_intertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL om
             vc_count = 0;
 
             pid1_spd.Ref = (SPEED_COMMAND_BIAS+SPEED_COMMAND_RANGE*cos(M_PI+2*M_PI*TEST_SIGNAL_FREQUENCY*CTRL.timebase))*RPM_2_RAD_PER_SEC;
-            pid1_spd.Fdb = SPEED_SIGNAL;
+            pid1_spd.Fbk = SPEED_SIGNAL;
             pid1_spd.calc(&pid1_spd);
             pid1_iq.Ref = pid1_spd.Out;
             // REAL torque_cmd = pid1_spd.Out;
@@ -710,10 +710,10 @@ void COMM_intertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL om
         }
     }
 
-    pid1_id.Fdb = id_fb;
+    pid1_id.Fbk = id_fb;
     pid1_id.calc(&pid1_id);
 
-    pid1_iq.Fdb = iq_fb;
+    pid1_iq.Fbk = iq_fb;
     pid1_iq.calc(&pid1_iq);
 
     UD_OUTPUT = MT2A(pid1_id.Out, pid1_iq.Out, cosPark, sinPark);

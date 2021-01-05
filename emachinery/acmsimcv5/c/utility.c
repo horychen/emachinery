@@ -1,9 +1,9 @@
 #include "ACMSim.h"
 // 功能函数
 // 写变量名到文件
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.rpm_cmd,ACM.rpm,im.omg_elec*RAD_PER_SEC_2_RPM,CTRL.iDs_cmd,CTRL.iDs,ACM.iMs,CTRL.iQs_cmd,CTRL.iQs,ACM.iTs,ACM.ial,ACM.ibe,ACM.x[0],ACM.x[2],ACM.x[6]/M_PI*180\n"
-#define DATA_DETAILS ACM.rpm_cmd,ACM.rpm,im.omg_elec*RAD_PER_SEC_2_RPM,CTRL.iDs_cmd,CTRL.iDs,ACM.iMs,CTRL.iQs_cmd,CTRL.iQs,ACM.iTs,ACM.ial,ACM.ibe,ACM.x[0],ACM.x[2],ACM.x[6]/M_PI*180
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.rpm_cmd,ACM.rpm,sm.omg_elec*RAD_PER_SEC_2_RPM,harnefors.omg_elec*RAD_PER_SEC_2_RPM,ACM.x[3]/M_PI*180,harnefors.theta_d/M_PI*180,CTRL.iq_cmd,ACM.iq,CTRL.id_cmd,ACM.id,ACM.x[4]/M_PI*180,ACM.ud,ACM.uq\n"
+#define DATA_DETAILS ACM.rpm_cmd,ACM.rpm,sm.omg_elec*RAD_PER_SEC_2_RPM,harnefors.omg_elec*RAD_PER_SEC_2_RPM,ACM.x[3]/M_PI*180,harnefors.theta_d/M_PI*180,CTRL.iq_cmd,ACM.iq,CTRL.id_cmd,ACM.id,ACM.x[4]/M_PI*180,ACM.ud,ACM.uq
 
 void write_header_to_file(FILE *fw){
     printf("%s\n", DATA_FILE_NAME);
@@ -47,4 +47,10 @@ int isNumber(double x){
     // but it's FALSE if x is an NaN (1.#QNAN0).
     return (x == x); 
     // see https://www.johndcook.com/blog/IEEE_exceptions_in_cpp/ cb: https://stackoverflow.com/questions/347920/what-do-1-inf00-1-ind00-and-1-ind-mean
+}
+
+
+//低通滤波器：测量值，上一步的滤波器输出，时间常数的倒数
+REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv){
+    return y_tminus1 + CL_TS * time_const_inv * (x - y_tminus1);
 }

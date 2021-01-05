@@ -47,6 +47,10 @@ extern PID_REG pid1_ia;
 extern PID_REG pid1_ib;
 extern PID_REG pid1_ic;
 
+#define pid1_id pid1_iM
+#define pid1_iq pid1_iT
+
+
 void ACMSIMC_PIDTuner();
 
 void commands(REAL *p_rpm_speed_command, REAL *p_amp_current_command);

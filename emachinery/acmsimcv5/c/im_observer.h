@@ -112,6 +112,7 @@ extern struct ObserverControl ob;
 
 void acm_init();
 
+void improved_Holtz_method();
 void observer_marino2005();
 
 #endif

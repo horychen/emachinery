@@ -122,8 +122,9 @@ def iterate_for_desired_bandwidth( delta, desired_VLBW_Hz, motor_dict, CLBW_Hz_i
     J_total    = J_s*(1+JLoadRatio) 
 
     CLBW_Hz = CLBW_Hz_initial  #100 # Hz (initial)
-    VLBW_Hz = 0  # Hz (initial)
+    VLBW_Hz = -10  # Hz (initial)
     count = 0
+
     while True:
         count += 1
         if count>20:

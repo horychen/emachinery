@@ -1,6 +1,7 @@
+Torque [Nm]
 Speed [rpm]
-Magnetizing Current [A]
-Torque Current [A]
-Stator Current [A]
-Stator & Rotor Flux [Wb]
-Position [deg]	
+Flux Modulus [Wb]
+Flux Ctrl Err [Wb]
+D-axis Current [A]
+Q-axis Current [A]
+volts
