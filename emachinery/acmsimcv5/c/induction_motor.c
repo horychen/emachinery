@@ -39,32 +39,40 @@ void Machine_init(){
     IM.rpm_deriv_cmd = 0.0;
 
 
-    IM.Leq    = 0.4482;
-    IM.Lls    = 0.0126;
-    IM.Llr= 0.0126;
-    IM.Lm     = 0.5*(IM.Leq+sqrt(IM.Leq*IM.Leq+4*IM.Llr*IM.Leq));
-    // IM.Lm  = 0.47; // 0.4144
+    IM.Lmu    = IM_MAGNETIZING_INDUCTANCE;
+    IM.Lmu_inv= 1.0/IM.Lmu;
+
+    IM.Lsigma = IM_TOTAL_LEAKAGE_INDUCTANCE;
+
+    IM.Lls = IM.Lsigma * 0.5;
+    IM.Llr = IM.Lls;
+
+    IM.Lm = IM.Lmu + IM.Lsigma - IM.Lls; // Lsigma = Ls * (1.0 - IM.Lm*IM.Lm/Ls/Lr);
+    // IM.Lm     = 0.5*(IM.Lmu+sqrt(IM.Lmu*IM.Lmu+4*IM.Llr*IM.Lmu));
+    // IM.Lmu = IM.Lm * IM.Lm / (IM.Lm + IM.Llr);
 
     IM.Lm_slash_Lr = IM.Lm/(IM.Lm+IM.Llr);
     IM.Lr_slash_Lm = (IM.Lm+IM.Llr)/IM.Lm;
 
-    IM.rr     = 1.69;
-    IM.rs     = 3.04;
+    IM.rreq = IM_ROTOR_RESISTANCE;
+    IM.alpha = IM.rreq/IM.Lmu;
+    // IM.rreq  = IM.Lmu * IM.alpha;
+    // IM.alpha  = IM.rr / (IM.Lm + IM.Llr);
 
-    IM.alpha  = IM.rr / (IM.Lm + IM.Llr);
-    // IM.Leq = IM.Lm * IM.Lm / (IM.Lm + IM.Llr);
-    IM.Leq_inv= 1.0/IM.Leq;
-    IM.rreq   = IM.Leq * IM.alpha;
-    IM.Lsigma = IM.Lm + IM.Lls - IM.Leq; // Ls * (1.0 - IM.Lm*IM.Lm/Ls/Lr);
+    IM.rr     = IM.rreq*IM.Lr_slash_Lm*IM.Lr_slash_Lm;
+    IM.rs     = IM_STAOTR_RESISTANCE;
+
+
     IM.LSigmal = 1.0 / (1.0 / IM.Lls + 1.0 / IM.Llr);
     #if NO_ROTOR_LEAKAGE
         IM.LSigmal = 0.0;
         IM.Llr= 0.0;
     #endif
 
-    IM.Js = 0.0636; // Awaya92 using im.omg
+    // IM.Js = (0.0636)*(1+); // Awaya92 using im.omg
+    IM.Js = MOTOR_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
 
-    IM.npp = 2;
+    IM.npp = MOTOR_NUMBER_OF_POLE_PAIRS;
     IM.mu_m = IM.npp/IM.Js;
 
     IM.Ts  = MACHINE_TS;
@@ -98,10 +106,10 @@ void collectCurrents(double *x){
                 /* Lm_anal = LmN * psim / im(psim) */
                 // IM.Lm = 0.4144 * IM.psim/(5.0709*0.4144) \
                 //                / (0.9 * IM.psim/(5.0709*0.4144) + (0.1)*powf(IM.psim/(5.0709*0.4144),7));
-                IM.Leq = IM.Lm*IM.Lm/(IM.Lm+IM.Llr);
+                IM.Lmu = IM.Lm*IM.Lm/(IM.Lm+IM.Llr);
                 IM.alpha = IM.rr/(IM.Lm+IM.Llr);
-                IM.rreq = IM.Leq*IM.alpha;
-                IM.Lsigma = (IM.Lls+IM.Lm) - IM.Leq;            
+                IM.rreq = IM.Lmu*IM.alpha;
+                IM.Lsigma = (IM.Lls+IM.Lm) - IM.Lmu;            
             }
         #else
             IM.psim = 1.0/(1.0/IM.Lm+1.0/IM.Lls+1.0/IM.Llr)*IM.iz;

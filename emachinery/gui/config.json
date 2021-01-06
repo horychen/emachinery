@@ -3,7 +3,7 @@
     "EndTime": "4",
     "CLTS": "1/20e3",
     "VLTS": "4/20e3",
-    "LoadTorque": "0.0",
+    "LoadTorque": "0",
     "LoadInertiaPercentage": "16",
     "ViscousCoefficient": "0.7e-4",
     "OutputDataFileName": "IM_Velocity"

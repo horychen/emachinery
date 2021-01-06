@@ -1,7 +1,9 @@
 Torque [Nm]
+Load [Nm]
 Speed [rpm]
 Flux Modulus [Wb]
 Flux Ctrl Err [Wb]
 D-axis Current [A]
 Q-axis Current [A]
 volts
+Position [rad]

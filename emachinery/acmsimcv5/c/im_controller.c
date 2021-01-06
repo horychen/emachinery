@@ -17,8 +17,8 @@ void CTRL_init(){
         CTRL.rreq   = IM.rreq;
         CTRL.Lsigma = IM.Lsigma;
         CTRL.Lsigma_inv = 1.0/IM.Lsigma;
-        CTRL.Lmu    = IM.Leq;
-        CTRL.Lmu_inv = 1.0/IM.Leq;
+        CTRL.Lmu    = IM.Lmu;
+        CTRL.Lmu_inv = 1.0/IM.Lmu;
         CTRL.alpha  = CTRL.rreq/CTRL.Lmu;
         CTRL.alpha_inv = 1.0/CTRL.alpha;
         CTRL.Js     = IM.Js;
@@ -226,8 +226,8 @@ void CTRL_init(){
     marino.k_omega    = 10*60.0;  // e_omega
     marino.kappa      = 0.05;  // e_omega
     marino.gamma_inv  = 180.0*CTRL.Js_inv; // TL
-    marino.delta_inv  = 75.0; // alpha
-    marino.lambda_inv = 0.1*6000.0; // omega
+    marino.delta_inv  = 0*75.0; // alpha
+    marino.lambda_inv = 0*6000.0; // omega
 
     marino.xTL_Max = 8.0;
     marino.xAlpha_Max = 7.0;
@@ -322,10 +322,10 @@ void controller_marino2005(){
     CTRL.TLoad   = marino.xTL;
 
     // debug
-    CTRL.theta_D = ACM.theta_M;
-    CTRL.omg__fb = im.omg_elec;
-    CTRL.alpha   = ACM.alpha;
-    CTRL.TLoad   = ACM.TLoad;
+    // CTRL.theta_D = ACM.theta_M;
+    // CTRL.omg__fb = im.omg_elec;
+    // CTRL.alpha   = ACM.alpha;
+    // CTRL.TLoad   = ACM.TLoad;
 
     CTRL.alpha_inv = 1.0/CTRL.alpha;
 
@@ -494,8 +494,8 @@ void controller(){
         CTRL.dderiv_omg_cmd = 0;
     }else if(CTRL.timebase>1){
         static REAL last_omg_cmd;
-        rpm_speed_command += CL_TS*50;
-        local_dc_rpm_cmd = rpm_speed_command;
+        rpm_speed_command += CL_TS*150;
+        local_dc_rpm_cmd    = rpm_speed_command;
         CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
         CTRL.deriv_omg_cmd  = (CTRL.omg_cmd - last_omg_cmd)*CL_TS_INVERSE; //50*RPM_2_RAD_PER_SEC;
         CTRL.dderiv_omg_cmd = 0;
@@ -515,6 +515,7 @@ void controller(){
         CTRL.deriv_psi_cmd  = CTRL.m0;
         CTRL.dderiv_psi_cmd = 0.0;
     }else{
+        // CTRL.m1 = 0.0;
         CTRL.psi_cmd_raw = CTRL.m0 + CTRL.m1 * sin(CTRL.omega1*CTRL.timebase);
         CTRL.psi_cmd     = CTRL.psi_cmd_raw; // _lpf(CTRL.psi_cmd_raw, CTRL.psi_cmd, 5);
         CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
