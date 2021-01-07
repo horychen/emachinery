@@ -1071,7 +1071,7 @@
                  <item>
                   <widget class="QLineEdit" name="lineEdit_OutputDataFileName">
                    <property name="text">
-                    <string>PMSM_SweepFreq</string>
+                    <string>DefaultOutputFileName</string>
                    </property>
                   </widget>
                  </item>

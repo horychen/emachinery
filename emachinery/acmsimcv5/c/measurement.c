@@ -23,17 +23,15 @@ void measurement(){
     US_P(1) = US_C(1);
 
     // 电流测量存在噪声，只会影响反馈控制，实际的扰动可能是逆变器引入的，见逆变器建模
-    // power-invariant to amplitude-invariant via Clarke transformation
+        // power-invariant to amplitude-invariant via Clarke transformation???
     // REAL sqrt_2slash3 = sqrt(2.0/3.0);
     // REAL ia = sqrt_2slash3 * ACM.ial                              + 0*2*5e-2*RANDOM;
     // REAL ib = sqrt_2slash3 * (-0.5*ACM.ial + 0.5*sqrt(3)*ACM.ibe) + 0*2*5e-2*RANDOM;
     // REAL ic = sqrt_2slash3 * (-0.5*ACM.ial - 0.5*sqrt(3)*ACM.ibe) + 0*2*5e-2*RANDOM;
     // IS_C(0) = 2.0/3.0 * (ia - 0.5*ib - 0.5*ic);
     // IS_C(1) = 2.0/3.0 * 0.5*sqrt(3.0) * (ib - ic);
-
-    // power-invariant to amplitude-invariant
-    IS_C(0) = ACM.ial; //* POW2AMPL;
-    IS_C(1) = ACM.ibe; //* POW2AMPL;
+    IS_C(0)      = ACM.ial;
+    IS_C(1)      = ACM.ibe;
     CTRL.ial__fb = ACM.ial;
     CTRL.ibe__fb = ACM.ibe;
 

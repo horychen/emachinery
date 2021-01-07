@@ -469,7 +469,7 @@ class EmachineryWidget(QMainWindow):
         else:
             # file name with PI coefficients
             self.data_file_name = f"../dat/{self.motor_dict['data_file_name_prefix']}-{上位机电流KP:.0f}-{上位机电流KI:.0f}-{上位机速度KP:.0f}-{上位机速度KI:.0f}.dat"
-        print('self.data_file_name:', self.data_file_name, end='\n'*2)
+        # print('self.data_file_name:', self.data_file_name, end='\n'*2)
         return self.data_file_name
     # read in .dat file for plot
     def get_dataFrame(self):
@@ -698,7 +698,7 @@ class EmachineryWidget(QMainWindow):
                     # Machine Type
                     if "Induction Machine" in self.ui.comboBox_MachineType.currentText():
                         if '#define MACHINE_TYPE' in line: 
-                            new_lines.append(f'#define MACHINE_TYPE {11}\n')
+                            new_lines.append(f'#define MACHINE_TYPE {1}\n') # 11 or 1
                             # Machine Parameters
                             new_lines.append(f'\t#define IM_STAOTR_RESISTANCE        {motor_dict["Rs"]}\n')
                             new_lines.append(f'\t#define IM_ROTOR_RESISTANCE         {motor_dict["Rreq"]}\n')

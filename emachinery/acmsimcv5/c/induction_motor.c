@@ -43,6 +43,7 @@ void Machine_init(){
     IM.Lmu_inv= 1.0/IM.Lmu;
 
     IM.Lsigma = IM_TOTAL_LEAKAGE_INDUCTANCE;
+    IM.Lsigma_inv = 1.0/IM.Lsigma;
 
     IM.Lls = IM.Lsigma * 0.5;
     IM.Llr = IM.Lls;
@@ -225,18 +226,29 @@ void IM_linear_Dynamics(double t, double *x, double *fx){
         UBE_C_DIST = IM.ube;  
     #endif
 
+    /* T-equivalent Circuit x[2] and x[3] are \psi_r rather than \psi_\mu 
+        // ## STEP TWO: electromagnetic model
+        fx[2] = IM.alpha*(IM.Lm*x[0] - x[2]) - x[4]*x[3];
+        fx[3] = IM.alpha*(IM.Lm*x[1] - x[3]) + x[4]*x[2];
+        fx[0] = (UAL_C_DIST - IM.rs*x[0] - IM.Lm_slash_Lr*fx[2])/IM.Lsigma;
+        fx[1] = (UBE_C_DIST - IM.rs*x[1] - IM.Lm_slash_Lr*fx[3])/IM.Lsigma;
+        IM.Tem = IM.Lm_slash_Lr*CLARKE_TRANS_TORQUE_GAIN*IM.npp*(x[1]*x[2]-x[0]*x[3]);
+        // Or you can go with:
+        // fx[2] = IM.Lm_slash_Lr*IM.rr*x[0] - IM.alpha*x[2] - x[4]*x[3];
+        // fx[3] = IM.Lm_slash_Lr*IM.rr*x[1] - IM.alpha*x[3] + x[4]*x[2];
+        // fx[0] = (UAL_C - IM.rs*x[0] - fx[2])/IM.Lsigma;
+        // fx[1] = (UBE_C - IM.rs*x[1] - fx[3])/IM.Lsigma;
+    */
+
+    /* Inverse-Gamma-equivalent Circuit x[2] and x[3] are \psi_\mu */
     // ## STEP TWO: electromagnetic model
-    // fx[2] = IM.Lm_slash_Lr*IM.rr*x[0] - IM.alpha*x[2] - x[4]*x[3];
-    // fx[3] = IM.Lm_slash_Lr*IM.rr*x[1] - IM.alpha*x[3] + x[4]*x[2];
-    fx[2] = IM.alpha*(IM.Lm*x[0] - x[2]) - x[4]*x[3];
-    fx[3] = IM.alpha*(IM.Lm*x[1] - x[3]) + x[4]*x[2];
-    // fx[0] = (UAL_C - IM.rs*x[0] - fx[2])/IM.Lsigma;
-    // fx[1] = (UBE_C - IM.rs*x[1] - fx[3])/IM.Lsigma;
-    fx[0] = (UAL_C_DIST - IM.rs*x[0] - IM.Lm_slash_Lr*fx[2])/IM.Lsigma;
-    fx[1] = (UBE_C_DIST - IM.rs*x[1] - IM.Lm_slash_Lr*fx[3])/IM.Lsigma;
+    fx[2] = IM.alpha*(IM.Lmu*x[0] - x[2]) - x[4]*x[3];
+    fx[3] = IM.alpha*(IM.Lmu*x[1] - x[3]) + x[4]*x[2];
+    fx[0] = (UAL_C_DIST - IM.rs*x[0] - fx[2])*IM.Lsigma_inv;
+    fx[1] = (UBE_C_DIST - IM.rs*x[1] - fx[3])*IM.Lsigma_inv;
+    IM.Tem = CLARKE_TRANS_TORQUE_GAIN*IM.npp*(x[1]*x[2]-x[0]*x[3]);
 
     // ## STEP THREE: mechanical model
-    IM.Tem = IM.Lm_slash_Lr*IM.npp*(x[1]*x[2]-x[0]*x[3]);
     fx[4] = (IM.Tem - IM.TLoad)*IM.mu_m;
     fx[5] = x[4];
     fx[6] = x[4];
@@ -295,10 +307,9 @@ int machine_simulation(){
         ACM.iqs = ACM.x[1];
     #elif MACHINE_TYPE == INDUCTION_MACHINE_FLUX_ONLY_MODEL
         collectCurrents(ACM.x);
-
-        ACM.ial = ACM.ids;
-        ACM.ibe = ACM.iqs;
     #endif
+    ACM.ial = ACM.ids;
+    ACM.ibe = ACM.iqs;
     // get M-T frame quantities for fun
     ACM.theta_M = atan2(ACM.x[3], ACM.x[2]);
     ACM.cosT = cos(ACM.theta_M); 
@@ -308,11 +319,11 @@ int machine_simulation(){
 
     // 电机转速接口
     ACM.omg_elec = ACM.x[4]; // 电气转速 [elec. rad/s]
-    ACM.rpm = ACM.x[4] * 60 / (2 * M_PI * ACM.npp); // 机械转速 [mech. r/min]
+    ACM.rpm = ACM.x[4] * RAD_PER_SEC_2_RPM; // 机械转速 [mech. r/min]
 
     // 电机转子位置接口
-    ACM.theta_d = ACM.x[5];
     ACM.theta_d_accum = ACM.x[6];
+    ACM.theta_d = ACM.x[5];
     // 转子（假想）d轴位置限幅
     if(ACM.theta_d > M_PI) ACM.theta_d -= 2*M_PI;
     if(ACM.theta_d < -M_PI) ACM.theta_d += 2*M_PI; // 反转！
@@ -321,10 +332,7 @@ int machine_simulation(){
 
     #if PC_SIMULATION
         // 电机磁链接口
-        #if MACHINE_TYPE == INDUCTION_MACHINE_CLASSIC_MODEL
-            ACM.psi_Dmu = AB2M(ACM.x[2], ACM.x[3], ACM.cosT, ACM.sinT);
-            ACM.psi_Qmu = AB2T(ACM.x[2], ACM.x[3], ACM.cosT, ACM.sinT);
-        #elif MACHINE_TYPE == INDUCTION_MACHINE_FLUX_ONLY_MODEL
+        #if MACHINE_TYPE == INDUCTION_MACHINE_CLASSIC_MODEL || MACHINE_TYPE == INDUCTION_MACHINE_FLUX_ONLY_MODEL
             ACM.psi_Dmu = AB2M(ACM.x[2], ACM.x[3], ACM.cosT, ACM.sinT);
             ACM.psi_Qmu = AB2T(ACM.x[2], ACM.x[3], ACM.cosT, ACM.sinT);
         #endif

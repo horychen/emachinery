@@ -31,6 +31,7 @@ struct InductionMachineSimulated{
     double omg_elec;
 
     double Lsigma;
+    double Lsigma_inv;
     double rs;
     double rreq;
     double Lmu;

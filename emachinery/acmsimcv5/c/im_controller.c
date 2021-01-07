@@ -223,11 +223,13 @@ void CTRL_init(){
 
     // struct Marino2005
     marino.kz         = 700.0; // zd, zq
+
     marino.k_omega    = 10*60.0;  // e_omega
     marino.kappa      = 0.05;  // e_omega
-    marino.gamma_inv  = 180.0*CTRL.Js_inv; // TL
+
+    marino.gamma_inv  = 1e8 * 180*CTRL.Js_inv; // TL
+    marino.lambda_inv = 1e8 * 6000.0; // omega
     marino.delta_inv  = 0*75.0; // alpha
-    marino.lambda_inv = 0*6000.0; // omega
 
     marino.xTL_Max = 8.0;
     marino.xAlpha_Max = 7.0;
@@ -322,10 +324,10 @@ void controller_marino2005(){
     CTRL.TLoad   = marino.xTL;
 
     // debug
-    // CTRL.theta_D = ACM.theta_M;
-    // CTRL.omg__fb = im.omg_elec;
-    // CTRL.alpha   = ACM.alpha;
-    // CTRL.TLoad   = ACM.TLoad;
+    CTRL.theta_D = ACM.theta_M;
+    CTRL.omg__fb = im.omg_elec;
+    CTRL.alpha   = ACM.alpha;
+    CTRL.TLoad   = ACM.TLoad;
 
     CTRL.alpha_inv = 1.0/CTRL.alpha;
 
@@ -368,6 +370,73 @@ void controller_marino2005(){
     CTRL.ual_cmd = MT2A(CTRL.uDs_cmd, CTRL.uQs_cmd, CTRL.cosT, CTRL.sinT);
     CTRL.ube_cmd = MT2B(CTRL.uDs_cmd, CTRL.uQs_cmd, CTRL.cosT, CTRL.sinT);
 }
+
+
+void controller_IFOC();
+void controller(){
+
+    // 1. 生成转速指令
+    static REAL rpm_speed_command=0.0, amp_current_command=0.0;
+
+    // commands(&rpm_speed_command, &amp_current_command);
+
+    static REAL local_dc_rpm_cmd = 0.0; 
+    if(CTRL.timebase>3){
+        #define OMG1 (2*M_PI*1)
+        rpm_speed_command   = 100          * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd;
+        CTRL.omg_cmd        = (100         * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd)*RPM_2_RAD_PER_SEC;
+        CTRL.deriv_omg_cmd  = 1*100*OMG1     * cos(OMG1*CTRL.timebase)*RPM_2_RAD_PER_SEC;
+        CTRL.dderiv_omg_cmd = 1*100*OMG1*OMG1*-sin(OMG1*CTRL.timebase)*RPM_2_RAD_PER_SEC;
+    }else if(CTRL.timebase>2){
+        rpm_speed_command   = local_dc_rpm_cmd;
+        CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
+        CTRL.deriv_omg_cmd  = 0;
+        CTRL.dderiv_omg_cmd = 0;
+    }else if(CTRL.timebase>1){
+        static REAL last_omg_cmd;
+        rpm_speed_command += CL_TS*150;
+        local_dc_rpm_cmd    = rpm_speed_command;
+        CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
+        CTRL.deriv_omg_cmd  = (CTRL.omg_cmd - last_omg_cmd)*CL_TS_INVERSE; //50*RPM_2_RAD_PER_SEC;
+        CTRL.dderiv_omg_cmd = 0;
+
+        last_omg_cmd = CTRL.omg_cmd;
+    }else{
+        rpm_speed_command   = 0;
+        CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
+        CTRL.deriv_omg_cmd  = 0;
+        CTRL.dderiv_omg_cmd = 0;
+    }
+
+    // 2. 生成磁链指令
+    if(CTRL.timebase<1){
+        CTRL.psi_cmd_raw += CL_TS*CTRL.m0;
+        CTRL.psi_cmd     = CTRL.psi_cmd_raw;
+        CTRL.deriv_psi_cmd  = CTRL.m0;
+        CTRL.dderiv_psi_cmd = 0.0;
+    }else{
+        // CTRL.m1 = 0.0;
+        CTRL.psi_cmd_raw = CTRL.m0 + CTRL.m1 * sin(CTRL.omega1*CTRL.timebase);
+        CTRL.psi_cmd     = CTRL.psi_cmd_raw; // _lpf(CTRL.psi_cmd_raw, CTRL.psi_cmd, 5);
+        CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
+        CTRL.deriv_psi_cmd  = CTRL.m1 * CTRL.omega1 * cos(CTRL.omega1*CTRL.timebase);
+        CTRL.dderiv_psi_cmd = CTRL.m1 * CTRL.omega1 * CTRL.omega1 * -sin(CTRL.omega1*CTRL.timebase);
+    }
+    CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
+
+
+    #if CONTROL_STRATEGY == INDIRECT_FOC
+        controller_IFOC();
+    #elif CONTROL_STRATEGY == MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL
+        controller_marino2005();
+    #endif
+
+    // for plot
+    ACM.rpm_cmd = rpm_speed_command;
+    CTRL.speed_ctrl_err = (CTRL.omg__fb - CTRL.omg_cmd)*RAD_PER_SEC_2_RPM;
+}
+
+
 
 void controller_IFOC(){
 
@@ -472,68 +541,4 @@ void controller_IFOC(){
     CTRL.ual_cmd = MT2A(decoupled_M_axis_voltage, decoupled_T_axis_voltage, CTRL.cosT, CTRL.sinT);
     CTRL.ube_cmd = MT2B(decoupled_M_axis_voltage, decoupled_T_axis_voltage, CTRL.cosT, CTRL.sinT);
 }
-
-void controller(){
-
-    // 1. 生成转速指令
-    static REAL rpm_speed_command=0.0, amp_current_command=0.0;
-
-    // commands(&rpm_speed_command, &amp_current_command);
-
-    static REAL local_dc_rpm_cmd = 0.0; 
-    if(CTRL.timebase>3){
-        #define OMG1 (2*M_PI*1)
-        rpm_speed_command   = 100          * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd;
-        CTRL.omg_cmd        = (100         * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd)*RPM_2_RAD_PER_SEC;
-        CTRL.deriv_omg_cmd  = 1*100*OMG1     * cos(OMG1*CTRL.timebase)*RPM_2_RAD_PER_SEC;
-        CTRL.dderiv_omg_cmd = 1*100*OMG1*OMG1*-sin(OMG1*CTRL.timebase)*RPM_2_RAD_PER_SEC;
-    }else if(CTRL.timebase>2){
-        rpm_speed_command   = local_dc_rpm_cmd;
-        CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
-        CTRL.deriv_omg_cmd  = 0;
-        CTRL.dderiv_omg_cmd = 0;
-    }else if(CTRL.timebase>1){
-        static REAL last_omg_cmd;
-        rpm_speed_command += CL_TS*150;
-        local_dc_rpm_cmd    = rpm_speed_command;
-        CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
-        CTRL.deriv_omg_cmd  = (CTRL.omg_cmd - last_omg_cmd)*CL_TS_INVERSE; //50*RPM_2_RAD_PER_SEC;
-        CTRL.dderiv_omg_cmd = 0;
-
-        last_omg_cmd = CTRL.omg_cmd;
-    }else{
-        rpm_speed_command   = 0;
-        CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
-        CTRL.deriv_omg_cmd  = 0;
-        CTRL.dderiv_omg_cmd = 0;
-    }
-
-    // 2. 生成磁链指令
-    if(CTRL.timebase<1){
-        CTRL.psi_cmd_raw += CL_TS*CTRL.m0;
-        CTRL.psi_cmd     = CTRL.psi_cmd_raw;
-        CTRL.deriv_psi_cmd  = CTRL.m0;
-        CTRL.dderiv_psi_cmd = 0.0;
-    }else{
-        // CTRL.m1 = 0.0;
-        CTRL.psi_cmd_raw = CTRL.m0 + CTRL.m1 * sin(CTRL.omega1*CTRL.timebase);
-        CTRL.psi_cmd     = CTRL.psi_cmd_raw; // _lpf(CTRL.psi_cmd_raw, CTRL.psi_cmd, 5);
-        CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
-        CTRL.deriv_psi_cmd  = CTRL.m1 * CTRL.omega1 * cos(CTRL.omega1*CTRL.timebase);
-        CTRL.dderiv_psi_cmd = CTRL.m1 * CTRL.omega1 * CTRL.omega1 * -sin(CTRL.omega1*CTRL.timebase);
-    }
-    CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
-
-
-    #if CONTROL_STRATEGY == INDIRECT_FOC
-        controller_IFOC();
-    #elif CONTROL_STRATEGY == MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL
-        controller_marino2005();
-    #endif
-
-    // for plot
-    ACM.rpm_cmd = rpm_speed_command;
-    CTRL.speed_ctrl_err = (CTRL.omg__fb - CTRL.omg_cmd)*RAD_PER_SEC_2_RPM;
-}
-
 #endif
