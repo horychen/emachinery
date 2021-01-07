@@ -1,4 +1,4 @@
-ACM.Tem, marino.torque
+ACM.Tem, marino.torque_cmd, marino.torque__fb
 ACM.TLoad, marino.xTL
 CTRL.deriv_omg_cmd, ACM.rpm_cmd, ACM.rpm, marino.xOmg*RAD_PER_SEC_2_RPM
 CTRL.psi_cmd, marino.psi_Dmu

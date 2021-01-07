@@ -5,5 +5,5 @@ Flux Modulus [Wb]
 Flux Ctrl Err [Wb]
 D-axis Current [A]
 Q-axis Current [A]
-volts
+Voltage [V]
 Position [rad]

@@ -6,6 +6,57 @@ struct ControllerForExperiment CTRL;
 #define IM ACM // 权宜之计
 
 void CTRL_init(){
+
+    // struct Marino2005
+    marino.kz         = 700.0; // zd, zq
+
+    marino.k_omega    = 100*60.0;  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
+    marino.kappa      = 24; //0.05;  // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
+
+    marino.gamma_inv  = 1e8 * 180*CTRL.Js_inv; // TL
+    marino.lambda_inv = 1e8 * 6000.0; // omega
+    marino.delta_inv  = 0*75.0; // alpha
+
+    marino.xTL_Max = 8.0;
+    marino.xAlpha_Max = 7.0;
+    marino.xAlpha_min = 3.0;
+    printf("alpha: %g in [%g, %g]?\n", im.alpha, marino.xAlpha_min, marino.xAlpha_Max);
+
+    marino.xRho = 0.0;
+    marino.xTL = 0.0;
+    marino.xAlpha = im.alpha;
+    marino.xOmg = 0.0;
+
+    marino.deriv_xTL = 0.0;
+    marino.deriv_xAlpha = 0.0;
+    marino.deriv_xOmg = 0.0;
+
+    marino.psi_Dmu = 0.0;
+    marino.psi_Qmu = 0.0;
+
+    marino.zD = 0.0;
+    marino.zQ = 0.0;
+    marino.e_iDs = 0.0;
+    marino.e_iQs = 0.0;
+    marino.e_psi_Dmu = 0.0;
+    marino.e_psi_Qmu = 0.0;
+
+    marino.deriv_iD_cmd = 0.0;
+    marino.deriv_iQ_cmd = 0.0;
+
+    marino.Gamma_D = 0.0;
+    marino.Gamma_Q = 0.0;
+
+    marino.torque_cmd = 0.0;
+    marino.torque__fb = 0.0;
+
+    // struct Holtz2003
+    holtz.psi_D2 = 0.0;
+    holtz.psi_Q2 = 0.0;
+
+
+
+
     int i=0,j=0;
 
     CTRL.timebase = 0.0;
@@ -63,7 +114,7 @@ void CTRL_init(){
 
     CTRL.tajima_omg = 0.0;
     CTRL.K_PEM = 0.1;
-    
+
     CTRL.omg__fb = 0.0;
     CTRL.ial__fb = 0.0;
     CTRL.ibe__fb = 0.0;
@@ -73,7 +124,7 @@ void CTRL_init(){
     // CTRL.psimod_fb = 0.0;
     // CTRL.psimod_fb_inv = 1.0;
     // CTRL.deriv_fluxModSim = 0.0;
-    
+
     CTRL.psi_cmd_raw    = 0.0;
     CTRL.psi_cmd        = 0.0;
     CTRL.dderiv_psi_cmd = 0.0;
@@ -221,51 +272,6 @@ void CTRL_init(){
     printf("Speed PID: Kp=%g, Ki=%g, limit=%g Nm\n", pid1_spd.Kp, pid1_spd.Ki/CL_TS, pid1_spd.OutLimit);
     printf("Current PID: Kp=%g, Ki=%g, limit=%g V\n", pid1_iM.Kp, pid1_iM.Ki/CL_TS, pid1_iM.OutLimit);
 
-    // struct Marino2005
-    marino.kz         = 700.0; // zd, zq
-
-    marino.k_omega    = 10*60.0;  // e_omega
-    marino.kappa      = 0.05;  // e_omega
-
-    marino.gamma_inv  = 1e8 * 180*CTRL.Js_inv; // TL
-    marino.lambda_inv = 1e8 * 6000.0; // omega
-    marino.delta_inv  = 0*75.0; // alpha
-
-    marino.xTL_Max = 8.0;
-    marino.xAlpha_Max = 7.0;
-    marino.xAlpha_min = 3.0;
-    printf("alpha: %g in [%g, %g]?\n", im.alpha, marino.xAlpha_min, marino.xAlpha_Max);
-
-    marino.xRho = 0.0;
-    marino.xTL = 0.0;
-    marino.xAlpha = im.alpha;
-    marino.xOmg = 0.0;
-
-    marino.deriv_xTL = 0.0;
-    marino.deriv_xAlpha = 0.0;
-    marino.deriv_xOmg = 0.0;
-
-    marino.psi_Dmu = 0.0;
-    marino.psi_Qmu = 0.0;
-
-    marino.zD = 0.0;
-    marino.zQ = 0.0;
-    marino.e_iDs = 0.0;
-    marino.e_iQs = 0.0;
-    marino.e_psi_Dmu = 0.0;
-    marino.e_psi_Qmu = 0.0;
-
-    marino.deriv_iD_cmd = 0.0;
-    marino.deriv_iQ_cmd = 0.0;
-
-    marino.Gamma_D = 0.0;
-    marino.Gamma_Q = 0.0;
-
-    marino.torque = 0.0;
-
-    // struct Holtz2003
-    holtz.psi_D2 = 0.0;
-    holtz.psi_Q2 = 0.0;
 }
 
 // 定义特定的测试指令，如快速反转等
@@ -339,13 +345,13 @@ void controller_marino2005(){
 
     // TODO
     // CTRL.deriv_omg_cmd
-    marino.deriv_iD_cmd = 0.0*CTRL.Lmu_inv*(  CTRL.deriv_psi_cmd \
+    marino.deriv_iD_cmd = 1.0*CTRL.Lmu_inv*(  CTRL.deriv_psi_cmd \
                                             + CTRL.dderiv_psi_cmd*CTRL.alpha_inv \
                                             - CTRL.deriv_psi_cmd*CTRL.alpha_inv*CTRL.alpha_inv*marino.deriv_xAlpha);
     //TODO 重新写！
     REAL mu_temp = CTRL.npp*CTRL.Js_inv * CLARKE_TRANS_TORQUE_GAIN*CTRL.npp; 
-    marino.deriv_iQ_cmd =   0.0*(-marino.k_omega*deriv_sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) * (marino.deriv_xOmg - CTRL.deriv_omg_cmd) + CTRL.Js_inv*CTRL.npp*marino.deriv_xTL + CTRL.dderiv_omg_cmd ) / (mu_temp * CTRL.psi_cmd)\
-                          - 0.0*(-marino.k_omega*sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) + CTRL.Js_inv*CTRL.TLoad+CTRL.deriv_omg_cmd) * (CTRL.deriv_psi_cmd/(mu_temp*CTRL.psi_cmd*CTRL.psi_cmd));
+    marino.deriv_iQ_cmd =   1.0*(-marino.k_omega*deriv_sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) * (marino.deriv_xOmg - CTRL.deriv_omg_cmd) + CTRL.Js_inv*CTRL.npp*marino.deriv_xTL + CTRL.dderiv_omg_cmd ) / (mu_temp * CTRL.psi_cmd)\
+                          - 1.0*(-marino.k_omega*sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) + CTRL.Js_inv*CTRL.TLoad+CTRL.deriv_omg_cmd) * (CTRL.deriv_psi_cmd/(mu_temp*CTRL.psi_cmd*CTRL.psi_cmd));
 
     // current error quantities
     CTRL.iDs_cmd = ( CTRL.psi_cmd + CTRL.deriv_psi_cmd*CTRL.alpha_inv ) * CTRL.Lmu_inv;
@@ -353,7 +359,9 @@ void controller_marino2005(){
     marino.e_iDs = CTRL.iDs - CTRL.iDs_cmd;
     marino.e_iQs = CTRL.iQs - CTRL.iQs_cmd;
 
-    marino.torque = CTRL.iQs_cmd * (CLARKE_TRANS_TORQUE_GAIN*CTRL.npp*CTRL.psi_cmd);
+    marino.torque_cmd = CLARKE_TRANS_TORQUE_GAIN * CTRL.npp * (CTRL.iQs_cmd * CTRL.psi_cmd   - CTRL.iDs_cmd*0);
+    marino.torque__fb = CLARKE_TRANS_TORQUE_GAIN * CTRL.npp * (CTRL.iQs     * marino.psi_Dmu - CTRL.iDs * marino.psi_Qmu);
+    // marino.torque__fb = CLARKE_TRANS_TORQUE_GAIN * CTRL.npp * (CTRL.iQs     * marino.psi_Dmu);
 
 
     // linear combination of error

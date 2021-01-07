@@ -186,7 +186,8 @@ struct Marino2005{
     REAL Gamma_D;
     REAL Gamma_Q;
 
-    REAL torque;
+    REAL torque_cmd;
+    REAL torque__fb;
 };
 extern struct Marino2005 marino;
 

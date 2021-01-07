@@ -59,8 +59,8 @@ void rhs_func_marino2005(double *increment_n, double xRho, double xTL, double xA
     // time-varying quantities
     CTRL.cosT = cos(xRho);
     CTRL.sinT = sin(xRho);
-    CTRL.iDs = AB2M(CTRL.ial__fb, CTRL.ibe__fb, CTRL.cosT, CTRL.sinT);
-    CTRL.iQs = AB2T(CTRL.ial__fb, CTRL.ibe__fb, CTRL.cosT, CTRL.sinT);
+    CTRL.iDs = AB2M(IS(0), IS(1), CTRL.cosT, CTRL.sinT);
+    CTRL.iQs = AB2T(IS(0), IS(1), CTRL.cosT, CTRL.sinT);
 
     // f = \dot x = the time derivative
     double f[4];
@@ -94,10 +94,10 @@ void rK4(double hs){
      * Begin RK4 
      * */
     // time instant t
-    CTRL.ual_cmd = US_P(0);
-    CTRL.ube_cmd = US_P(1);
-    CTRL.ial__fb = IS_P(0);
-    CTRL.ibe__fb = IS_P(1);
+    US(0) = US_P(0);
+    US(1) = US_P(1);
+    IS(0) = IS_P(0);
+    IS(1) = IS_P(1);
     rhs_func_marino2005( increment_1, marino.xRho, marino.xTL, marino.xAlpha, marino.xOmg, hs); 
     x_temp[0]  = marino.xRho   + increment_1[0]*0.5;
     x_temp[1]  = marino.xTL    + increment_1[1]*0.5;
@@ -105,8 +105,8 @@ void rK4(double hs){
     x_temp[3]  = marino.xOmg   + increment_1[3]*0.5;
 
     // time instant t+hs/2
-    CTRL.ial__fb = 0.5*(IS_P(0)+IS_C(0));
-    CTRL.ibe__fb = 0.5*(IS_P(1)+IS_C(1));
+    IS(0) = 0.5*(IS_P(0)+IS_C(0));
+    IS(1) = 0.5*(IS_P(1)+IS_C(1));
     rhs_func_marino2005( increment_2, *(p_x_temp+0), *(p_x_temp+1), *(p_x_temp+2), *(p_x_temp+3), hs );
     x_temp[0]  = marino.xRho   + increment_2[0]*0.5;
     x_temp[1]  = marino.xTL    + increment_2[1]*0.5;
@@ -121,8 +121,8 @@ void rK4(double hs){
     x_temp[3]  = marino.xOmg   + increment_3[3];
 
     // time instant t+hs
-    CTRL.ial__fb = IS_C(0);
-    CTRL.ibe__fb = IS_C(1);
+    IS(0) = IS_C(0);
+    IS(1) = IS_C(1);
     rhs_func_marino2005( increment_4, *(p_x_temp+0), *(p_x_temp+1), *(p_x_temp+2), *(p_x_temp+3), hs );
     // \+=[^\n]*1\[(\d+)\][^\n]*2\[(\d+)\][^\n]*3\[(\d+)\][^\n]*4\[(\d+)\][^\n]*/ ([\d]+)
     // +=   (increment_1[$5] + 2*(increment_2[$5] + increment_3[$5]) + increment_4[$5])*0.166666666666667; // $5
