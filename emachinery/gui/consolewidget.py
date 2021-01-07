@@ -1,6 +1,7 @@
 
 # https://stackoverflow.com/questions/11513132/embedding-ipython-qt-console-in-a-pyqt-application
-from qtconsole.qt import QtGui
+# from qtconsole.qt import QtGui # This works with qtconsole-4.6.0
+from PyQt5 import QtGui
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
 

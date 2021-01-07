@@ -537,7 +537,7 @@ class EmachineryWidget(QMainWindow):
             # for i, key in enumerate(self.list__label):
             first_ax = None
             for i, number_of_traces_per_subplot in enumerate(self.list__number_of_traces_per_subplot):
-                ax = self.ui.MplWidget_ACMPlot.canvas.figure.add_subplot(number_of_subplot*100+11+i, sharex=first_ax)
+                ax = self.ui.MplWidget_ACMPlot.canvas.figure.add_subplot(number_of_subplot, 1, 1+i, sharex=first_ax)
                 if first_ax is None:
                     first_ax = ax
 
