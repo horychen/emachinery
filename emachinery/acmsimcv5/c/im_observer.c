@@ -56,9 +56,13 @@ void rhs_func_marino2005(double *increment_n, double xRho, double xTL, double xA
     // x????: state variable
     // hs: step size of numerical integral
 
+    /* 把磁链观测嫁到这里来？？*/
+    /* 把磁链观测嫁到这里来？？*/
+    /* 把磁链观测嫁到这里来？？*/
+
     // time-varying quantities
-    CTRL.cosT = cos(xRho);
-    CTRL.sinT = sin(xRho);
+    CTRL.cosT = cos(xRho); // 这里体现了该观测器的非线性——让 q 轴电流给定和观测转速之间通过 iQs 的值产生了联系
+    CTRL.sinT = sin(xRho); // 这里体现了该观测器的非线性——让 q 轴电流给定和观测转速之间通过 iQs 的值产生了联系
     CTRL.iDs = AB2M(IS(0), IS(1), CTRL.cosT, CTRL.sinT);
     CTRL.iQs = AB2T(IS(0), IS(1), CTRL.cosT, CTRL.sinT);
 
@@ -157,8 +161,17 @@ void rK4(double hs){
 }
 
 void improved_Holtz_method(){
+    // Flux Measurements
     holtz.psi_D2 = ACM.psi_Dmu;
     holtz.psi_Q2 = ACM.psi_Qmu;
+
+    // Flux Estimator (Open Loop Voltage Model + ODE1)
+    REAL deriv_psi_D1 = CTRL.uDs_cmd - CTRL.rs*CTRL.iDs + CTRL.omega_syn*holtz.psi_Q1_ode1;
+    REAL deriv_psi_Q1 = CTRL.uQs_cmd - CTRL.rs*CTRL.iQs - CTRL.omega_syn*holtz.psi_D1_ode1;
+    holtz.psi_D1_ode1 += CL_TS * (deriv_psi_D1);
+    holtz.psi_Q1_ode1 += CL_TS * (deriv_psi_Q1);
+    holtz.psi_D2_ode1 = holtz.psi_D1_ode1 - CTRL.Lsigma*CTRL.iDs;
+    holtz.psi_Q2_ode1 = holtz.psi_Q1_ode1 - CTRL.Lsigma*CTRL.iQs;
 }
 void observer_marino2005(){
 

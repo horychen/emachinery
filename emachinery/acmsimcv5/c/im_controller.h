@@ -149,6 +149,7 @@ struct ControllerForExperiment {
 };
 extern struct ControllerForExperiment CTRL;
 
+// 这个结构体声明的是基本的IFOC中所没有的变量的集合体。
 struct Marino2005{
     REAL kz;     // zd, zq
     REAL k_omega; // e_omega
@@ -192,6 +193,16 @@ struct Marino2005{
 extern struct Marino2005 marino;
 
 struct Holtz2003{
+    REAL psi_D1_ode1;
+    REAL psi_Q1_ode1;
+    REAL psi_D2_ode1;
+    REAL psi_Q2_ode1;
+
+    REAL psi_D1_ode4;
+    REAL psi_Q1_ode4;
+    REAL psi_D2_ode4;
+    REAL psi_Q2_ode4;
+
     REAL psi_D2;
     REAL psi_Q2;
 };

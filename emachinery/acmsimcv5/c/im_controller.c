@@ -10,12 +10,12 @@ void CTRL_init(){
     // struct Marino2005
     marino.kz         = 700.0; // zd, zq
 
-    marino.k_omega    = 100*60.0;  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
-    marino.kappa      = 24; //0.05;  // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
+    marino.k_omega    = 88*60.0; // 6000  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
+    marino.kappa      = 24;      //0.05;  // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
 
-    marino.gamma_inv  = 1e8 * 180*CTRL.Js_inv; // TL
-    marino.lambda_inv = 1e8 * 6000.0; // omega
-    marino.delta_inv  = 0*75.0; // alpha
+    marino.gamma_inv  = 1e-4 * 180*CTRL.Js_inv; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
+    marino.lambda_inv = 1e-4 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
+    marino.delta_inv  = 0*75.0; // alpha 要求磁链幅值时变
 
     marino.xTL_Max = 8.0;
     marino.xAlpha_Max = 7.0;
@@ -53,6 +53,15 @@ void CTRL_init(){
     // struct Holtz2003
     holtz.psi_D2 = 0.0;
     holtz.psi_Q2 = 0.0;
+    holtz.psi_D1_ode1 = 0.0;
+    holtz.psi_Q1_ode1 = 0.0;
+    holtz.psi_D2_ode1 = 0.0;
+    holtz.psi_Q2_ode1 = 0.0;
+    holtz.psi_D1_ode4 = 0.0;
+    holtz.psi_Q1_ode4 = 0.0;
+    holtz.psi_D2_ode4 = 0.0;
+    holtz.psi_Q2_ode4 = 0.0;
+
 
 
 
@@ -318,6 +327,8 @@ void controller_marino2005(){
     // flux feedback
     marino.psi_Dmu = holtz.psi_D2;
     marino.psi_Qmu = holtz.psi_Q2;
+    // marino.psi_Dmu = holtz.psi_D2_ode1;
+    // marino.psi_Qmu = holtz.psi_Q2_ode1;
     // flux error quantities
     marino.e_psi_Dmu = marino.psi_Dmu - CTRL.psi_cmd;
     marino.e_psi_Qmu = marino.psi_Qmu - 0.0;

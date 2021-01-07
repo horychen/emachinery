@@ -7,3 +7,5 @@ CTRL.iDs_cmd, ACM.iMs, CTRL.iDs
 CTRL.iQs_cmd, ACM.iTs, CTRL.iQs
 CTRL.uDs_cmd, CTRL.uQs_cmd
 ACM.theta_M, marino.xRho
+holtz.psi_D2, holtz.psi_D2_ode1
+holtz.psi_Q2, holtz.psi_Q2_ode1
