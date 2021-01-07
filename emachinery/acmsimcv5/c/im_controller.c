@@ -8,9 +8,9 @@ struct ControllerForExperiment CTRL;
 void CTRL_init(){
 
     // struct Marino2005
-    marino.kz         = 2*700.0; // zd, zq
+    marino.kz         = 1*700.0; // zd, zq
 
-    marino.k_omega    = 88*60.0; // 6000  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
+    marino.k_omega    = 0.5*88*60.0; // 6000  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
     marino.kappa      = 24;      //0.05;  // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
 
     marino.lambda_inv = 1e-1 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
@@ -402,11 +402,11 @@ void controller(){
 
     static REAL local_dc_rpm_cmd = 0.0; 
     if(CTRL.timebase>3){
-        #define OMG1 (2*M_PI*1)
+        #define OMG1 (2*M_PI*4)
         rpm_speed_command   = 100          * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd;
         CTRL.omg_cmd        = (100         * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd)*RPM_2_RAD_PER_SEC;
-        CTRL.deriv_omg_cmd  = 1*100*OMG1     * cos(OMG1*CTRL.timebase)*RPM_2_RAD_PER_SEC;
-        CTRL.dderiv_omg_cmd = 1*100*OMG1*OMG1*-sin(OMG1*CTRL.timebase)*RPM_2_RAD_PER_SEC;
+        CTRL.deriv_omg_cmd  = 100*OMG1     * cos(OMG1*CTRL.timebase)                    *RPM_2_RAD_PER_SEC;
+        CTRL.dderiv_omg_cmd = 100*OMG1*OMG1*-sin(OMG1*CTRL.timebase)                    *RPM_2_RAD_PER_SEC;
     }else if(CTRL.timebase>2){
         rpm_speed_command   = local_dc_rpm_cmd;
         CTRL.omg_cmd        = rpm_speed_command*RPM_2_RAD_PER_SEC;
