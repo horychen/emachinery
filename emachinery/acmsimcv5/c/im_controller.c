@@ -122,8 +122,8 @@ void CTRL_init(){
     CTRL.omega_sl = 0.0;
     CTRL.omega_syn = 0.0;
 
-    CTRL.tajima_omg = 0.0;
-    CTRL.K_PEM = 0.1;
+    // CTRL.tajima_omg = 0.0;
+    // CTRL.K_PEM = 0.1;
 
     CTRL.omg__fb = 0.0;
     CTRL.ial__fb = 0.0;
@@ -145,60 +145,18 @@ void CTRL_init(){
 
 
 
-    CTRL.omg_ctrl_err = 0.0;
-    CTRL.gamma_res_transient = 0;
-    CTRL.gamma_res_transient_shape = 2000; //2000~5000都不错
-    CTRL.gamma_res2_transient = 0;
-    CTRL.gamma_res2_transient_shape = 2; // 10
-    CTRL.gamma_omg_transient = 0;
-    CTRL.gamma_omg_transient_shape = 1; // 1 数值越小，那么区域越宽，避免转速稳态下转速辨识增益振荡。
-    CTRL.resistance_id_on = FALSE;
+    // CTRL.omg_ctrl_err = 0.0;
+    // CTRL.gamma_res_transient = 0;
+    // CTRL.gamma_res_transient_shape = 2000; //2000~5000都不错
+    // CTRL.gamma_res2_transient = 0;
+    // CTRL.gamma_res2_transient_shape = 2; // 10
+    // CTRL.gamma_omg_transient = 0;
+    // CTRL.gamma_omg_transient_shape = 1; // 1 数值越小，那么区域越宽，避免转速稳态下转速辨识增益振荡。
+    // CTRL.resistance_id_on = FALSE;
 
 
-
-
-    CTRL.sensorless = SENSORLESS_CONTROL;
-    CTRL.CtrMode = CONTROL_STRATEGY;
-
-
-
-
-
-    CTRL.FSET = 0.0;        // VVVF: Frequency Set(Hz), others: rpm_cmd
-    CTRL.Goal = 0.0;        // 斜坡转速给定的值
-    CTRL.Goal_dot = 0.0;        // 斜坡转速给定的值
-    CTRL.FCUR = 0.5;        // Current Frequent (Hz)
-    CTRL.Speed = 0.0;       // 转速(rpm)
-    CTRL.SpStart = 0;       // Boolean for starting
-    CTRL.SpCount = 0.0;
-
-    CTRL.VCUR = 0.0;           // Current Voltag
-    CTRL.VCurPerUnit = 0.0;    // 2*Current Voltag/Udc
-    CTRL.Cvf0 = 3;//6.22;          // VVVF曲线，Cvf0=最大输出电压幅值/转折频率=150/50;
-
-    CTRL.Udc = 0.0;
-    CTRL.lUdc = 0.0;
-
-    CTRL.VaPU = 0.0;               // 标幺化voltage in a-b-c frame
-    CTRL.VbPU = 0.0;
-    CTRL.VcPU = 0.0;
-
-    CTRL.IAmp = 0.0;       //输出电流幅值
-    CTRL.ITMP = 0.0;       //计算电流有效值用中间变量
-    CTRL.NT = 0;           //一个同步速周期进入同步中断的次数
-    CTRL.NAdc = 0;         //在一个同步中断周期内ADC的次数
-
-    for(i=0;i<PHASE_NUMBER;i++)
-    {
-        CTRL.CmparBeforeCmpnst[i] = 0;     //死区补偿前的比较值
-        CTRL.CmparAfterCmpnst[i] = 0;      //死区补偿后的比较值
-    }
-
-    // ============错误报警==============
-    CTRL.SetOverMaxFreq = FALSE;
-    CTRL.SetBelowMinFreq = FALSE;
-    CTRL.UdcBelowZero = FALSE;
-    CTRL.OverModulation = FALSE;
+    CTRL.sensorless    = SENSORLESS_CONTROL;
+    CTRL.ctrl_strategy = CONTROL_STRATEGY;
 
 
     #define AKATSU00 FALSE
@@ -281,7 +239,6 @@ void CTRL_init(){
     ACMSIMC_PIDTuner();
     printf("Speed PID: Kp=%g, Ki=%g, limit=%g Nm\n", pid1_spd.Kp, pid1_spd.Ki/CL_TS, pid1_spd.OutLimit);
     printf("Current PID: Kp=%g, Ki=%g, limit=%g V\n", pid1_iM.Kp, pid1_iM.Ki/CL_TS, pid1_iM.OutLimit);
-
 }
 
 // 定义特定的测试指令，如快速反转等
@@ -325,11 +282,13 @@ void controller_marino2005(){
     /* VM based Flux Est. */
     // Akatsu_RrId();
     improved_Holtz_method();
+
     // flux feedback
-    marino.psi_Dmu = holtz.psi_D2;
-    marino.psi_Qmu = holtz.psi_Q2;
+    // marino.psi_Dmu = holtz.psi_D2;
+    // marino.psi_Qmu = holtz.psi_Q2;
     marino.psi_Dmu = holtz.psi_D2_ode1;
     marino.psi_Qmu = holtz.psi_Q2_ode1;
+
     // flux error quantities
     marino.e_psi_Dmu = marino.psi_Dmu - CTRL.psi_cmd;
     marino.e_psi_Qmu = marino.psi_Qmu - 0.0;
@@ -401,8 +360,13 @@ void controller(){
     // commands(&rpm_speed_command, &amp_current_command);
 
     static REAL local_dc_rpm_cmd = 0.0; 
+    REAL OMG1;
     if(CTRL.timebase>3){
-        #define OMG1 (2*M_PI*4)
+        if(CTRL.timebase>3.5){
+            OMG1 = (2*M_PI*8);
+        }else{
+            OMG1 = (2*M_PI*4);
+        }
         rpm_speed_command   = 100          * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd;
         CTRL.omg_cmd        = (100         * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd)*RPM_2_RAD_PER_SEC;
         CTRL.deriv_omg_cmd  = 100*OMG1     * cos(OMG1*CTRL.timebase)                    *RPM_2_RAD_PER_SEC;

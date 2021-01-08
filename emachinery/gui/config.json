@@ -5,6 +5,6 @@
     "VLTS": "4/20e3",
     "LoadTorque": "2",
     "LoadInertiaPercentage": "16",
-    "ViscousCoefficient": "0*0.7e-4",
+    "ViscousCoefficient": "0.7e-1",
     "OutputDataFileName": "IM_Velocity"
 }

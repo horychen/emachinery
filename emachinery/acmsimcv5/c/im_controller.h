@@ -22,6 +22,7 @@ struct ControllerForExperiment {
     REAL torque_cmd;
 
     REAL speed_ctrl_err;
+    // REAL omg_ctrl_err;
 
     REAL theta_D;
     REAL cosT;
@@ -37,9 +38,8 @@ struct ControllerForExperiment {
     REAL omega_sl;
     REAL omega_syn;
 
-
-    REAL tajima_omg;
-    REAL K_PEM;
+    // REAL tajima_omg;
+    // REAL K_PEM;
 
     REAL omg__fb;
     REAL ial__fb;
@@ -76,76 +76,18 @@ struct ControllerForExperiment {
 
     REAL TLoad;
 
-    
-    REAL omg_ctrl_err;
-    REAL gamma_omg_transient;
-    REAL gamma_omg_transient_shape;
-    REAL gamma_res_transient;
-    REAL gamma_res_transient_shape;
-    REAL gamma_res2_transient;
-    REAL gamma_res2_transient_shape;
-    int resistance_id_on;
 
+    // REAL gamma_omg_transient;
+    // REAL gamma_omg_transient_shape;
+    // REAL gamma_res_transient;
+    // REAL gamma_res_transient_shape;
+    // REAL gamma_res2_transient;
+    // REAL gamma_res2_transient_shape;
+    // int resistance_id_on;
 
     int sensorless;
-    int CtrMode;
+    int ctrl_strategy;
 
-
-    Uint32  Tctrl;          // 控制用时间,x个同步中断周期
-    Uint32  NT;             //一个同步速周期（2pi电角度内）进入电流环中断的次数
-    Uint16  NAdc;           //在一个同步中断周期内ADC的次数
-
-    Uint16 fInc;            // 加速标志
-    Uint16 fDec;            // 减速标志
-    Uint16 fRched;          // 频率到达标志
-    // ----------------------报警指示----------------------
-    int SetOverMaxFreq;
-    int SetBelowMinFreq;
-    int UdcBelowZero;
-    int OverModulation;
-    // ----------------------VVVF----------------------
-    REAL Freqmax;          // MCtrlPrm[4]=100 x10
-    REAL Freqmin;          // MCtrlPrm[6]=5   x10
-    REAL   DDS;            // Freq Decrease Step
-    REAL   DIS;            // Freq Increase Step
-
-    REAL   FSET;           // For Set, Hz or rpm
-    REAL   FCUR;           // Freq Current, Hz
-    REAL   Goal;           // Sp Goal ,rpm  //for Ramp Set //~~~
-    REAL   Goal_dot;           // Sp Goal ,rpm  //for Ramp Set //~~~
-    int     SpStart;
-    REAL  SpCount;
-
-    REAL   Speed;          // Speed
-    REAL   Wt;             // w1*t, Synchronous angle
-    REAL   Wht;     //liuhe
-    REAL   W;
-    REAL   myIq;
-    REAL   Ws1;
-
-    REAL   VCUR;           // Current Voltag Vector Amplify
-    REAL   VCurPerUnit;    // (2*Current Voltag/Udc), Voltag Vector Amplify
-    REAL   Cvf0;           // VVVF curve, Cvf0=P07/P05=311/50;  P07-最大输出电压;P05-转折频率
-    REAL   Udc;
-
-    REAL   lUdc;
-    REAL   Valfa;          //ab0
-    REAL   Vbeta;
-
-    REAL   VaPU;               // 通向PWM的三相电压，以Udc/2标幺化
-    REAL   VbPU;
-    REAL   VcPU;
-
-    int     CurDrct[PHASE_NUMBER];  //死区补偿
-    REAL   IAmp;           //输出电流幅值
-
-    REAL   ITMP;           //计算电流有效值用中间变量
-    // ----------------------死区补偿----------------------
-    Uint16 CmparBeforeCmpnst[PHASE_NUMBER];     //死区补偿前的比较值
-    Uint16 CmparAfterCmpnst[PHASE_NUMBER];      //死区补偿后的比较值
-
-    // SVPWM
-    REAL RealSection;
 };
 extern struct ControllerForExperiment CTRL;
 

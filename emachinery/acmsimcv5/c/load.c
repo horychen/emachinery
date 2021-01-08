@@ -6,11 +6,8 @@ double load_model(){
     // Tload = 0.0001 * ACM.rpm + 0.002 * cos(3*ACM.x[3]); // this load causes zero speed oscillation in controller 
     // Tload = 0.005*sign(ACM.rpm);
     // Tload = LOAD_TORQUE*sign(ACM.rpm) + 0*sin(2*M_PI*1*ACM.timebase);
-    // if((0< ACM.rpm && ACM.rpm<10) || ){
-    //     Tload = VISCOUS_COEFF*ACM.rpm*RPM_2_RAD_PER_SEC;
-    // if(ACM.rpm)
-        Tload = LOAD_TORQUE*sign(ACM.rpm) + VISCOUS_COEFF*ACM.rpm*RPM_2_RAD_PER_SEC;
-    // }
+
+    Tload = LOAD_TORQUE*sign(ACM.rpm) + VISCOUS_COEFF*ACM.rpm*RPM_2_RAD_PER_SEC;
 
     // Tload = 0.0;
         // EPA-2019-0568.R1
