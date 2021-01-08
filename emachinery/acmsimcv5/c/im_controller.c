@@ -15,7 +15,7 @@ void CTRL_init(){
 
     marino.lambda_inv = 1e-1 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
 
-    marino.gamma_inv  = 0*1e-4 * 180*CTRL.Js_inv; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
+    marino.gamma_inv  = 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
     marino.delta_inv  = 0*75.0; // alpha 要求磁链幅值时变
 
     marino.xTL_Max = 8.0;
@@ -342,10 +342,10 @@ void controller_marino2005(){
     CTRL.TLoad   = marino.xTL;
 
     // 磁场可测 debug
-    CTRL.theta_D = ACM.theta_M;
-    CTRL.omg__fb = im.omg_elec;
-    CTRL.alpha   = ACM.alpha;
-    CTRL.TLoad   = ACM.TLoad;
+    // CTRL.theta_D = ACM.theta_M;
+    // CTRL.omg__fb = im.omg_elec;
+    // CTRL.alpha   = ACM.alpha;
+    // CTRL.TLoad   = ACM.TLoad;
 
     CTRL.alpha_inv = 1.0/CTRL.alpha;
 
