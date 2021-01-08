@@ -1,9 +1,9 @@
 #include "ACMSim.h"
 // 功能函数
 // 写变量名到文件
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.rpm_cmd,ACM.rpm,sm.omg_elec*RAD_PER_SEC_2_RPM,harnefors.omg_elec*RAD_PER_SEC_2_RPM,ACM.x[3]/M_PI*180,harnefors.theta_d/M_PI*180,PIDQ(0),harnefors.deriv_id,PIDQ(1),harnefors.deriv_iq,CTRL.iq_cmd,ACM.iq,CTRL.id_cmd,ACM.id,ACM.x[4]/M_PI*180,ACM.ud,ACM.uq\n"
-#define DATA_DETAILS ACM.rpm_cmd,ACM.rpm,sm.omg_elec*RAD_PER_SEC_2_RPM,harnefors.omg_elec*RAD_PER_SEC_2_RPM,ACM.x[3]/M_PI*180,harnefors.theta_d/M_PI*180,PIDQ(0),harnefors.deriv_id,PIDQ(1),harnefors.deriv_iq,CTRL.iq_cmd,ACM.iq,CTRL.id_cmd,ACM.id,ACM.x[4]/M_PI*180,ACM.ud,ACM.uq
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.Tem,marino.torque_cmd,marino.torque__fb,ACM.TLoad,marino.xTL,ACM.rpm_cmd,ACM.rpm,marino.xOmg*RAD_PER_SEC_2_RPM,CTRL.psi_cmd,marino.psi_Dmu,marino.e_psi_Dmu,marino.e_psi_Qmu,CTRL.iDs_cmd,ACM.iMs,CTRL.iDs,CTRL.iQs_cmd,ACM.iTs,CTRL.iQs,CTRL.uDs_cmd,CTRL.uQs_cmd,ACM.theta_M,marino.xRho,holtz.psi_D2,holtz.psi_D2_ode1,holtz.psi_D2_ode1_v2,holtz.psi_Q2,holtz.psi_Q2_ode1,holtz.psi_Q2_ode1_v2\n"
+#define DATA_DETAILS ACM.Tem,marino.torque_cmd,marino.torque__fb,ACM.TLoad,marino.xTL,ACM.rpm_cmd,ACM.rpm,marino.xOmg*RAD_PER_SEC_2_RPM,CTRL.psi_cmd,marino.psi_Dmu,marino.e_psi_Dmu,marino.e_psi_Qmu,CTRL.iDs_cmd,ACM.iMs,CTRL.iDs,CTRL.iQs_cmd,ACM.iTs,CTRL.iQs,CTRL.uDs_cmd,CTRL.uQs_cmd,ACM.theta_M,marino.xRho,holtz.psi_D2,holtz.psi_D2_ode1,holtz.psi_D2_ode1_v2,holtz.psi_Q2,holtz.psi_Q2_ode1,holtz.psi_Q2_ode1_v2
 
 void write_header_to_file(FILE *fw){
     printf("%s\n", DATA_FILE_NAME);

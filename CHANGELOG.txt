@@ -1,6 +1,11 @@
 
 ## Changelog
 
+*1.1.0*
+- Induction motor simulation.
+- Marino05 is added.
+- Harnefors06 tuned for a different motor.
+
 *1.0.9*
 - (Video@Bilibili) Demonstrate the effectiveness of the current loop decoupling (PMSM).
 - Allow velocity-open-loop and current-closed-loop for sweep frequency analysis.

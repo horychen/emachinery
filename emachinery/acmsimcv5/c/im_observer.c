@@ -156,8 +156,6 @@ void rK4(double hs){
     }else if(marino.xAlpha < marino.xAlpha_min){
         marino.xAlpha = marino.xAlpha_min;
     }
-
-
 }
 
 void improved_Holtz_method(){
@@ -165,13 +163,35 @@ void improved_Holtz_method(){
     holtz.psi_D2 = ACM.psi_Dmu;
     holtz.psi_Q2 = ACM.psi_Qmu;
 
-    // Flux Estimator (Open Loop Voltage Model + ODE1)
-    REAL deriv_psi_D1 = CTRL.uDs_cmd - CTRL.rs*CTRL.iDs + CTRL.omega_syn*holtz.psi_Q1_ode1;
-    REAL deriv_psi_Q1 = CTRL.uQs_cmd - CTRL.rs*CTRL.iQs - CTRL.omega_syn*holtz.psi_D1_ode1;
-    holtz.psi_D1_ode1 += CL_TS * (deriv_psi_D1);
-    holtz.psi_Q1_ode1 += CL_TS * (deriv_psi_Q1);
-    holtz.psi_D2_ode1 = holtz.psi_D1_ode1 - CTRL.Lsigma*CTRL.iDs;
-    holtz.psi_Q2_ode1 = holtz.psi_Q1_ode1 - CTRL.Lsigma*CTRL.iQs;
+    // Flux Estimator (Open Loop Voltage Model in αβ frame + ODE1)
+    static REAL temp_Alpha1 = 0.0;
+    static REAL temp_Beta1 = 0.0;
+    static REAL temp_Alpha2 = 0.0;
+    static REAL temp_Beta2 = 0.0;    
+    temp_Alpha1 += CL_TS * ( CTRL.ual_cmd - CTRL.rs*CTRL.ial__fb );
+    temp_Beta1  += CL_TS * ( CTRL.ube_cmd - CTRL.rs*CTRL.ibe__fb );
+    temp_Alpha2 = temp_Alpha1 - CTRL.Lsigma*CTRL.ial__fb;
+    temp_Beta2  = temp_Beta1  - CTRL.Lsigma*CTRL.ibe__fb;
+    // REAL theta_field = atan2(temp_Beta2, temp_Alpha2);
+    REAL ampl, cosT, sinT;
+    ampl = sqrtf(temp_Alpha2*temp_Alpha2+temp_Beta2*temp_Beta2);
+    if(ampl != 0){
+        cosT = temp_Alpha2 / ampl;
+        sinT = temp_Beta2  / ampl;
+        holtz.psi_D2_ode1_v2 = AB2M(temp_Alpha2, temp_Beta2, cosT, sinT);
+        holtz.psi_Q2_ode1_v2 = AB2T(temp_Alpha2, temp_Beta2, cosT, sinT);
+    }
+
+    holtz.psi_D2_ode1 = holtz.psi_D2_ode1_v2;
+    holtz.psi_Q2_ode1 = holtz.psi_Q2_ode1_v2;
+
+    // Flux Estimator (Open Loop Voltage Model in indirect oriented DQ frame + ODE1)
+    // REAL deriv_psi_D1 = CTRL.uDs_cmd - CTRL.rs*CTRL.iDs + CTRL.omega_syn*holtz.psi_Q1_ode1;
+    // REAL deriv_psi_Q1 = CTRL.uQs_cmd - CTRL.rs*CTRL.iQs - CTRL.omega_syn*holtz.psi_D1_ode1;
+    // holtz.psi_D1_ode1 += CL_TS * (deriv_psi_D1);
+    // holtz.psi_Q1_ode1 += CL_TS * (deriv_psi_Q1);
+    // holtz.psi_D2_ode1 = holtz.psi_D1_ode1 - CTRL.Lsigma*CTRL.iDs;
+    // holtz.psi_Q2_ode1 = holtz.psi_Q1_ode1 - CTRL.Lsigma*CTRL.iQs;
 }
 void observer_marino2005(){
 

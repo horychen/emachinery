@@ -135,6 +135,9 @@ struct Marino2005{
 extern struct Marino2005 marino;
 
 struct Holtz2003{
+    REAL psi_D2_ode1_v2;
+    REAL psi_Q2_ode1_v2;
+
     REAL psi_D1_ode1;
     REAL psi_Q1_ode1;
     REAL psi_D2_ode1;
