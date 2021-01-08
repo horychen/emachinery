@@ -136,7 +136,8 @@ void controller(){
         CTRL.rotor_flux_cmd = 0.0;
         pid1_id.Ref = CTRL.rotor_flux_cmd / CTRL.Ld;
     #else
-        getch("Not Implemented");
+        printf("CONTROL_STRATEGY Not Implemented");
+        getch();
     #endif
 
     // For luenberger position observer for HFSI

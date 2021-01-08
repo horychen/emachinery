@@ -110,7 +110,8 @@ class EmachineryWidget(QMainWindow):
         self.ui.comboBox_MachineType.activated.connect(self.comboActivate_machineType)
         self.comboActivate_machineType()
 
-        self.motor_dict = self.get_motor_dict(self.mj);
+        # Move this to later, because we need to update lineEdit_OutputDataFileName from recovery first
+        # self.motor_dict = self.get_motor_dict(self.mj);
 
         # Select Excitation
         self.list__radioButton4Excitation = [
@@ -202,8 +203,12 @@ class EmachineryWidget(QMainWindow):
         self.ui.lineEdit_path2acmsimc.setText(self.path2acmsimc)
         self.ui.lineEdit_path2acmsimc.textChanged[str].connect(self.save_path2acmsimc)
 
-        self.data_file_name = self.get_data_file_name()
+        # self.data_file_name = self.get_data_file_name() # get it on the run, no need to init
         self.ui.pushButton_runCBasedSimulation.clicked.connect(self.runCBasedSimulation)
+
+        # Motor Dict
+        print(self.ui.lineEdit_OutputDataFileName.text())
+        self.motor_dict = self.get_motor_dict(self.mj);
 
         # init
         self.update_ACMPlotLabels_and_ACMPlotSignals()
@@ -487,6 +492,8 @@ class EmachineryWidget(QMainWindow):
         #         print('Sleep in ACMPlot.py')
         #         sleep(0.1)
         #         break    
+
+        self.data_file_name = self.get_data_file_name()
 
         # ???.dat
         # self.data_file_name = path+'/dat/'+data_file_name
