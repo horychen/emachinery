@@ -75,8 +75,14 @@ void rhs_func_marino2005(double *increment_n, double xRho, double xTL, double xA
     // xAlpha
     f[2] = marino.delta_inv * ( marino.e_psi_Dmu*(im.Lmu*CTRL.iDs_cmd - CTRL.psi_cmd) + marino.e_psi_Qmu*im.Lmu*CTRL.iQs_cmd);
     // xOmg
-    REAL xTem = CLARKE_TRANS_TORQUE_GAIN*im.npp*( marino.psi_Dmu*CTRL.iQs - marino.psi_Qmu*CTRL.iDs );
-    f[3] = im.npp*im.Js_inv*(xTem - xTL) + 2*marino.lambda_inv*CTRL.psi_cmd*marino.e_psi_Qmu;
+    // REAL xTem = CLARKE_TRANS_TORQUE_GAIN*im.npp*( marino.psi_Dmu*CTRL.iQs - marino.psi_Qmu*CTRL.iDs );
+    // f[3] = im.npp*im.Js_inv*(xTem - xTL) + 2*marino.lambda_inv*CTRL.psi_cmd*marino.e_psi_Qmu;
+
+    // REAL xTem = CLARKE_TRANS_TORQUE_GAIN*im.npp*( marino.psi_Dmu*ACM.iTs - marino.psi_Qmu*ACM.iMs );
+    // f[3] = im.npp*im.Js_inv*(ACM.Tem - ACM.TLoad);
+    // f[3] = im.npp*im.Js_inv*(CLARKE_TRANS_TORQUE_GAIN*ACM.npp*(ACM.x[1]*ACM.x[2]-ACM.x[0]*ACM.x[3] - ACM.TLoad));
+
+    f[3] = ACM.x_dot[4]; 
 
     increment_n[0] = ( f[0] )*hs;
     increment_n[1] = ( f[1] )*hs;
@@ -172,6 +178,8 @@ void improved_Holtz_method(){
     temp_Beta1  += CL_TS * ( CTRL.ube_cmd - CTRL.rs*CTRL.ibe__fb );
     temp_Alpha2 = temp_Alpha1 - CTRL.Lsigma*CTRL.ial__fb;
     temp_Beta2  = temp_Beta1  - CTRL.Lsigma*CTRL.ibe__fb;
+
+    // 如果观测到的磁链作帕克变换的时候不是用的marino.xRho的话，那么交轴磁链永远为零，转速观测校正项和xTL自适应律增益都将无效。
     // REAL theta_field = atan2(temp_Beta2, temp_Alpha2);
     REAL ampl, cosT, sinT;
     ampl = sqrtf(temp_Alpha2*temp_Alpha2+temp_Beta2*temp_Beta2);
@@ -182,16 +190,18 @@ void improved_Holtz_method(){
         holtz.psi_Q2_ode1_v2 = AB2T(temp_Alpha2, temp_Beta2, cosT, sinT);
     }
 
-    holtz.psi_D2_ode1 = holtz.psi_D2_ode1_v2;
-    holtz.psi_Q2_ode1 = holtz.psi_Q2_ode1_v2;
+    // holtz.psi_D2_ode1 = holtz.psi_D2_ode1_v2;
+    // holtz.psi_Q2_ode1 = holtz.psi_Q2_ode1_v2;
+    // holtz.psi_D2_ode1 = ACM.psi_Dmu;
+    // holtz.psi_Q2_ode1 = ACM.psi_Qmu;
 
     // Flux Estimator (Open Loop Voltage Model in indirect oriented DQ frame + ODE1)
-    // REAL deriv_psi_D1 = CTRL.uDs_cmd - CTRL.rs*CTRL.iDs + CTRL.omega_syn*holtz.psi_Q1_ode1;
-    // REAL deriv_psi_Q1 = CTRL.uQs_cmd - CTRL.rs*CTRL.iQs - CTRL.omega_syn*holtz.psi_D1_ode1;
-    // holtz.psi_D1_ode1 += CL_TS * (deriv_psi_D1);
-    // holtz.psi_Q1_ode1 += CL_TS * (deriv_psi_Q1);
-    // holtz.psi_D2_ode1 = holtz.psi_D1_ode1 - CTRL.Lsigma*CTRL.iDs;
-    // holtz.psi_Q2_ode1 = holtz.psi_Q1_ode1 - CTRL.Lsigma*CTRL.iQs;
+    REAL deriv_psi_D1 = CTRL.uDs_cmd - CTRL.rs*CTRL.iDs + CTRL.omega_syn*holtz.psi_Q1_ode1;
+    REAL deriv_psi_Q1 = CTRL.uQs_cmd - CTRL.rs*CTRL.iQs - CTRL.omega_syn*holtz.psi_D1_ode1;
+    holtz.psi_D1_ode1 += CL_TS * (deriv_psi_D1);
+    holtz.psi_Q1_ode1 += CL_TS * (deriv_psi_Q1);
+    holtz.psi_D2_ode1 = holtz.psi_D1_ode1 - CTRL.Lsigma*CTRL.iDs;
+    holtz.psi_Q2_ode1 = holtz.psi_Q1_ode1 - CTRL.Lsigma*CTRL.iQs;
 }
 void observer_marino2005(){
 

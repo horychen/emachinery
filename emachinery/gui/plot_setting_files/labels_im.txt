@@ -1,6 +1,7 @@
 Torque [Nm]
 Load [Nm]
 Speed [rpm]
+Speed Deriv [rpm/s]
 Flux Modulus [Wb]
 Flux Ctrl Err [Wb]
 D-axis Current [A]
