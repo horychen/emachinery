@@ -6,15 +6,16 @@ struct ControllerForExperiment CTRL;
 #define IM ACM // 权宜之计
 
 void CTRL_init(){
+    #define LOCAL_SCALE 1.0
 
     // struct Marino2005
-    marino.kz         = 2*700.0; // zd, zq
-    marino.k_omega    = 0.5*88*60.0; // 6000  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
+    marino.kz         = LOCAL_SCALE * 2*700.0; // zd, zq
+    marino.k_omega    = LOCAL_SCALE * 0.5*88*60.0; // 6000  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
 
 
     marino.kappa      = 1e4*24; // \in [0.1, 1e4*24] no difference // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
 
-    marino.lambda_inv = 1 * 1.5 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
+    marino.lambda_inv = 0.1 * 1.5 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
 
     marino.gamma_inv  = 0 * 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
     marino.delta_inv  = 0*75.0; // alpha 要求磁链幅值时变
