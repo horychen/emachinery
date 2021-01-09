@@ -1,0 +1,8 @@
+Speed [rpm]
+Absolute Position [deg]
+D-axis derivative [A/s]
+Q-axis derivative [A/s]
+$i_q^*,~i_q$ [A]
+$i_d^*,~i_d$ [A]
+Position [deg]
+Voltage [V]

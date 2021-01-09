@@ -211,7 +211,8 @@ class EmachineryWidget(QMainWindow):
         self.motor_dict = self.get_motor_dict(self.mj);
 
         # init
-        self.update_ACMPlotLabels_and_ACMPlotSignals()
+        self.update_ACMPlotLabels_and_ACMPlotSignals(bool_re_init=True)
+        self.ui.comboBox_plotSettings.activated.connect(self.update_ACMPlotLabels_and_ACMPlotSignals)
 
         # settings for sweep frequency
         self.ui.radioButton_openLoop.toggled.connect(self.radioChecked_Settings4SweepFrequency)
@@ -410,14 +411,27 @@ class EmachineryWidget(QMainWindow):
         self.ui.MplWidget_bodePlot.canvas.draw()
 
     ''' C-based Simulation '''
-    def update_ACMPlotLabels_and_ACMPlotSignals(self):
+    def update_ACMPlotLabels_and_ACMPlotSignals(self, bool_always_true_bug=True, bool_re_init=False):
+
+        # selected = self.ui.comboBox_plotSettings.currentText()
+        # print('selected:', selected)
+
+        # 初始化（电机类型切换的时候也得运行）
+        if bool_re_init:
+            self.ui.comboBox_plotSettings.clear()
+            if 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
+                self.ui.comboBox_plotSettings.addItems(['im_default'] + [f'im_user{i:02d}' for i in range(10)])
+            elif 'Synchronous Machine' in self.ui.comboBox_MachineType.currentText():
+                self.ui.comboBox_plotSettings.addItems(['pmsm_default'] + [f'pmsm_user{i:02d}' for i in range(10)])
+
         # Read in ACM Plot Settings
-        if 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
-            self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, './plot_setting_files/labels_im.txt') # self.ui.lineEdit_path2ACMPlotLabels.text())
-            self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, './plot_setting_files/signals_im.txt') # self.ui.lineEdit_path2ACMPlotSignals.text()) 
-        elif 'Synchronous Machine' in self.ui.comboBox_MachineType.currentText():
-            self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, './plot_setting_files/labels_pmsm.txt')
-            self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, './plot_setting_files/signals_pmsm.txt')
+        # 根据所选择的配置更新ACMPlot绘图信号列表
+        selected = self.ui.comboBox_plotSettings.currentText()
+        # print('selected:', selected)
+        self.filepath_to_ACMPlotLabels  = pkg_resources.resource_filename(__name__, f'./plot_setting_files/labels_{selected}.txt')
+        self.filepath_to_ACMPlotSignals = pkg_resources.resource_filename(__name__, f'./plot_setting_files/signals_{selected}.txt')
+        self.ui.lineEdit_path2ACMPlotLabels.setText(f'./plot_setting_files/labels_{selected}.txt')
+        self.ui.lineEdit_path2ACMPlotSignals.setText(f'./plot_setting_files/signals_{selected}.txt')
         try:
             with open(self.filepath_to_ACMPlotLabels, 'r') as f:
                 self.ui.plainTextEdit_ACMPlotLabels.clear()
@@ -425,9 +439,20 @@ class EmachineryWidget(QMainWindow):
             with open(self.filepath_to_ACMPlotSignals, 'r') as f:
                 self.ui.plainTextEdit_ACMPlotDetails.clear()
                 self.ui.plainTextEdit_ACMPlotDetails.appendPlainText(f.read())
+        except FileNotFoundError as e:
+            with open(self.filepath_to_ACMPlotLabels, 'w') as f:
+                pass
+            with open(self.filepath_to_ACMPlotLabels, 'r') as f:
+                self.ui.plainTextEdit_ACMPlotLabels.clear()
+                self.ui.plainTextEdit_ACMPlotLabels.appendPlainText(f.read())
+            with open(self.filepath_to_ACMPlotSignals, 'w') as f:
+                pass
+            with open(self.filepath_to_ACMPlotSignals, 'r') as f:
+                self.ui.plainTextEdit_ACMPlotDetails.clear()
+                self.ui.plainTextEdit_ACMPlotDetails.appendPlainText(f.read())
         except Exception as e:
             raise e
-            print('ACMPlot settings are not found. Will use the default instead.')
+            # print('ACMPlot settings are not found. Will use the default instead.')
 
     def save_Config4CBasedSimulation(self):
         self.configini['EndTime'] = self.ui.lineEdit_EndTime.text()
@@ -634,7 +659,7 @@ class EmachineryWidget(QMainWindow):
         # print(details)
         return details
     # save setting, compile .c and run .exe
-    def runCBasedSimulation(self, bool_=True, bool_savePlotSetting=True, bool_updatePlotSetting=True):
+    def runCBasedSimulation(self, bool_always_true_bug=True, bool_savePlotSetting=True, bool_updatePlotSetting=True):
         # why bool_ is always set to False???
         # print(bool_, bool_savePlotSetting, bool_updatePlotSetting)
 
@@ -822,21 +847,19 @@ class EmachineryWidget(QMainWindow):
                 pmsm_list.append(key)
             elif '感应' in machine['基本参数']['电机类型']:
                 im_list.append(key)
+        self.ui.comboBox_MachineName.clear()
         if 'Synchronous Machine' in self.ui.comboBox_MachineType.currentText():
-            self.ui.comboBox_MachineName.clear()
             self.ui.comboBox_MachineName.addItems(pmsm_list) #(self.mj.keys())
-
-            # update file path to plot settings
-            self.ui.lineEdit_path2ACMPlotLabels.setText('./plot_setting_files/labels_pmsm.txt')
-            self.ui.lineEdit_path2ACMPlotSignals.setText('./plot_setting_files/signals_pmsm.txt')
         elif 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
-            self.ui.comboBox_MachineName.clear()
             self.ui.comboBox_MachineName.addItems(im_list) #(self.mj.keys())
 
-            # update file path to plot settings
-            self.ui.lineEdit_path2ACMPlotLabels.setText('./plot_setting_files/labels_im.txt')
-            self.ui.lineEdit_path2ACMPlotSignals.setText('./plot_setting_files/signals_im.txt')
-        self.update_ACMPlotLabels_and_ACMPlotSignals()
+        # update file path to plot settings
+        self.update_ACMPlotLabels_and_ACMPlotSignals(bool_re_init=True)
+            # self.ui.lineEdit_path2ACMPlotLabels.setText('./plot_setting_files/labels_pmsm.txt')
+            # self.ui.lineEdit_path2ACMPlotSignals.setText('./plot_setting_files/signals_pmsm.txt')
+            # self.ui.lineEdit_path2ACMPlotLabels.setText('./plot_setting_files/labels_im.txt')
+            # self.ui.lineEdit_path2ACMPlotSignals.setText('./plot_setting_files/signals_im.txt')
+            # self.update_ACMPlotLabels_and_ACMPlotSignals()
         self.comboActivate_namePlateData()
 
     def comboActivate_namePlateData(self):

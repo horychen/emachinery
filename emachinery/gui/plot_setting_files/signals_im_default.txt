@@ -1,0 +1,12 @@
+ACM.Tem, marino.torque_cmd, marino.torque__fb
+ACM.TLoad, marino.xTL
+ACM.rpm_cmd, ACM.rpm, marino.xOmg*RAD_PER_SEC_2_RPM
+ACM.x_dot[4], marino.deriv_xOmg
+CTRL.psi_cmd, marino.psi_Dmu
+marino.e_psi_Dmu, marino.e_psi_Qmu
+CTRL.iDs_cmd, ACM.iMs, CTRL.iDs
+CTRL.iQs_cmd, ACM.iTs, CTRL.iQs
+CTRL.uDs_cmd, CTRL.uQs_cmd
+ACM.theta_M, marino.xRho
+holtz.psi_D2, holtz.psi_D2_ode1, holtz.psi_D2_ode1_v2
+holtz.psi_Q2, holtz.psi_Q2_ode1, holtz.psi_Q2_ode1_v2

@@ -1,0 +1,8 @@
+ACM.rpm_cmd, ACM.rpm, sm.omg_elec*RAD_PER_SEC_2_RPM, harnefors.omg_elec*RAD_PER_SEC_2_RPM
+ACM.x[3]/M_PI*180, harnefors.theta_d/M_PI*180
+PIDQ(0), harnefors.deriv_id
+PIDQ(1), harnefors.deriv_iq
+CTRL.iq_cmd, ACM.iq
+CTRL.id_cmd, ACM.id
+ACM.x[4]/M_PI*180
+ACM.ud, ACM.uq

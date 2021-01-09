@@ -1,0 +1,2 @@
+ACM.rpm_cmd, ACM.rpm, marino.xOmg*RAD_PER_SEC_2_RPM
+ACM.x_dot[4], marino.deriv_xOmg

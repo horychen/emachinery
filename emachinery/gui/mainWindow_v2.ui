@@ -977,16 +977,6 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLabel" name="label_npd_12">
-                   <property name="frameShape">
-                    <enum>QFrame::Panel</enum>
-                   </property>
-                   <property name="text">
-                    <string>Load Torque [Nm]</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
                   <widget class="QLabel" name="label_npd_13">
                    <property name="frameShape">
                     <enum>QFrame::Panel</enum>
@@ -997,22 +987,22 @@
                   </widget>
                  </item>
                  <item>
+                  <widget class="QLabel" name="label_npd_12">
+                   <property name="frameShape">
+                    <enum>QFrame::Panel</enum>
+                   </property>
+                   <property name="text">
+                    <string>Load Torque [Nm]</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QLabel" name="label_npd_15">
                    <property name="frameShape">
                     <enum>QFrame::Panel</enum>
                    </property>
                    <property name="text">
                     <string>Viscous Coefficient [Nm/elec.rad*s]</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_npd_14">
-                   <property name="frameShape">
-                    <enum>QFrame::Panel</enum>
-                   </property>
-                   <property name="text">
-                    <string>Output File Name Prefix@acmsimc</string>
                    </property>
                   </widget>
                  </item>
@@ -1036,6 +1026,16 @@
                    </property>
                   </widget>
                  </item>
+                 <item>
+                  <widget class="QLabel" name="label_npd_14">
+                   <property name="frameShape">
+                    <enum>QFrame::Panel</enum>
+                   </property>
+                   <property name="text">
+                    <string>Output File Name Prefix@acmsimc</string>
+                   </property>
+                  </widget>
+                 </item>
                 </layout>
                </item>
                <item>
@@ -1048,13 +1048,6 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLineEdit" name="lineEdit_LoadTorque">
-                   <property name="text">
-                    <string>0.0</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
                   <widget class="QLineEdit" name="lineEdit_LoadInertiaPercentage">
                    <property name="text">
                     <string>16</string>
@@ -1062,16 +1055,16 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLineEdit" name="lineEdit_ViscousCoefficient">
+                  <widget class="QLineEdit" name="lineEdit_LoadTorque">
                    <property name="text">
-                    <string>0.7e-4</string>
+                    <string>0.0</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLineEdit" name="lineEdit_OutputDataFileName">
+                  <widget class="QLineEdit" name="lineEdit_ViscousCoefficient">
                    <property name="text">
-                    <string>DefaultOutputFileName</string>
+                    <string>0.7e-4</string>
                    </property>
                   </widget>
                  </item>
@@ -1086,6 +1079,13 @@
                   <widget class="QLineEdit" name="lineEdit_DCBusVoltage">
                    <property name="text">
                     <string>48</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_OutputDataFileName">
+                   <property name="text">
+                    <string>DefaultOutputFileName</string>
                    </property>
                   </widget>
                  </item>
@@ -1183,7 +1183,7 @@
            <widget class="QWidget" name="verticalLayoutWidget_5">
             <property name="geometry">
              <rect>
-              <x>10</x>
+              <x>0</x>
               <y>440</y>
               <width>321</width>
               <height>351</height>
@@ -1260,9 +1260,9 @@
            <widget class="QWidget" name="verticalLayoutWidget_6">
             <property name="geometry">
              <rect>
-              <x>340</x>
+              <x>330</x>
               <y>440</y>
-              <width>451</width>
+              <width>481</width>
               <height>351</height>
              </rect>
             </property>
@@ -1350,7 +1350,7 @@
              <rect>
               <x>390</x>
               <y>50</y>
-              <width>401</width>
+              <width>421</width>
               <height>221</height>
              </rect>
             </property>
@@ -1368,7 +1368,7 @@
               <rect>
                <x>0</x>
                <y>20</y>
-               <width>391</width>
+               <width>411</width>
                <height>141</height>
               </rect>
              </property>
@@ -1483,6 +1483,21 @@
               </item>
              </layout>
             </widget>
+           </widget>
+           <widget class="QComboBox" name="comboBox_plotSettings">
+            <property name="geometry">
+             <rect>
+              <x>210</x>
+              <y>400</y>
+              <width>286</width>
+              <height>20</height>
+             </rect>
+            </property>
+            <item>
+             <property name="text">
+              <string>None</string>
+             </property>
+            </item>
            </widget>
           </widget>
           <widget class="QWidget" name="tab_6">
