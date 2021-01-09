@@ -418,6 +418,9 @@ void controller(){
         controller_marino2005();
     #endif
 
+    // debug marino05 observer---not work as expected. For Marino05 you cannot tune observer and controller separately. They are just coupled together.
+    // controller_IFOC();
+
     // for plot
     ACM.rpm_cmd = rpm_speed_command;
     CTRL.speed_ctrl_err = (CTRL.omg__fb - CTRL.omg_cmd)*RAD_PER_SEC_2_RPM;

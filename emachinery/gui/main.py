@@ -585,7 +585,7 @@ class EmachineryWidget(QMainWindow):
                     try:
                         ax.plot(time, signal, '-.', lw=1, label=key, alpha=0.5)
                     except ValueError as e:
-                        print('ValueError during ax.plot():', e) # ValueError: could not convert string to float: '3.33723e-'
+                        print('ValueError during ax.plot():', e, '\nThis is known issue and will ignore and continue.') # ValueError: could not convert string to float: '3.33723e-'
                         pass
                 ax.set_ylabel(self.list__label[i])
                 ax.legend(loc='lower center')
