@@ -8,24 +8,24 @@ struct ControllerForExperiment CTRL;
 void CTRL_init(){
 
     // struct Marino2005
-    marino.kz         = 5*700.0; // zd, zq
+    marino.kz         = 2*700.0; // zd, zq
 
     marino.k_omega    = 0.5*88*60.0; // 6000  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
-    marino.kappa      = 1e0*24;      //0.05;  // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
+    marino.kappa      = 1e4*24; // \in [0.1, 1e4*24] no difference // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
 
-    marino.lambda_inv = 1.7e-0 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
+    marino.lambda_inv = 0*1.5 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
 
-    marino.gamma_inv  = 1 * 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
+    marino.gamma_inv  = 0 * 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
     marino.delta_inv  = 0*75.0; // alpha 要求磁链幅值时变
 
     marino.xTL_Max = 8.0;
-    marino.xAlpha_Max = 7.0;
+    marino.xAlpha_Max = 8.0;
     marino.xAlpha_min = 3.0;
-    printf("alpha: %g in [%g, %g]?\n", im.alpha, marino.xAlpha_min, marino.xAlpha_Max);
+    printf("alpha: %g in [%g, %g]?\n", CTRL.alpha, marino.xAlpha_min, marino.xAlpha_Max);
 
     marino.xRho = 0.0;
     marino.xTL = 0.0;
-    marino.xAlpha = im.alpha;
+    marino.xAlpha = IM_ROTOR_RESISTANCE/IM_MAGNETIZING_INDUCTANCE;
     marino.xOmg = 0.0;
 
     marino.deriv_xTL = 0.0;
@@ -298,7 +298,7 @@ void controller_marino2005(){
     // marino.psi_Dmu = holtz.psi_D2;
     // marino.psi_Qmu = holtz.psi_Q2;
     // CTRL.theta_D = ACM.theta_M;
-    // CTRL.omg__fb = im.omg_elec;
+    // CTRL.omg__fb = CTRL.omg__fb;
     // CTRL.alpha   = ACM.alpha;
     // CTRL.TLoad   = ACM.TLoad;
 
@@ -343,7 +343,7 @@ void controller_marino2005(){
     marino.zD = marino.e_iDs + CTRL.Lsigma_inv*marino.e_psi_Dmu;
     marino.zQ = marino.e_iQs + CTRL.Lsigma_inv*marino.e_psi_Qmu;
 
-    // known signals to cancel
+    // known signals to feedforward (to cancel)
     marino.Gamma_D = CTRL.Lsigma_inv * (-CTRL.rs*CTRL.iDs -CTRL.alpha*CTRL.Lmu*CTRL.iDs_cmd +CTRL.alpha  *CTRL.psi_cmd +CTRL.omega_syn*marino.e_psi_Qmu) +CTRL.omega_syn*CTRL.iQs - marino.deriv_iD_cmd;
     marino.Gamma_Q = CTRL.Lsigma_inv * (-CTRL.rs*CTRL.iQs -CTRL.alpha*CTRL.Lmu*CTRL.iQs_cmd -CTRL.omg__fb*CTRL.psi_cmd -CTRL.omega_syn*marino.e_psi_Dmu) -CTRL.omega_syn*CTRL.iDs - marino.deriv_iQ_cmd;
 
@@ -366,7 +366,9 @@ void controller(){
     static REAL local_dc_rpm_cmd = 0.0; 
     REAL OMG1;
     if(CTRL.timebase>3){
-        if(CTRL.timebase>3.75){
+        if(CTRL.timebase>3.875){
+            OMG1 = (2*M_PI*32);
+        }else if(CTRL.timebase>3.75){
             OMG1 = (2*M_PI*16);
         }else if(CTRL.timebase>3.5){
             OMG1 = (2*M_PI*8);
@@ -438,7 +440,7 @@ void controller_IFOC(){
         // CTRL.theta_d__fb = qep.theta_d;
 
     //（实际反馈，实验中不可能）
-    CTRL.omg__fb     = im.omg_elec;
+    // CTRL.omg__fb     = im.omg_elec;
 
         //（无感）
         // harnefors_scvm();
@@ -490,7 +492,7 @@ void controller_IFOC(){
     // }
     pid1_iM.Ref = CTRL.iDs_cmd;
     // 计算转矩
-    CTRL.torque_cmd = CLARKE_TRANS_TORQUE_GAIN * im.npp * CTRL.iQs_cmd * (CTRL.psi_cmd);
+    CTRL.torque_cmd = CLARKE_TRANS_TORQUE_GAIN * CTRL.npp * CTRL.iQs_cmd * (CTRL.psi_cmd);
     // 间接磁场定向第二部分
     CTRL.omega_sl = CTRL.rreq*CTRL.iQs_cmd/(CTRL.psi_cmd);
     CTRL.omega_syn = CTRL.omg__fb + CTRL.omega_sl;
@@ -520,7 +522,7 @@ void controller_IFOC(){
             // decoupled_T_axis_voltage = vT + (CTRL.rs+CTRL.rreq)*CTRL.iTs + CTRL.Lsigma*( CTRL.omega_syn*CTRL.iMs) + CTRL.omg_fb*CTRL.psimod_fb;
 
             decoupled_M_axis_voltage = pid1_iM.Out + (CTRL.Lsigma) * (-CTRL.omega_syn*CTRL.iQs); // Telford03/04
-            // decoupled_T_axis_voltage = pid1_iT.Out + CTRL.omega_syn*(CTRL.psi_cmd + im.Lsigma*CTRL.iMs); // 这个行，但是无速度运行时，会导致M轴电流在转速暂态高频震荡。
+            // decoupled_T_axis_voltage = pid1_iT.Out + CTRL.omega_syn*(CTRL.psi_cmd + CTRL.Lsigma*CTRL.iMs); // 这个行，但是无速度运行时，会导致M轴电流在转速暂态高频震荡。
             // decoupled_T_axis_voltage = vT + CTRL.omega_syn*(CTRL.Lsigma+CTRL.Lmu)*CTRL.iMs; // 这个就不行，说明：CTRL.Lmu*iMs != ob.taao_flux_cmd，而是会因iMs的波动在T轴控制上引入波动和不稳定
             decoupled_T_axis_voltage = pid1_iT.Out; // 无感用这个
         #else

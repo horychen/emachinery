@@ -99,7 +99,7 @@ void measurement(){
     #endif
 
     #if MACHINE_TYPE == INDUCTION_MACHINE_CLASSIC_MODEL || MACHINE_TYPE == INDUCTION_MACHINE_FLUX_ONLY_MODEL
-    im.omg_elec = ACM.omg_elec;
-    im.omg_mech = im.omg_elec * im.npp_inv;    
+    CTRL.omg__fb = ACM.omg_elec;
+    // CTRL.omg_mech__fb = ACM.omg_elec * im.npp_inv;    
     #endif
 }

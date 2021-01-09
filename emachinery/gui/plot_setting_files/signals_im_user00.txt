@@ -3,5 +3,7 @@ ACM.x_dot[4], marino.deriv_xOmg
 CTRL.iQs_cmd, ACM.iTs, CTRL.iQs
 CTRL.iDs_cmd, ACM.iMs, CTRL.iDs
 marino.e_psi_Dmu, marino.e_psi_Qmu
-CTRL.psi_cmd, marino.psi_Dmu
+CTRL.psi_cmd, ACM.psi_Dmu, marino.psi_Dmu
+ACM.theta_M, marino.xRho
 ACM.TLoad, marino.xTL
+ACM.Tem, marino.torque_cmd, marino.torque__fb

@@ -50,7 +50,7 @@
 #define POW2AMPL (0.816496581) // = 1/sqrt(1.5) power-invariant to aplitude-invariant (the dqn vector becomes shorter to have the same length as the abc vector)
 #define AMPL2POW (1.22474487)
 
-#define LOAD_INERTIA    0.16
+#define LOAD_INERTIA    0.0
 #define LOAD_TORQUE     0
 #define VISCOUS_COEFF   0.0
 

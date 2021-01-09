@@ -1,9 +1,9 @@
 #include "ACMSim.h"
 // 功能函数
 // 写变量名到文件
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.rpm_cmd,ACM.rpm,marino.xOmg*RAD_PER_SEC_2_RPM,ACM.x_dot[4],marino.deriv_xOmg,CTRL.iQs_cmd,ACM.iTs,CTRL.iQs,CTRL.iDs_cmd,ACM.iMs,CTRL.iDs,marino.e_psi_Dmu,marino.e_psi_Qmu,CTRL.psi_cmd,marino.psi_Dmu,ACM.TLoad,marino.xTL\n"
-#define DATA_DETAILS ACM.rpm_cmd,ACM.rpm,marino.xOmg*RAD_PER_SEC_2_RPM,ACM.x_dot[4],marino.deriv_xOmg,CTRL.iQs_cmd,ACM.iTs,CTRL.iQs,CTRL.iDs_cmd,ACM.iMs,CTRL.iDs,marino.e_psi_Dmu,marino.e_psi_Qmu,CTRL.psi_cmd,marino.psi_Dmu,ACM.TLoad,marino.xTL
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.rpm_cmd,ACM.rpm,marino.xOmg*RAD_PER_SEC_2_RPM,ACM.x_dot[4],marino.deriv_xOmg,CTRL.iQs_cmd,ACM.iTs,CTRL.iQs,CTRL.iDs_cmd,ACM.iMs,CTRL.iDs,marino.e_psi_Dmu,marino.e_psi_Qmu,CTRL.psi_cmd,ACM.psi_Dmu,marino.psi_Dmu,ACM.theta_M,marino.xRho,ACM.TLoad,marino.xTL,ACM.Tem,marino.torque_cmd,marino.torque__fb\n"
+#define DATA_DETAILS ACM.rpm_cmd,ACM.rpm,marino.xOmg*RAD_PER_SEC_2_RPM,ACM.x_dot[4],marino.deriv_xOmg,CTRL.iQs_cmd,ACM.iTs,CTRL.iQs,CTRL.iDs_cmd,ACM.iMs,CTRL.iDs,marino.e_psi_Dmu,marino.e_psi_Qmu,CTRL.psi_cmd,ACM.psi_Dmu,marino.psi_Dmu,ACM.theta_M,marino.xRho,ACM.TLoad,marino.xTL,ACM.Tem,marino.torque_cmd,marino.torque__fb
 
 void write_header_to_file(FILE *fw){
     printf("%s\n", DATA_FILE_NAME);

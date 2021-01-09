@@ -3,50 +3,60 @@
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
 /* Macro for External Access Interface */
-#define US(X) im.us[X]
-#define IS(X) im.is[X]
-#define US_C(X) im.us_curr[X]
-#define IS_C(X) im.is_curr[X]
-#define US_P(X) im.us_prev[X]
-#define IS_P(X) im.is_prev[X]
+#define US(X)   rk4.us[X]
+#define IS(X)   rk4.is[X]
+#define US_C(X) rk4.us_curr[X]
+#define IS_C(X) rk4.is_curr[X]
+#define US_P(X) rk4.us_prev[X]
+#define IS_P(X) rk4.is_prev[X]
 
-struct InductionMachine{
+struct RK4_DATA{
     double us[2];
     double is[2];
     double us_curr[2];
     double is_curr[2];
     double us_prev[2];
     double is_prev[2];
-
-    double Js;
-    double Js_inv;
-    double npp;
-    double npp_inv;
-    double mu_m;
-    double mu;
-
-    // double Lm;
-    // double Lm_inv;
-    // double Lls;
-    // double Llr;
-    // double Lr;
-    // double sigma;
-    // double rr;
-    double Lmu;
-    double Lmu_inv;
-    double Lsigma;
-    double Lsigma_inv;
-    double Ls;
-    double rs;
-    double rreq;
-    double alpha;
-    double Tr;
-
-    // double omg;
-    double omg_elec;
-    double omg_mech;
 };
-extern struct InductionMachine im;
+extern struct RK4_DATA rk4;
+
+// struct InductionMachine{
+//     double us[2];
+//     double is[2];
+//     double us_curr[2];
+//     double is_curr[2];
+//     double us_prev[2];
+//     double is_prev[2];
+
+//     double Js;
+//     double Js_inv;
+//     double npp;
+//     double npp_inv;
+//     double mu_m;
+//     double mu;
+
+//     // double Lm;
+//     // double Lm_inv;
+//     // double Lls;
+//     // double Llr;
+//     // double Lr;
+//     // double sigma;
+//     // double rr;
+//     double Lmu;
+//     double Lmu_inv;
+//     double Lsigma;
+//     double Lsigma_inv;
+//     double Ls;
+//     double rs;
+//     double rreq;
+//     double alpha;
+//     double Tr;
+
+//     // double omg;
+//     double omg_elec;
+//     double omg_mech;
+// };
+// extern struct InductionMachine im;
 
 struct ObserverControl{
     

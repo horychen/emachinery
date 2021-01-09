@@ -1,49 +1,51 @@
 #include "ACMSim.h"
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
-struct InductionMachine im;
+struct RK4_DATA rk4;
+// struct InductionMachine im;
 
 void acm_init(){
 
-    im.us[0] = 0.0;
-    im.us[1] = 0.0;
-    im.is[0] = 0.0;
-    im.is[1] = 0.0;
-    im.us_curr[0] = 0.0;
-    im.us_curr[1] = 0.0;
-    im.is_curr[0] = 0.0;
-    im.is_curr[1] = 0.0;
-    im.us_prev[0] = 0.0;
-    im.us_prev[1] = 0.0;
-    im.is_prev[0] = 0.0;
-    im.is_prev[1] = 0.0;
+    rk4.us[0] = 0.0;
+    rk4.us[1] = 0.0;
+    rk4.is[0] = 0.0;
+    rk4.is[1] = 0.0;
+    rk4.us_curr[0] = 0.0;
+    rk4.us_curr[1] = 0.0;
+    rk4.is_curr[0] = 0.0;
+    rk4.is_curr[1] = 0.0;
+    rk4.us_prev[0] = 0.0;
+    rk4.us_prev[1] = 0.0;
+    rk4.is_prev[0] = 0.0;
+    rk4.is_prev[1] = 0.0;
 
-    // im.Js = 0.017876; // 3000rpm阶跃测转动惯量
-    // im.Js = 0.172; 
-    // im.Js = 0.072; 
-    // im.Js = 0.017876*0.7;
-    im.Js = MOTOR_SHAFT_INERTIA;
-    im.Js_inv = 1.0/im.Js;
-    im.npp = MOTOR_NUMBER_OF_POLE_PAIRS; // no. of pole pair
-    im.npp_inv = 1.0/im.npp; // no. of pole pair
-    im.mu_m = im.npp*im.Js_inv;
-    im.mu   = im.npp*im.mu_m;
-    // printf("im.mu_m = %g; im.mu = %g\n", im.mu_m, im.mu);
+    //     // im.Js = 0.017876; // 3000rpm阶跃测转动惯量
+    //     // im.Js = 0.172; 
+    //     // im.Js = 0.072; 
+    //     // im.Js = 0.017876*0.7;
+    //     // im.Js = MOTOR_SHAFT_INERTIA;
+    //     im.Js = MOTOR_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
+    //     im.Js_inv = 1.0/im.Js;
+    //     im.npp = MOTOR_NUMBER_OF_POLE_PAIRS; // no. of pole pair
+    //     im.npp_inv = 1.0/im.npp; // no. of pole pair
+    //     im.mu_m = im.npp*im.Js_inv;
+    //     im.mu   = im.npp*im.mu_m;
+    //     // printf("im.mu_m = %g; im.mu = %g\n", im.mu_m, im.mu);
 
-    im.Lmu = IM_MAGNETIZING_INDUCTANCE;
-    im.Lmu_inv = 1.0/im.Lmu;
-    im.Lsigma = IM_TOTAL_LEAKAGE_INDUCTANCE;
-    im.Lsigma_inv = 1.0/im.Lsigma;
+    //     im.Lmu = IM_MAGNETIZING_INDUCTANCE;
+    //     im.Lmu_inv = 1.0/im.Lmu;
+    //     im.Lsigma = IM_TOTAL_LEAKAGE_INDUCTANCE;
+    //     im.Lsigma_inv = 1.0/im.Lsigma;
 
-    im.Ls = im.Lsigma + im.Lmu;
+    //     im.Ls = im.Lsigma + im.Lmu;
 
-    im.rs = IM_STAOTR_RESISTANCE;
-    im.rreq = IM_ROTOR_RESISTANCE;
+    //     im.rs = IM_STAOTR_RESISTANCE;
+    //     im.rreq = IM_ROTOR_RESISTANCE;
 
-    im.alpha = im.rreq/im.Lmu;
-    im.Tr = im.Lmu/im.rreq; 
-    im.omg_elec = 0.0;
-    im.omg_mech = 0.0;
+    //     im.alpha = im.rreq/im.Lmu;
+    //     im.Tr = im.Lmu/im.rreq; 
+    //     im.omg_elec = 0.0;
+    //     im.omg_mech = 0.0;
 }
 
 
@@ -69,18 +71,21 @@ void rhs_func_marino2005(double *increment_n, double xRho, double xTL, double xA
     // f = \dot x = the time derivative
     double f[4];
     // xRho
-    f[0] = xOmg + xAlpha*im.Lmu*CTRL.iQs_cmd*CTRL.psi_cmd_inv;
+    f[0] = xOmg + xAlpha*CTRL.Lmu*CTRL.iQs_cmd*CTRL.psi_cmd_inv;
     // xTL
-    f[1] = - marino.gamma_inv * im.Js * CTRL.psi_cmd * marino.e_psi_Qmu;
+    f[1] = - marino.gamma_inv * CTRL.Js * CTRL.psi_cmd * marino.e_psi_Qmu;
     // xAlpha
-    f[2] = marino.delta_inv * ( marino.e_psi_Dmu*(im.Lmu*CTRL.iDs_cmd - CTRL.psi_cmd) + marino.e_psi_Qmu*im.Lmu*CTRL.iQs_cmd);
+    f[2] = marino.delta_inv * ( marino.e_psi_Dmu*(CTRL.Lmu*CTRL.iDs_cmd - CTRL.psi_cmd) + marino.e_psi_Qmu*CTRL.Lmu*CTRL.iQs_cmd);
     // xOmg
-    REAL xTem = CLARKE_TRANS_TORQUE_GAIN*im.npp*( marino.psi_Dmu*CTRL.iQs - marino.psi_Qmu*CTRL.iDs );
-    f[3] = im.npp*im.Js_inv*(xTem - xTL) + 2*marino.lambda_inv*CTRL.psi_cmd*marino.e_psi_Qmu;
+    REAL xTem = CLARKE_TRANS_TORQUE_GAIN*CTRL.npp*( marino.psi_Dmu*CTRL.iQs - marino.psi_Qmu*CTRL.iDs );
+    f[3] = CTRL.npp*CTRL.Js_inv*(xTem - xTL) + 2*marino.lambda_inv*CTRL.psi_cmd*marino.e_psi_Qmu;
 
-    // REAL xTem = CLARKE_TRANS_TORQUE_GAIN*im.npp*( marino.psi_Dmu*ACM.iTs - marino.psi_Qmu*ACM.iMs );
-    // f[3] = im.npp*im.Js_inv*(ACM.Tem - ACM.TLoad);
-    // f[3] = im.npp*im.Js_inv*(CLARKE_TRANS_TORQUE_GAIN*ACM.npp*(ACM.x[1]*ACM.x[2]-ACM.x[0]*ACM.x[3] - ACM.TLoad));
+    // bad
+    // f[0] = xOmg + xAlpha*CTRL.Lmu*CTRL.iQs*CTRL.psi_cmd_inv;
+
+    // REAL xTem = CLARKE_TRANS_TORQUE_GAIN*CTRL.npp*( marino.psi_Dmu*ACM.iTs - marino.psi_Qmu*ACM.iMs );
+    // f[3] = CTRL.npp*CTRL.Js_inv*(ACM.Tem - ACM.TLoad);
+    // f[3] = CTRL.npp*CTRL.Js_inv*(CLARKE_TRANS_TORQUE_GAIN*ACM.npp*(ACM.x[1]*ACM.x[2]-ACM.x[0]*ACM.x[3] - ACM.TLoad));
 
     // f[3] = ACM.x_dot[4]; 
 
@@ -142,10 +147,12 @@ void rK4(double hs){
     marino.xOmg        += (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667; // 3
 
     // Also get derivatives:
-    CTRL.omega_syn = marino.xOmg + marino.xAlpha*im.Lmu*CTRL.iQs_cmd*CTRL.psi_cmd_inv;
+    CTRL.omega_syn = marino.xOmg + marino.xAlpha*CTRL.Lmu*CTRL.iQs_cmd*CTRL.psi_cmd_inv;
     marino.deriv_xTL    = (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667 * CL_TS_INVERSE;
     marino.deriv_xAlpha = (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667 * CL_TS_INVERSE;
     marino.deriv_xOmg   = (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667 * CL_TS_INVERSE;
+
+
 
     // Projection Algorithm
     // xRho   \in [-M_PI, M_PI]
