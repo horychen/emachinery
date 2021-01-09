@@ -3,11 +3,14 @@
 
 *1.1.1*
 - User is now able to select from different plot settings.
+- Support sinusoidal flux modulus command for induction motor.
+- Remember user's last selected plot setting considering machine types, i.e., IM or PMSM.
 
 *1.1.0*
 - Induction motor simulation.
 - Marino05 is added.
 - Harnefors06 is tuned for a different motor.
+- Fix the bug "cannot file .dat file" when "Plot Here" is clicked upon start.
 
 *1.0.9*
 - (Video@Bilibili) Demonstrate the effectiveness of the current loop decoupling (PMSM).

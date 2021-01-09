@@ -8,14 +8,14 @@ struct ControllerForExperiment CTRL;
 void CTRL_init(){
 
     // struct Marino2005
-    marino.kz         = 1*700.0; // zd, zq
+    marino.kz         = 5*700.0; // zd, zq
 
     marino.k_omega    = 0.5*88*60.0; // 6000  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
     marino.kappa      = 1e3*24;      //0.05;  // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
 
-    marino.lambda_inv = 1e-1 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
+    marino.lambda_inv = 1e-0 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
 
-    marino.gamma_inv  = 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
+    marino.gamma_inv  = 0 * 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
     marino.delta_inv  = 0*75.0; // alpha 要求磁链幅值时变
 
     marino.xTL_Max = 8.0;
@@ -315,7 +315,7 @@ void controller_marino2005(){
     CTRL.iQs = AB2T(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
 
     // TODO
-    // CTRL.deriv_omg_cmd
+    // 当磁链幅值给定平稳时，这项就是零。
     marino.deriv_iD_cmd = 1.0*CTRL.Lmu_inv*(  CTRL.deriv_psi_cmd \
                                             + CTRL.dderiv_psi_cmd*CTRL.alpha_inv \
                                             - CTRL.deriv_psi_cmd*CTRL.alpha_inv*CTRL.alpha_inv*marino.deriv_xAlpha);
@@ -366,7 +366,9 @@ void controller(){
     static REAL local_dc_rpm_cmd = 0.0; 
     REAL OMG1;
     if(CTRL.timebase>3){
-        if(CTRL.timebase>3.5){
+        if(CTRL.timebase>3.75){
+            OMG1 = (2*M_PI*16);
+        }else if(CTRL.timebase>3.5){
             OMG1 = (2*M_PI*8);
         }else{
             OMG1 = (2*M_PI*4);
@@ -398,16 +400,16 @@ void controller(){
 
     // 2. 生成磁链指令
     if(CTRL.timebase<1){
-        CTRL.psi_cmd_raw += CL_TS*CTRL.m0;
-        CTRL.psi_cmd     = CTRL.psi_cmd_raw;
+        CTRL.psi_cmd_raw   += CL_TS*CTRL.m0;
+        CTRL.psi_cmd        = CTRL.psi_cmd_raw;
         CTRL.deriv_psi_cmd  = CTRL.m0;
         CTRL.dderiv_psi_cmd = 0.0;
     }else{
         // CTRL.m1 = 0.0;
-        CTRL.psi_cmd_raw = CTRL.m0 + CTRL.m1 * sin(CTRL.omega1*CTRL.timebase);
-        CTRL.psi_cmd     = CTRL.psi_cmd_raw; // _lpf(CTRL.psi_cmd_raw, CTRL.psi_cmd, 5);
-        CTRL.deriv_psi_cmd  = CTRL.m1 * CTRL.omega1 * cos(CTRL.omega1*CTRL.timebase);
-        CTRL.dderiv_psi_cmd = CTRL.m1 * CTRL.omega1 * CTRL.omega1 * -sin(CTRL.omega1*CTRL.timebase);
+        CTRL.psi_cmd_raw    = CTRL.m0 + CTRL.m1 * sin(CTRL.omega1*CTRL.timebase);
+        CTRL.psi_cmd        = CTRL.psi_cmd_raw; // _lpf(CTRL.psi_cmd_raw, CTRL.psi_cmd, 5);
+        CTRL.deriv_psi_cmd  =           CTRL.m1 * CTRL.omega1 * cos(CTRL.omega1*CTRL.timebase);
+        CTRL.dderiv_psi_cmd =           CTRL.m1 * CTRL.omega1 * CTRL.omega1 * -sin(CTRL.omega1*CTRL.timebase);
     }
     CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
 

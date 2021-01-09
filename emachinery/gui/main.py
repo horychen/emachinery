@@ -102,13 +102,13 @@ class EmachineryWidget(QMainWindow):
         except Exception as e:
             raise e
 
-        '''tab: Name Plate Data
+        '''tab 1: Name Plate Data
         '''
         self.mj = ACMInfo.MotorJson().d
 
         self.ui.comboBox_MachineName.activated.connect(self.comboActivate_namePlateData)
         self.ui.comboBox_MachineType.activated.connect(self.comboActivate_machineType)
-        self.comboActivate_machineType()
+        # self.comboActivate_machineType() # should be called after when configini is initialized
 
         # Move this to later, because we need to update lineEdit_OutputDataFileName from recovery first
         # self.motor_dict = self.get_motor_dict(self.mj);
@@ -127,59 +127,7 @@ class EmachineryWidget(QMainWindow):
 
 
 
-        '''tab_2: Plots
-        '''
-        # update plot
-        self.ui.pushButton_getSignal.clicked.connect(self.update_graph)
-        # undate model
-        self.ui.pushButton_updateModel.clicked.connect(self.update_emy)
-
-        # Matplotlib navigation bar to: self or tabWidget
-        self.toolbar = NavigationToolbar(self.ui.MplWidget.canvas, self)
-            # self.addToolBar(self.toolbar) # add to mainWindow
-        self.ui.verticalLayout_inTab2.addWidget(self.toolbar) # add to tab 2 only
-
-
-
-        '''tab_3: FEA-based Optimization
-        '''
-        try:
-            path = self.ui.lineEdit_path2boptPython.text()
-            with open(path+'/codes3/machine_specifications.json', 'r', encoding='utf-8') as f:
-                self.bopt_fea_config_dict = json.load(f, object_pairs_hook=OrderedDict) # https://stackoverflow.com/questions/10844064/items-in-json-object-are-out-of-order-using-json-dumps/23820416
-            self.ui.comboBox_MachineSpec.addItems(self.bopt_fea_config_dict.keys())
-            self.ui.comboBox_MachineSpec.activated.connect(self.update_machineSpec)
-            self.update_machineSpec()
-            with open(path+'/codes3/machine_simulation.json', 'r', encoding='utf-8') as f:
-                self.bopt_machine_spec_dict = json.load(f, object_pairs_hook=OrderedDict) # https://stackoverflow.com/questions/10844064/items-in-json-object-are-out-of-order-using-json-dumps/23820416
-            self.ui.comboBox_FEAConfig.addItems(self.bopt_machine_spec_dict.keys())
-            self.ui.comboBox_FEAConfig.activated.connect(self.update_FEAConfig)
-            self.update_FEAConfig()
-        except Exception as e:
-            print(str(e))
-            print('[Warn] Skip FEA-based Optimization')
-            pass
-
-
-
-
-        '''tab_5: Controller Tuning
-        '''
-        latex_repo = latexdemo.LaTeX_Repo()
-        self.ui.label_qpix_CLKP.setPixmap(latex_repo.qpixmap_CLKP)
-        self.ui.label_qpix_CLKI.setPixmap(latex_repo.qpixmap_CLKI)
-        self.ui.label_qpix_VLKP.setPixmap(latex_repo.qpixmap_VLKP)
-        self.ui.label_qpix_VLKI.setPixmap(latex_repo.qpixmap_VLKI)
-        self.ui.label_qpix_Note1.setPixmap(latex_repo.qpixmap_Note1)
-        self.ui.label_qpix_Note2.setPixmap(latex_repo.qpixmap_Note2)
-        self.ui.label_qpix_Note3.setPixmap(latex_repo.qpixmap_Note3)
-        self.ui.pushButton_pidTuner.clicked.connect(self.run_series_pid_tuner)
-        self.run_series_pid_tuner()
-        # self.ui.pushButton_SweepFreq.clicked.connect(self.runCBasedSimulation_SweepFrequnecyAnalysis)
-
-
-
-        '''tab_4: C-based Simulation
+        '''tab_3: C-based Simulation
         '''
         self.filepath_to_configini = pkg_resources.resource_filename(__name__, r'config.json')
          # Recover last user input
@@ -206,13 +154,16 @@ class EmachineryWidget(QMainWindow):
         # self.data_file_name = self.get_data_file_name() # get it on the run, no need to init
         self.ui.pushButton_runCBasedSimulation.clicked.connect(self.runCBasedSimulation)
 
-        # Motor Dict
+
+        # init comboBox_plotSettings
+        self.ui.comboBox_plotSettings.activated.connect(self.update_ACMPlotLabels_and_ACMPlotSignals)
+        # this will invoke: self.update_ACMPlotLabels_and_ACMPlotSignals(bool_re_init=True) for ya
+        self.comboActivate_machineType() 
+
+        # Motor Dict ( The order matters, should be after self.comboActivate_machineType() )
         print(self.ui.lineEdit_OutputDataFileName.text())
         self.motor_dict = self.get_motor_dict(self.mj);
 
-        # init
-        self.update_ACMPlotLabels_and_ACMPlotSignals(bool_re_init=True)
-        self.ui.comboBox_plotSettings.activated.connect(self.update_ACMPlotLabels_and_ACMPlotSignals)
 
         # settings for sweep frequency
         self.ui.radioButton_openLoop.toggled.connect(self.radioChecked_Settings4SweepFrequency)
@@ -220,7 +171,9 @@ class EmachineryWidget(QMainWindow):
 
 
 
-        '''tab_4: ACMPlot
+
+
+        '''tab_3: ACMPlot
         '''
         self.ui.pushButton_ACMPlotHere.clicked.connect(self.update_ACMPlot)
         # Matplotlib navigation bar to: self or tabWidget
@@ -232,9 +185,63 @@ class EmachineryWidget(QMainWindow):
 
 
 
-        '''tab_6: Bode Plot
+
+        '''tab_2: Controller Tuning
+        '''
+        latex_repo = latexdemo.LaTeX_Repo()
+        self.ui.label_qpix_CLKP.setPixmap(latex_repo.qpixmap_CLKP)
+        self.ui.label_qpix_CLKI.setPixmap(latex_repo.qpixmap_CLKI)
+        self.ui.label_qpix_VLKP.setPixmap(latex_repo.qpixmap_VLKP)
+        self.ui.label_qpix_VLKI.setPixmap(latex_repo.qpixmap_VLKI)
+        self.ui.label_qpix_Note1.setPixmap(latex_repo.qpixmap_Note1)
+        self.ui.label_qpix_Note2.setPixmap(latex_repo.qpixmap_Note2)
+        self.ui.label_qpix_Note3.setPixmap(latex_repo.qpixmap_Note3)
+        self.ui.pushButton_pidTuner.clicked.connect(self.run_series_pid_tuner)
+        self.run_series_pid_tuner()
+        # self.ui.pushButton_SweepFreq.clicked.connect(self.runCBasedSimulation_SweepFrequnecyAnalysis)
+
+
+
+
+
+        '''tab_4: Bode Plot
         '''
         self.ui.pushButton_bodePlot.clicked.connect(self.update_BodePlot)
+
+
+
+        '''tab_5: Plots
+        '''
+        # update plot
+        self.ui.pushButton_getSignal.clicked.connect(self.update_graph)
+        # undate model
+        self.ui.pushButton_updateModel.clicked.connect(self.update_emy)
+
+        # Matplotlib navigation bar to: self or tabWidget
+        self.toolbar = NavigationToolbar(self.ui.MplWidget.canvas, self)
+            # self.addToolBar(self.toolbar) # add to mainWindow
+        self.ui.verticalLayout_inTab2.addWidget(self.toolbar) # add to tab 2 only
+
+
+
+        '''tab_6: FEA-based Optimization
+        '''
+        try:
+            path = self.ui.lineEdit_path2boptPython.text()
+            with open(path+'/codes3/machine_specifications.json', 'r', encoding='utf-8') as f:
+                self.bopt_fea_config_dict = json.load(f, object_pairs_hook=OrderedDict) # https://stackoverflow.com/questions/10844064/items-in-json-object-are-out-of-order-using-json-dumps/23820416
+            self.ui.comboBox_MachineSpec.addItems(self.bopt_fea_config_dict.keys())
+            self.ui.comboBox_MachineSpec.activated.connect(self.update_machineSpec)
+            self.update_machineSpec()
+            with open(path+'/codes3/machine_simulation.json', 'r', encoding='utf-8') as f:
+                self.bopt_machine_spec_dict = json.load(f, object_pairs_hook=OrderedDict) # https://stackoverflow.com/questions/10844064/items-in-json-object-are-out-of-order-using-json-dumps/23820416
+            self.ui.comboBox_FEAConfig.addItems(self.bopt_machine_spec_dict.keys())
+            self.ui.comboBox_FEAConfig.activated.connect(self.update_FEAConfig)
+            self.update_FEAConfig()
+        except Exception as e:
+            print(str(e))
+            print('[Warn] Skip FEA-based Optimization')
+            pass
 
 
         '''menu
@@ -410,6 +417,16 @@ class EmachineryWidget(QMainWindow):
 
         self.ui.MplWidget_bodePlot.canvas.draw()
 
+    def get_mtype(self):
+
+        if 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
+            mtype = 'im'
+        elif 'Synchronous Machine' in self.ui.comboBox_MachineType.currentText():
+            mtype = 'pmsm'
+        else:
+            raise 'Unknown machine type'
+        return mtype
+
     ''' C-based Simulation '''
     def update_ACMPlotLabels_and_ACMPlotSignals(self, bool_always_true_bug=True, bool_re_init=False):
 
@@ -418,11 +435,18 @@ class EmachineryWidget(QMainWindow):
 
         # 初始化（电机类型切换的时候也得运行）
         if bool_re_init:
+
+            mtype = self.get_mtype()
+
+            # 产生下拉菜单
             self.ui.comboBox_plotSettings.clear()
-            if 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
-                self.ui.comboBox_plotSettings.addItems(['im_default'] + [f'im_user{i:02d}' for i in range(10)])
-            elif 'Synchronous Machine' in self.ui.comboBox_MachineType.currentText():
-                self.ui.comboBox_plotSettings.addItems(['pmsm_default'] + [f'pmsm_user{i:02d}' for i in range(10)])
+            self.ui.comboBox_plotSettings.addItems([f'{mtype}_default'] + [f'{mtype}_user{i:02d}' for i in range(10)])
+
+            # 为了重新启动以后能记住上一次所选择的PlotSetting
+            for i in range(self.ui.comboBox_plotSettings.count()):
+                if self.configini[f'{mtype}-PlotSettings'] in self.ui.comboBox_plotSettings.itemText(i):
+                    self.ui.comboBox_plotSettings.setCurrentIndex(i)
+                    break
 
         # Read in ACM Plot Settings
         # 根据所选择的配置更新ACMPlot绘图信号列表
@@ -462,6 +486,8 @@ class EmachineryWidget(QMainWindow):
         self.configini['LoadInertiaPercentage'] = self.ui.lineEdit_LoadInertiaPercentage.text()
         self.configini['ViscousCoefficient'] = self.ui.lineEdit_ViscousCoefficient.text()
         self.configini['OutputDataFileName'] = self.ui.lineEdit_OutputDataFileName.text()
+        mtype = self.get_mtype()
+        self.configini[f'{mtype}-PlotSettings'] = self.ui.comboBox_plotSettings.currentText()[-2:]
         with open(self.filepath_to_configini, 'w') as f:
             json.dump(self.configini, f, ensure_ascii=False, indent=4)
     def save_path2acmsimc(self):
@@ -583,7 +609,7 @@ class EmachineryWidget(QMainWindow):
                         raise e
                     trace_counter += 1
                     try:
-                        ax.plot(time, signal, '-.', lw=1, label=key, alpha=0.5)
+                        ax.plot(time, signal, '-.', lw=1.5, label=key, alpha=0.5)
                     except ValueError as e:
                         print('ValueError during ax.plot():', e, '\nThis is known issue and will ignore and continue.') # ValueError: could not convert string to float: '3.33723e-'
                         pass
@@ -684,6 +710,7 @@ class EmachineryWidget(QMainWindow):
                 f.writelines(new_lines)
 
         def updateACMConfig(path2acmsimc, motor_dict, control_dict, sweepFreq_dict):
+            # print(motor_dict)
             def conditions_to_continue(line):
                 # 原来如果有定义这些宏，那就不要了
                 if     '#define IM_STAOTR_RESISTANCE' in line \
@@ -916,8 +943,8 @@ class EmachineryWidget(QMainWindow):
             motor_dict['KE']     = KE     = motor["额定反电势系数 [Wb]"]
             motor_dict['Ls']     = Lsigma + Lmu # this will be used in tuner.py for iteration for current BW
 
-            motor_dict['flux_cmd_dc_part'] = KE * eval(self.ui.lineEdit_FluxCmdPercentage.text())/100
-            motor_dict['flux_cmd_sine_part'] = 0.0
+            motor_dict['flux_cmd_dc_part']   = KE * eval(self.ui.lineEdit_FluxCmdPercentage.text())*0.01
+            motor_dict['flux_cmd_sine_part'] = motor_dict['flux_cmd_dc_part'] * eval(self.ui.lineEdit_FluxCmdSinePartPercentage.text())*0.01
 
         elif '永磁' in motor['电机类型']:
             motor_dict['Rs'] = R  = motor["定子电阻 [Ohm]"]

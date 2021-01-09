@@ -931,7 +931,7 @@
               <x>10</x>
               <y>10</y>
               <width>361</width>
-              <height>293</height>
+              <height>301</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1017,6 +1017,16 @@
                   </widget>
                  </item>
                  <item>
+                  <widget class="QLabel" name="label_npd_18">
+                   <property name="frameShape">
+                    <enum>QFrame::Panel</enum>
+                   </property>
+                   <property name="text">
+                    <string>Flux Cmd. Sine Part Percentage [%]</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QLabel" name="label_npd_17">
                    <property name="frameShape">
                     <enum>QFrame::Panel</enum>
@@ -1072,6 +1082,13 @@
                   <widget class="QLineEdit" name="lineEdit_FluxCmdPercentage">
                    <property name="text">
                     <string>100</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_FluxCmdSinePartPercentage">
+                   <property name="text">
+                    <string>0</string>
                    </property>
                   </widget>
                  </item>
