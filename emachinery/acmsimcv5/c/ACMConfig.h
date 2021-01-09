@@ -46,6 +46,7 @@
 #define SPEED_LOOP_CEILING (4)
 
 #define CLARKE_TRANS_TORQUE_GAIN (1.5) // consistent with experiment
+#define CLARKE_TRANS_TORQUE_GAIN_INVERSE (0.666666667)
 #define POW2AMPL (0.816496581) // = 1/sqrt(1.5) power-invariant to aplitude-invariant (the dqn vector becomes shorter to have the same length as the abc vector)
 #define AMPL2POW (1.22474487)
 

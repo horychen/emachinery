@@ -75,14 +75,14 @@ void rhs_func_marino2005(double *increment_n, double xRho, double xTL, double xA
     // xAlpha
     f[2] = marino.delta_inv * ( marino.e_psi_Dmu*(im.Lmu*CTRL.iDs_cmd - CTRL.psi_cmd) + marino.e_psi_Qmu*im.Lmu*CTRL.iQs_cmd);
     // xOmg
-    // REAL xTem = CLARKE_TRANS_TORQUE_GAIN*im.npp*( marino.psi_Dmu*CTRL.iQs - marino.psi_Qmu*CTRL.iDs );
-    // f[3] = im.npp*im.Js_inv*(xTem - xTL) + 2*marino.lambda_inv*CTRL.psi_cmd*marino.e_psi_Qmu;
+    REAL xTem = CLARKE_TRANS_TORQUE_GAIN*im.npp*( marino.psi_Dmu*CTRL.iQs - marino.psi_Qmu*CTRL.iDs );
+    f[3] = im.npp*im.Js_inv*(xTem - xTL) + 2*marino.lambda_inv*CTRL.psi_cmd*marino.e_psi_Qmu;
 
     // REAL xTem = CLARKE_TRANS_TORQUE_GAIN*im.npp*( marino.psi_Dmu*ACM.iTs - marino.psi_Qmu*ACM.iMs );
     // f[3] = im.npp*im.Js_inv*(ACM.Tem - ACM.TLoad);
     // f[3] = im.npp*im.Js_inv*(CLARKE_TRANS_TORQUE_GAIN*ACM.npp*(ACM.x[1]*ACM.x[2]-ACM.x[0]*ACM.x[3] - ACM.TLoad));
 
-    f[3] = ACM.x_dot[4]; 
+    // f[3] = ACM.x_dot[4]; 
 
     increment_n[0] = ( f[0] )*hs;
     increment_n[1] = ( f[1] )*hs;

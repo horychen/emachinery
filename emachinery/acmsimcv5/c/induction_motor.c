@@ -316,6 +316,7 @@ int machine_simulation(){
     ACM.sinT = sin(ACM.theta_M);
     ACM.iMs = AB2M(ACM.ial, ACM.ibe, ACM.cosT, ACM.sinT);
     ACM.iTs = AB2T(ACM.ial, ACM.ibe, ACM.cosT, ACM.sinT);
+    ACM.Tem = CLARKE_TRANS_TORQUE_GAIN*ACM.npp*(ACM.x[1]*ACM.x[2]-ACM.x[0]*ACM.x[3]);
 
     // 电机转速接口
     ACM.omg_elec = ACM.x[4]; // 电气转速 [elec. rad/s]

@@ -1,2 +1,6 @@
 ACM.rpm_cmd, ACM.rpm, marino.xOmg*RAD_PER_SEC_2_RPM
 ACM.x_dot[4], marino.deriv_xOmg
+CTRL.iQs_cmd, ACM.iTs, CTRL.iQs
+CTRL.iDs_cmd, ACM.iMs, CTRL.iDs
+CTRL.psi_cmd, marino.psi_Dmu
+marino.e_psi_Dmu, marino.e_psi_Qmu

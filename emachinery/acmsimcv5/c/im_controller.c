@@ -11,7 +11,7 @@ void CTRL_init(){
     marino.kz         = 1*700.0; // zd, zq
 
     marino.k_omega    = 0.5*88*60.0; // 6000  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
-    marino.kappa      = 24;      //0.05;  // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
+    marino.kappa      = 1e3*24;      //0.05;  // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
 
     marino.lambda_inv = 1e-1 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
 
@@ -284,14 +284,8 @@ void controller_marino2005(){
     improved_Holtz_method();
 
     // flux feedback
-    // marino.psi_Dmu = holtz.psi_D2;
-    // marino.psi_Qmu = holtz.psi_Q2;
     marino.psi_Dmu = holtz.psi_D2_ode1;
     marino.psi_Qmu = holtz.psi_Q2_ode1;
-
-    // flux error quantities
-    marino.e_psi_Dmu = marino.psi_Dmu - CTRL.psi_cmd;
-    marino.e_psi_Qmu = marino.psi_Qmu - 0.0;
 
     // API to the fourth-order system of observer and identifiers
     observer_marino2005();
@@ -301,10 +295,16 @@ void controller_marino2005(){
     CTRL.TLoad   = marino.xTL;
 
     // 磁场可测 debug
+    // marino.psi_Dmu = holtz.psi_D2;
+    // marino.psi_Qmu = holtz.psi_Q2;
     // CTRL.theta_D = ACM.theta_M;
     // CTRL.omg__fb = im.omg_elec;
     // CTRL.alpha   = ACM.alpha;
     // CTRL.TLoad   = ACM.TLoad;
+
+    // flux error quantities
+    marino.e_psi_Dmu = marino.psi_Dmu - CTRL.psi_cmd;
+    marino.e_psi_Qmu = marino.psi_Qmu - 0.0;
 
     CTRL.alpha_inv = 1.0/CTRL.alpha;
 
@@ -319,14 +319,18 @@ void controller_marino2005(){
     marino.deriv_iD_cmd = 1.0*CTRL.Lmu_inv*(  CTRL.deriv_psi_cmd \
                                             + CTRL.dderiv_psi_cmd*CTRL.alpha_inv \
                                             - CTRL.deriv_psi_cmd*CTRL.alpha_inv*CTRL.alpha_inv*marino.deriv_xAlpha);
-    //TODO 重新写！
-    REAL mu_temp = CTRL.npp*CTRL.Js_inv * CLARKE_TRANS_TORQUE_GAIN*CTRL.npp; 
-    marino.deriv_iQ_cmd =   1.0*(-marino.k_omega*deriv_sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) * (marino.deriv_xOmg - CTRL.deriv_omg_cmd) + CTRL.Js_inv*CTRL.npp*marino.deriv_xTL + CTRL.dderiv_omg_cmd ) / (mu_temp * CTRL.psi_cmd)\
-                          - 1.0*(-marino.k_omega*sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) + CTRL.Js_inv*CTRL.TLoad+CTRL.deriv_omg_cmd) * (CTRL.deriv_psi_cmd/(mu_temp*CTRL.psi_cmd*CTRL.psi_cmd));
+    // TODO 重新写！
+    // REAL mu_temp     = CTRL.npp_inv*CTRL.Js * CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.npp_inv;
+    // REAL mu_temp_inv = CTRL.npp*CTRL.Js_inv * CLARKE_TRANS_TORQUE_GAIN*CTRL.npp;
+    // 第一项很有用，第二项无用。
+    marino.deriv_iQ_cmd =   CTRL.npp_inv*CTRL.Js * CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.npp_inv * (\
+        1.0*(-marino.k_omega*deriv_sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) * (marino.deriv_xOmg - CTRL.deriv_omg_cmd) + CTRL.Js_inv*CTRL.npp*marino.deriv_xTL + CTRL.dderiv_omg_cmd ) * CTRL.psi_cmd_inv\
+      - 1.0*(-marino.k_omega*      sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) + CTRL.Js_inv*CTRL.npp*CTRL.TLoad + CTRL.deriv_omg_cmd) * (CTRL.deriv_psi_cmd * CTRL.psi_cmd_inv*CTRL.psi_cmd_inv)
+        );
 
     // current error quantities
     CTRL.iDs_cmd = ( CTRL.psi_cmd + CTRL.deriv_psi_cmd*CTRL.alpha_inv ) * CTRL.Lmu_inv;
-    CTRL.iQs_cmd = ( CTRL.npp_inv*CTRL.Js *( 1*CTRL.deriv_omg_cmd - marino.k_omega*sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) ) + CTRL.TLoad ) / (CLARKE_TRANS_TORQUE_GAIN*CTRL.npp*CTRL.psi_cmd);
+    CTRL.iQs_cmd = ( CTRL.npp_inv*CTRL.Js *( 1*CTRL.deriv_omg_cmd - marino.k_omega*sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) ) + CTRL.TLoad ) * (CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.npp_inv*CTRL.psi_cmd_inv);
     marino.e_iDs = CTRL.iDs - CTRL.iDs_cmd;
     marino.e_iQs = CTRL.iQs - CTRL.iQs_cmd;
 
@@ -402,7 +406,6 @@ void controller(){
         // CTRL.m1 = 0.0;
         CTRL.psi_cmd_raw = CTRL.m0 + CTRL.m1 * sin(CTRL.omega1*CTRL.timebase);
         CTRL.psi_cmd     = CTRL.psi_cmd_raw; // _lpf(CTRL.psi_cmd_raw, CTRL.psi_cmd, 5);
-        CTRL.psi_cmd_inv = 1.0/ CTRL.psi_cmd;
         CTRL.deriv_psi_cmd  = CTRL.m1 * CTRL.omega1 * cos(CTRL.omega1*CTRL.timebase);
         CTRL.dderiv_psi_cmd = CTRL.m1 * CTRL.omega1 * CTRL.omega1 * -sin(CTRL.omega1*CTRL.timebase);
     }

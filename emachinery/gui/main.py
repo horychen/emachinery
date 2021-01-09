@@ -583,7 +583,7 @@ class EmachineryWidget(QMainWindow):
                         raise e
                     trace_counter += 1
                     try:
-                        ax.plot(time, signal, '-.', lw=1, label=key)
+                        ax.plot(time, signal, '-.', lw=1, label=key, alpha=0.5)
                     except ValueError as e:
                         print('ValueError during ax.plot():', e) # ValueError: could not convert string to float: '3.33723e-'
                         pass
