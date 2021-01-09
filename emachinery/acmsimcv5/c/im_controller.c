@@ -17,8 +17,11 @@ void CTRL_init(){
 
     // lammbda_inv和gamma_inv是竞争的关系
     marino.lambda_inv = 5* 0.1 * 1.5 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
-    marino.gamma_inv  = 10 * 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
+    // marino.gamma_inv  = 10 * 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
     marino.delta_inv  = 0*75.0; // alpha 要求磁链幅值时变
+
+
+    marino.gamma_inv = GAMMA_INV_xTL;
 
     marino.xTL_Max = 8.0;
     marino.xAlpha_Max = 8.0;

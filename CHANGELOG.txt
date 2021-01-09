@@ -1,10 +1,14 @@
 
 ## Changelog
 
+*1.1.2*
+- Support parametric analysis.
+
 *1.1.1*
 - User is now able to select from different plot settings.
 - Support sinusoidal flux modulus command for induction motor.
 - Remember user's last selected plot setting considering machine types, i.e., IM or PMSM.
+- Marino05 is tuned.
 
 *1.1.0*
 - Induction motor simulation.

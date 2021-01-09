@@ -22,6 +22,7 @@ from collections import OrderedDict
 import json
 import re
 from time import sleep
+import copy
 
 from emachinery.utils.conversion import ElectricMachinery
 from emachinery.jsons import ACMInfo
@@ -71,6 +72,9 @@ This is not a problem if you use load .ui, but it is a problem if you import .py
 
 6. 还有一个不方便的地方就是，如果正式安装了emachinery，就没法在本地测试了，因为会优先import库emachinery中的.py文件作为模块。
 换句话说，只能用“pip install -e .”进行本地测试。
+'''
+KnownIssues=r'''
+- If a function is connected, the first kwarg is always set to True or False by PyQt5. Search for bool_always_[\D]*_bug for example.
 '''
 from emachinery.acmdesignv2 import tuner
 # from emachinery.acmdesignv2 import simulator
@@ -129,31 +133,10 @@ class EmachineryWidget(QMainWindow):
 
         '''tab_3: C-based Simulation
         '''
-        self.filepath_to_configini = pkg_resources.resource_filename(__name__, r'config.json')
-         # Recover last user input
-        try:
-            with open(self.filepath_to_configini, 'r') as f:
-                self.configini = json.load(f)
-            if os.path.exists(self.configini['path2acmsimc']):
-                self.path2acmsimc = self.configini['path2acmsimc']
-            else:
-                print(f'''Path "{self.configini['path2acmsimc']}" does not exist. Will use default C codes instead.''')
-                self.path2acmsimc = path2acmsimc # the default code comes along with the emachinery package
-            self.ui.lineEdit_EndTime.setText(self.configini['EndTime'])
-            self.ui.lineEdit_CLTS.setText(self.configini['CLTS'])
-            self.ui.lineEdit_VLTS.setText(self.configini['VLTS'])
-            self.ui.lineEdit_LoadTorque.setText(self.configini['LoadTorque'])
-            self.ui.lineEdit_LoadInertiaPercentage.setText(self.configini['LoadInertiaPercentage'])
-            self.ui.lineEdit_ViscousCoefficient.setText(self.configini['ViscousCoefficient'])
-            self.ui.lineEdit_OutputDataFileName.setText(self.configini['OutputDataFileName'])
-        except Exception as e:
-            raise e
-        self.ui.lineEdit_path2acmsimc.setText(self.path2acmsimc)
-        self.ui.lineEdit_path2acmsimc.textChanged[str].connect(self.save_path2acmsimc)
-
-        # self.data_file_name = self.get_data_file_name() # get it on the run, no need to init
         self.ui.pushButton_runCBasedSimulation.clicked.connect(self.runCBasedSimulation)
 
+        # can get data file name on the run, no need to init it.
+        # self.data_file_name = self.get_data_file_name()
 
         # init comboBox_plotSettings
         self.ui.comboBox_plotSettings.activated.connect(self.update_ACMPlotLabels_and_ACMPlotSignals)
@@ -163,6 +146,10 @@ class EmachineryWidget(QMainWindow):
         # Motor Dict ( The order matters, should be after self.comboActivate_machineType() )
         print(self.ui.lineEdit_OutputDataFileName.text())
         self.motor_dict = self.get_motor_dict(self.mj);
+
+
+        self.ui.lineEdit_path2acmsimc.setText(self.path2acmsimc)
+        self.ui.lineEdit_path2acmsimc.textChanged[str].connect(self.save_path2acmsimc)
 
 
         # settings for sweep frequency
@@ -209,7 +196,6 @@ class EmachineryWidget(QMainWindow):
         self.ui.pushButton_bodePlot.clicked.connect(self.update_BodePlot)
 
 
-
         '''tab_5: Plots
         '''
         # update plot
@@ -242,6 +228,14 @@ class EmachineryWidget(QMainWindow):
             print(str(e))
             print('[Warn] Skip FEA-based Optimization')
             pass
+
+        '''tab_7: Parametric Analysis
+        '''
+        self.ui.pushButton_runCBasedSimulation4PA.clicked.connect(self.runCBasedSimulation4PA)
+        self.ui.plainTextEdit_PANames.clear()
+        self.ui.plainTextEdit_PANames.appendPlainText(self.configini['PANames'])
+        self.ui.plainTextEdit_PAValues.clear()
+        self.ui.plainTextEdit_PAValues.appendPlainText(self.configini['PAValues'])
 
 
         '''menu
@@ -428,7 +422,7 @@ class EmachineryWidget(QMainWindow):
         return mtype
 
     ''' C-based Simulation '''
-    def update_ACMPlotLabels_and_ACMPlotSignals(self, bool_always_true_bug=True, bool_re_init=False):
+    def update_ACMPlotLabels_and_ACMPlotSignals(self, configini, bool_always_true_bug=True, bool_re_init=False):
 
         # selected = self.ui.comboBox_plotSettings.currentText()
         # print('selected:', selected)
@@ -444,7 +438,7 @@ class EmachineryWidget(QMainWindow):
 
             # 为了重新启动以后能记住上一次所选择的PlotSetting
             for i in range(self.ui.comboBox_plotSettings.count()):
-                if self.configini[f'{mtype}-PlotSettings'] in self.ui.comboBox_plotSettings.itemText(i):
+                if configini[f'{mtype}-PlotSettings'] in self.ui.comboBox_plotSettings.itemText(i):
                     self.ui.comboBox_plotSettings.setCurrentIndex(i)
                     break
 
@@ -479,6 +473,7 @@ class EmachineryWidget(QMainWindow):
             # print('ACMPlot settings are not found. Will use the default instead.')
 
     def save_Config4CBasedSimulation(self):
+        # 读取需要记住的用户输入
         self.configini['EndTime'] = self.ui.lineEdit_EndTime.text()
         self.configini['CLTS'] = self.ui.lineEdit_CLTS.text()
         self.configini['VLTS'] = self.ui.lineEdit_VLTS.text()
@@ -488,6 +483,8 @@ class EmachineryWidget(QMainWindow):
         self.configini['OutputDataFileName'] = self.ui.lineEdit_OutputDataFileName.text()
         mtype = self.get_mtype()
         self.configini[f'{mtype}-PlotSettings'] = self.ui.comboBox_plotSettings.currentText()[-2:]
+        self.configini['PANames'] = self.ui.plainTextEdit_PANames.toPlainText()
+        self.configini['PAValues'] = self.ui.plainTextEdit_PAValues.toPlainText()
         with open(self.filepath_to_configini, 'w') as f:
             json.dump(self.configini, f, ensure_ascii=False, indent=4)
     def save_path2acmsimc(self):
@@ -685,6 +682,15 @@ class EmachineryWidget(QMainWindow):
         # print(details)
         return details
     # save setting, compile .c and run .exe
+    def compile_and_run(self):
+        # compile c and run
+        if os.path.exists(self.path2acmsimc+"/dat/info.dat"):
+            os.remove(self.path2acmsimc+"/dat/info.dat")
+        os.system(f"cd /d {self.path2acmsimc}/c && gmake main && start cmd /c main")
+        while not os.path.exists(self.path2acmsimc+"/dat/info.dat"):
+            # print('sleep for info.dat')
+            sleep(0.1)
+
     def runCBasedSimulation(self, bool_always_true_bug=True, bool_savePlotSetting=True, bool_updatePlotSetting=True):
         # why bool_ is always set to False???
         # print(bool_, bool_savePlotSetting, bool_updatePlotSetting)
@@ -840,13 +846,7 @@ class EmachineryWidget(QMainWindow):
         print('ACMConfig.h is updated.')
 
         if self.ui.checkBox_compileAndRun.isChecked():
-            # compile c and run
-            if os.path.exists(self.path2acmsimc+"/dat/info.dat"):
-                os.remove(self.path2acmsimc+"/dat/info.dat")
-            os.system(f"cd /d {self.path2acmsimc}/c && gmake main && start cmd /c main")
-            while not os.path.exists(self.path2acmsimc+"/dat/info.dat"):
-                # print('sleep for info.dat')
-                sleep(0.1)
+            self.compile_and_run()
 
             # Animate ACMPlot
             # print('sleep for .dat file')
@@ -854,6 +854,54 @@ class EmachineryWidget(QMainWindow):
             # but we don't need to use sleep() to wait for that anymore, because we have animated ACMPlot now which works well with incomplete data
             self.update_ACMPlot()
     # def runCBasedSimulation_SweepFrequnecyAnalysis(self):
+    def runCBasedSimulation4PA(self, bool_always_false_bug=9999999999, bool_=88888888):
+        # see the bug clearly
+        # print(self, bool_always_false_bug, bool_)
+
+        # Basic Run to make sure everything is up-to-date and saved.
+        self.runCBasedSimulation()
+
+        # 先根据多个参数的名字，找到它们在文件ACMConfig.h中的行数，即PAIndex。
+        PANameTuple = eval(self.ui.plainTextEdit_PANames.toPlainText())
+        original_buf = None
+        PAIndexList = []
+        with open(self.path2acmsimc+'/c/ACMConfig.h', 'r', encoding='utf-8') as f:
+            original_buf = list(f.readlines())
+            for index, line in enumerate(original_buf):
+                for PAName in PANameTuple:
+                    if ' ' + PAName + ' ' in line:
+                        PAIndexList.append(index)
+                        break
+
+        # 输出数据文件所在行数
+        DataFileNameIndex = None
+        for i in range(-1,-100, -1):
+            if 'DATA_FILE_NAME' in original_buf[i]:
+                DataFileNameIndex = i
+                break
+
+        # 根据每一个PAValueTuple，更新ACMConfig.h，并编译运行，保存数据。
+        for _, PAValueTuple in enumerate(eval(self.ui.plainTextEdit_PAValues.toPlainText())):
+            if PAValueTuple is ():
+                return 'PAValueTuple is empty.'
+
+            write_buf = copy.deepcopy(original_buf)
+
+            # 打开文件
+            with open(self.path2acmsimc+'/c/ACMConfig.h', 'w', encoding='utf-8') as f:
+
+                # 每个参数都要修改ACMConfig.h文件的一行
+                for PAName, PAIndex, PAValue in zip(PANameTuple, PAIndexList, PAValueTuple):
+                    write_buf[PAIndex] = f'#define {PAName} {PAValue}\n'
+
+                # 修改输出数据文件名
+                write_buf[DataFileNameIndex] = f'#define DATA_FILE_NAME "{self.data_file_name}-{_+1:03d}"\n'
+
+                # 写入ACMConfig.h
+                f.writelines(write_buf)
+
+            # 编译+运行C
+            self.compile_and_run()
 
 
     ''' Optimization Section '''
@@ -880,13 +928,37 @@ class EmachineryWidget(QMainWindow):
         elif 'Induction Machine' in self.ui.comboBox_MachineType.currentText():
             self.ui.comboBox_MachineName.addItems(im_list) #(self.mj.keys())
 
+
+        # Recover last user input
+        self.filepath_to_configini = pkg_resources.resource_filename(__name__, f'config_{self.get_mtype()}.json') # updated in self.comboActivate_machineType()
+        try:
+            with open(self.filepath_to_configini, 'r') as f:
+                configini = self.configini = json.load(f)
+            if os.path.exists(configini['path2acmsimc']):
+                self.path2acmsimc = configini['path2acmsimc']
+            else:
+                print(f'''Path "{configini['path2acmsimc']}" does not exist. Will use default C codes instead.''')
+                self.path2acmsimc = path2acmsimc # the default code comes along with the emachinery package
+            self.ui.lineEdit_EndTime.setText(configini['EndTime'])
+            self.ui.lineEdit_CLTS.setText(configini['CLTS'])
+            self.ui.lineEdit_VLTS.setText(configini['VLTS'])
+            self.ui.lineEdit_LoadTorque.setText(configini['LoadTorque'])
+            self.ui.lineEdit_LoadInertiaPercentage.setText(configini['LoadInertiaPercentage'])
+            self.ui.lineEdit_ViscousCoefficient.setText(configini['ViscousCoefficient'])
+            self.ui.lineEdit_OutputDataFileName.setText(configini['OutputDataFileName'])
+        except Exception as e:
+            raise e
+
+        # 更新绘图信号对
         # update file path to plot settings
-        self.update_ACMPlotLabels_and_ACMPlotSignals(bool_re_init=True)
+        self.update_ACMPlotLabels_and_ACMPlotSignals(configini, bool_re_init=True)
             # self.ui.lineEdit_path2ACMPlotLabels.setText('./plot_setting_files/labels_pmsm.txt')
             # self.ui.lineEdit_path2ACMPlotSignals.setText('./plot_setting_files/signals_pmsm.txt')
             # self.ui.lineEdit_path2ACMPlotLabels.setText('./plot_setting_files/labels_im.txt')
             # self.ui.lineEdit_path2ACMPlotSignals.setText('./plot_setting_files/signals_im.txt')
             # self.update_ACMPlotLabels_and_ACMPlotSignals()
+
+        # 更新铭牌值
         self.comboActivate_namePlateData()
 
     def comboActivate_namePlateData(self):

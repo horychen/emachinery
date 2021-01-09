@@ -1,0 +1,13 @@
+{
+    "path2acmsimc": "D:\\DrH\\Codes\\emachineryTestPYPI\\emachinery\\acmsimcv5",
+    "EndTime": "5",
+    "CLTS": "1/20e3",
+    "VLTS": "4/20e3",
+    "LoadTorque": "2",
+    "LoadInertiaPercentage": "16",
+    "ViscousCoefficient": "0.7e-2",
+    "OutputDataFileName": "IM_Transient",
+    "im-PlotSettings": "00",
+    "PANames": "(\"GAMMA_INV_xTL\",)",
+    "PAValues": "[(1*3*180/self.motor_dict['J_s'],),\n(3*3*180/self.motor_dict['J_s'],),\n(6*3*180/self.motor_dict['J_s'],),\n(9*3*180/self.motor_dict['J_s'],),\n(12*3*180/self.motor_dict['J_s'],),\n(15*3*180/self.motor_dict['J_s'],),\n]"
+}
