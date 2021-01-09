@@ -15,20 +15,21 @@ void CTRL_init(){
 
     marino.kappa      = 1e4*24; // \in [0.1, 1e4*24] no difference // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
 
-    marino.lambda_inv = 0.1 * 1.5 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
-
-    marino.gamma_inv  = 0 * 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
+    // lammbda_inv和gamma_inv是竞争的关系
+    marino.lambda_inv = 5* 0.1 * 1.5 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
+    marino.gamma_inv  = 10 * 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
     marino.delta_inv  = 0*75.0; // alpha 要求磁链幅值时变
 
     marino.xTL_Max = 8.0;
     marino.xAlpha_Max = 8.0;
     marino.xAlpha_min = 3.0;
-    printf("alpha: %g in [%g, %g]?\n", CTRL.alpha, marino.xAlpha_min, marino.xAlpha_Max);
 
     marino.xRho = 0.0;
     marino.xTL = 0.0;
     marino.xAlpha = IM_ROTOR_RESISTANCE/IM_MAGNETIZING_INDUCTANCE;
     marino.xOmg = 0.0;
+
+    printf("alpha: %g in [%g, %g]?\n", marino.xAlpha, marino.xAlpha_min, marino.xAlpha_Max);
 
     marino.deriv_xTL = 0.0;
     marino.deriv_xAlpha = 0.0;

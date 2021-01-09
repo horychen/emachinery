@@ -3,9 +3,9 @@
     "EndTime": "5",
     "CLTS": "1/20e3",
     "VLTS": "4/20e3",
-    "LoadTorque": "2*0",
-    "LoadInertiaPercentage": "16*0",
-    "ViscousCoefficient": "0*0.7e-3",
+    "LoadTorque": "2",
+    "LoadInertiaPercentage": "16",
+    "ViscousCoefficient": "0.7e-2",
     "OutputDataFileName": "IM_Transient",
     "im-PlotSettings": "00",
     "pmsm-PlotSettings": "lt"
