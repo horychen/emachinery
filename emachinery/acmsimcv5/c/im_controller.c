@@ -7,71 +7,6 @@ struct ControllerForExperiment CTRL;
 
 void CTRL_init(){
 
-    #define LOCAL_SCALE 1.0
-    marino.kz         = LOCAL_SCALE * 2*700.0; // zd, zq
-    marino.k_omega    = LOCAL_SCALE * 0.5*88*60.0; // 6000  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
-
-
-    marino.kappa      = 1e4*24; // \in [0.1, 1e4*24] no difference // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
-
-    // lammbda_inv和gamma_inv是竞争的关系
-    // marino.lambda_inv = 5* 0.1 * 1.5 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
-    // marino.gamma_inv  = 10 * 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
-
-    marino.delta_inv  = 0*75.0; // alpha 要求磁链幅值时变
-
-    marino.lambda_inv = LAMBDA_INV_xOmg;
-    marino.gamma_inv  = GAMMA_INV_xTL;
-
-    marino.xTL_Max = 8.0;
-    marino.xAlpha_Max = 8.0;
-    marino.xAlpha_min = 3.0;
-
-    marino.xRho = 0.0;
-    marino.xTL = 0.0;
-    marino.xAlpha = IM_ROTOR_RESISTANCE/IM_MAGNETIZING_INDUCTANCE;
-    marino.xOmg = 0.0;
-
-    printf("alpha: %g in [%g, %g]?\n", marino.xAlpha, marino.xAlpha_min, marino.xAlpha_Max);
-
-    marino.deriv_xTL = 0.0;
-    marino.deriv_xAlpha = 0.0;
-    marino.deriv_xOmg = 0.0;
-
-    marino.psi_Dmu = 0.0;
-    marino.psi_Qmu = 0.0;
-
-    marino.zD = 0.0;
-    marino.zQ = 0.0;
-    marino.e_iDs = 0.0;
-    marino.e_iQs = 0.0;
-    marino.e_psi_Dmu = 0.0;
-    marino.e_psi_Qmu = 0.0;
-
-    marino.deriv_iD_cmd = 0.0;
-    marino.deriv_iQ_cmd = 0.0;
-
-    marino.Gamma_D = 0.0;
-    marino.Gamma_Q = 0.0;
-
-    marino.torque_cmd = 0.0;
-    marino.torque__fb = 0.0;
-
-    // struct Holtz2003
-    holtz.psi_D2 = 0.0;
-    holtz.psi_Q2 = 0.0;
-    holtz.psi_D1_ode1 = 0.0;
-    holtz.psi_Q1_ode1 = 0.0;
-    holtz.psi_D2_ode1 = 0.0;
-    holtz.psi_Q2_ode1 = 0.0;
-    holtz.psi_D1_ode4 = 0.0;
-    holtz.psi_Q1_ode4 = 0.0;
-    holtz.psi_D2_ode4 = 0.0;
-    holtz.psi_Q2_ode4 = 0.0;
-
-
-
-
 
     int i=0,j=0;
 
@@ -261,106 +196,6 @@ void cmd_fast_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rp
 }
 
 
-struct Marino2005 marino;
-struct Holtz2003 holtz;
-
-REAL sat_kappa(REAL x){
-    if(x>marino.kappa){
-        return marino.kappa;
-    }else if(x<-marino.kappa){
-        return -marino.kappa;
-    }else{
-        return x;
-    }
-}
-REAL deriv_sat_kappa(REAL x){
-    if(x>marino.kappa){
-        return 0;
-    }else if(x<-marino.kappa){
-        return -0;
-    }else{
-        return 1;
-    }
-}
-void controller_marino2005(){
-
-    // Cascaded from other system
-    /* VM based Flux Est. */
-    // Akatsu_RrId();
-    improved_Holtz_method();
-
-    // flux feedback
-    marino.psi_Dmu = holtz.psi_D2_ode1;
-    marino.psi_Qmu = holtz.psi_Q2_ode1;
-
-    // API to the fourth-order system of observer and identifiers
-    observer_marino2005();
-    CTRL.theta_D = marino.xRho;
-    CTRL.omg__fb = marino.xOmg;
-    CTRL.alpha   = marino.xAlpha;
-    CTRL.TLoad   = marino.xTL;
-
-    // 磁场可测 debug
-    // marino.psi_Dmu = holtz.psi_D2;
-    // marino.psi_Qmu = holtz.psi_Q2;
-    // CTRL.theta_D = ACM.theta_M;
-    // CTRL.omg__fb = CTRL.omg__fb;
-    // CTRL.alpha   = ACM.alpha;
-    // CTRL.TLoad   = ACM.TLoad;
-
-    // flux error quantities
-    marino.e_psi_Dmu = marino.psi_Dmu - CTRL.psi_cmd;
-    marino.e_psi_Qmu = marino.psi_Qmu - 0.0;
-
-    CTRL.alpha_inv = 1.0/CTRL.alpha;
-
-    // αβ to DQ
-    CTRL.cosT = cos(CTRL.theta_D);
-    CTRL.sinT = sin(CTRL.theta_D);
-    CTRL.iDs = AB2M(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
-    CTRL.iQs = AB2T(IS_C(0), IS_C(1), CTRL.cosT, CTRL.sinT);
-
-    // TODO
-    // 当磁链幅值给定平稳时，这项就是零。
-    marino.deriv_iD_cmd = 1.0*CTRL.Lmu_inv*(  CTRL.deriv_psi_cmd \
-                                            + CTRL.dderiv_psi_cmd*CTRL.alpha_inv \
-                                            - CTRL.deriv_psi_cmd*CTRL.alpha_inv*CTRL.alpha_inv*marino.deriv_xAlpha);
-    // TODO 重新写！
-    // REAL mu_temp     = CTRL.npp_inv*CTRL.Js * CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.npp_inv;
-    // REAL mu_temp_inv = CTRL.npp*CTRL.Js_inv * CLARKE_TRANS_TORQUE_GAIN*CTRL.npp;
-    // 第一项很有用，第二项无用。
-    marino.deriv_iQ_cmd =   CTRL.npp_inv*CTRL.Js * CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.npp_inv * (\
-        1.0*(-marino.k_omega*deriv_sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) * (marino.deriv_xOmg - CTRL.deriv_omg_cmd) + CTRL.Js_inv*CTRL.npp*marino.deriv_xTL + CTRL.dderiv_omg_cmd ) * CTRL.psi_cmd_inv\
-      - 1.0*(-marino.k_omega*      sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) + CTRL.Js_inv*CTRL.npp*CTRL.TLoad + CTRL.deriv_omg_cmd) * (CTRL.deriv_psi_cmd * CTRL.psi_cmd_inv*CTRL.psi_cmd_inv)
-        );
-
-    // current error quantities
-    CTRL.iDs_cmd = ( CTRL.psi_cmd + CTRL.deriv_psi_cmd*CTRL.alpha_inv ) * CTRL.Lmu_inv;
-    CTRL.iQs_cmd = ( CTRL.npp_inv*CTRL.Js *( 1*CTRL.deriv_omg_cmd - marino.k_omega*sat_kappa(CTRL.omg__fb-CTRL.omg_cmd) ) + CTRL.TLoad ) * (CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.npp_inv*CTRL.psi_cmd_inv);
-    marino.e_iDs = CTRL.iDs - CTRL.iDs_cmd;
-    marino.e_iQs = CTRL.iQs - CTRL.iQs_cmd;
-
-    marino.torque_cmd = CLARKE_TRANS_TORQUE_GAIN * CTRL.npp * (CTRL.iQs_cmd * CTRL.psi_cmd   - CTRL.iDs_cmd*0);
-    marino.torque__fb = CLARKE_TRANS_TORQUE_GAIN * CTRL.npp * (CTRL.iQs     * marino.psi_Dmu - CTRL.iDs * marino.psi_Qmu);
-    // marino.torque__fb = CLARKE_TRANS_TORQUE_GAIN * CTRL.npp * (CTRL.iQs     * marino.psi_Dmu);
-
-
-    // linear combination of error
-    marino.zD = marino.e_iDs + CTRL.Lsigma_inv*marino.e_psi_Dmu;
-    marino.zQ = marino.e_iQs + CTRL.Lsigma_inv*marino.e_psi_Qmu;
-
-    // known signals to feedforward (to cancel)
-    marino.Gamma_D = CTRL.Lsigma_inv * (-CTRL.rs*CTRL.iDs -CTRL.alpha*CTRL.Lmu*CTRL.iDs_cmd +CTRL.alpha  *CTRL.psi_cmd +CTRL.omega_syn*marino.e_psi_Qmu) +CTRL.omega_syn*CTRL.iQs - marino.deriv_iD_cmd;
-    marino.Gamma_Q = CTRL.Lsigma_inv * (-CTRL.rs*CTRL.iQs -CTRL.alpha*CTRL.Lmu*CTRL.iQs_cmd -CTRL.omg__fb*CTRL.psi_cmd -CTRL.omega_syn*marino.e_psi_Dmu) -CTRL.omega_syn*CTRL.iDs - marino.deriv_iQ_cmd;
-
-    // voltage commands
-    CTRL.uDs_cmd = CTRL.Lsigma * (-(marino.kz+0.25*CTRL.Lsigma*CTRL.Lmu*marino.xAlpha_Max)*marino.zD - marino.Gamma_D);
-    CTRL.uQs_cmd = CTRL.Lsigma * (-(marino.kz+0.25*CTRL.Lsigma*CTRL.Lmu*marino.xAlpha_Max)*marino.zQ - marino.Gamma_Q);
-    CTRL.ual_cmd = MT2A(CTRL.uDs_cmd, CTRL.uQs_cmd, CTRL.cosT, CTRL.sinT);
-    CTRL.ube_cmd = MT2B(CTRL.uDs_cmd, CTRL.uQs_cmd, CTRL.cosT, CTRL.sinT);
-}
-
-
 void controller_IFOC();
 void controller(){
 
@@ -526,16 +361,18 @@ void controller_IFOC(){
         #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
             // decoupled_M_axis_voltage = vM + (CTRL.rs+CTRL.rreq)*CTRL.iMs + CTRL.Lsigma*(-CTRL.omega_syn*CTRL.iTs) - CTRL.alpha*CTRL.psimod_fb; // Jadot09
             // decoupled_T_axis_voltage = vT + (CTRL.rs+CTRL.rreq)*CTRL.iTs + CTRL.Lsigma*( CTRL.omega_syn*CTRL.iMs) + CTRL.omg_fb*CTRL.psimod_fb;
+            // decoupled_T_axis_voltage = vT + CTRL.omega_syn*(CTRL.Lsigma+CTRL.Lmu)*CTRL.iMs; // 这个就不行，说明：CTRL.Lmu*iMs != ob.taao_flux_cmd，而是会因iMs的波动在T轴控制上引入波动和不稳定
 
             decoupled_M_axis_voltage = pid1_iM.Out + (CTRL.Lsigma) * (-CTRL.omega_syn*CTRL.iQs); // Telford03/04
-            // decoupled_T_axis_voltage = pid1_iT.Out + CTRL.omega_syn*(CTRL.psi_cmd + CTRL.Lsigma*CTRL.iMs); // 这个行，但是无速度运行时，会导致M轴电流在转速暂态高频震荡。
-            // decoupled_T_axis_voltage = vT + CTRL.omega_syn*(CTRL.Lsigma+CTRL.Lmu)*CTRL.iMs; // 这个就不行，说明：CTRL.Lmu*iMs != ob.taao_flux_cmd，而是会因iMs的波动在T轴控制上引入波动和不稳定
-            decoupled_T_axis_voltage = pid1_iT.Out; // 无感用这个
+            decoupled_T_axis_voltage = pid1_iT.Out + CTRL.omega_syn*(CTRL.psi_cmd + CTRL.Lsigma*CTRL.iDs); // 这个行，但是无速度运行时，会导致M轴电流在转速暂态高频震荡。
+            // decoupled_T_axis_voltage = pid1_iT.Out; // 无感用这个
         #else
             decoupled_M_axis_voltage = pid1_iM.Out;
             decoupled_T_axis_voltage = pid1_iT.Out;
         #endif
     }
+    CTRL.uDs_cmd = decoupled_M_axis_voltage;
+    CTRL.uQs_cmd = decoupled_T_axis_voltage;
 
     // 7. 反帕克变换
     CTRL.ual_cmd = MT2A(decoupled_M_axis_voltage, decoupled_T_axis_voltage, CTRL.cosT, CTRL.sinT);

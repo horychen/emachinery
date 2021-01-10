@@ -91,68 +91,6 @@ struct ControllerForExperiment {
 };
 extern struct ControllerForExperiment CTRL;
 
-// 这个结构体声明的是基本的IFOC中所没有的变量的集合体。
-struct Marino2005{
-    REAL kz;     // zd, zq
-    REAL k_omega; // e_omega
-    REAL kappa;  // e_omega
-    REAL gamma_inv; // TL
-    REAL delta_inv; // alpha
-    REAL lambda_inv; // omega
-
-    REAL xTL_Max;
-    REAL xAlpha_Max;
-    REAL xAlpha_min;
-
-    REAL xRho;
-    REAL xTL;
-    REAL xAlpha;
-    REAL xOmg;
-
-    REAL deriv_xTL;
-    REAL deriv_xAlpha;
-    REAL deriv_xOmg;
-
-    REAL psi_Dmu;
-    REAL psi_Qmu;
-
-    REAL zD;
-    REAL zQ;
-    REAL e_iDs;
-    REAL e_iQs;
-    REAL e_psi_Dmu;
-    REAL e_psi_Qmu;
-
-    REAL deriv_iD_cmd;
-    REAL deriv_iQ_cmd;
-
-    REAL Gamma_D;
-    REAL Gamma_Q;
-
-    REAL torque_cmd;
-    REAL torque__fb;
-};
-extern struct Marino2005 marino;
-
-struct Holtz2003{
-    REAL psi_D2_ode1_v2;
-    REAL psi_Q2_ode1_v2;
-
-    REAL psi_D1_ode1;
-    REAL psi_Q1_ode1;
-    REAL psi_D2_ode1;
-    REAL psi_Q2_ode1;
-
-    REAL psi_D1_ode4;
-    REAL psi_Q1_ode4;
-    REAL psi_D2_ode4;
-    REAL psi_Q2_ode4;
-
-    REAL psi_D2;
-    REAL psi_Q2;
-};
-extern struct Holtz2003 holtz;
-
 void CTRL_init();
 void control(REAL speed_cmd, REAL speed_cmd_dot);
 

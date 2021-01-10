@@ -923,6 +923,14 @@ class EmachineryWidget(QMainWindow):
         # stop the animation as we are going to plot the canvas for PA
         self.anim.event_source.stop()
 
+
+        # 更新可选数据文件下拉菜单
+        data_file_name_list = self.getDataFileNameList4PA()
+        self.ui.comboBox_PADataFileSelected.clear()
+        self.ui.comboBox_PADataFileSelected.addItems(data_file_name_list)
+        self.ui.comboBox_PADataFileSelected.activated.connect(self.update_PASelected)
+
+
         # 画图
         self.plot4PA(data_file_name_list = [f"{self.data_file_name}-{_+1:03d}" for _ in range(count)])
     def getDataFileNameList4PA(self):
