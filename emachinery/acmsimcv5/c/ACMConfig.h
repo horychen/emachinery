@@ -42,7 +42,8 @@
 #define TS_UPSAMPLING_FREQ_EXE_INVERSE 2
 
 // 调参
-#define GAMMA_INV_xTL 128571.42857142857
+#define GAMMA_INV_xTL 25714.285714285714
+#define LAMBDA_INV_xOmg 9000.0
 
 #define VL_TS          (0.0002)
 #define PL_TS VL_TS
@@ -67,5 +68,5 @@
 #define SWEEP_FREQ_C2C FALSE
 
 #define PC_SIMULATION TRUE
-#define DATA_FILE_NAME "../dat/IM_Transient-205-1000-7-2624.dat-006"
+#define DATA_FILE_NAME "../dat/IM_Transient-205-1000-7-2624.dat"
 #endif

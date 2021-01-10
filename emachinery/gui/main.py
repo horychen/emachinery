@@ -135,9 +135,6 @@ class EmachineryWidget(QMainWindow):
         '''
         self.ui.pushButton_runCBasedSimulation.clicked.connect(self.runCBasedSimulation)
 
-        # can get data file name on the run, no need to init it.
-        # self.data_file_name = self.get_data_file_name()
-
         # init comboBox_plotSettings
         self.ui.comboBox_plotSettings.activated.connect(self.update_ACMPlotLabels_and_ACMPlotSignals)
         # this will invoke: self.update_ACMPlotLabels_and_ACMPlotSignals(bool_re_init=True) for ya
@@ -162,7 +159,7 @@ class EmachineryWidget(QMainWindow):
 
         '''tab_3: ACMPlot
         '''
-        self.ui.pushButton_ACMPlotHere.clicked.connect(self.update_ACMPlot)
+        self.ui.pushButton_ACMPlotHere.clicked.connect(self.clicked__pushButton_ACMPlotHere)
         # Matplotlib navigation bar to: self or tabWidget
         self.toolbar = NavigationToolbar(self.ui.MplWidget_ACMPlot.canvas, self)
         self.ui.verticalLayout_CBSMplToolBar.addWidget(self.toolbar) # add to tab 2 only
@@ -236,6 +233,13 @@ class EmachineryWidget(QMainWindow):
         self.ui.plainTextEdit_PANames.appendPlainText(self.configini['PANames'])
         self.ui.plainTextEdit_PAValues.clear()
         self.ui.plainTextEdit_PAValues.appendPlainText(self.configini['PAValues'])
+
+        self.ui.pushButton_plot4PA.clicked.connect(self.plot4PA)
+
+        data_file_name_list = self.getDataFileNameList4PA()
+        self.ui.comboBox_PADataFileSelected.clear()
+        self.ui.comboBox_PADataFileSelected.addItems(data_file_name_list)
+        self.ui.comboBox_PADataFileSelected.activated.connect(self.update_PASelected)
 
 
         '''menu
@@ -323,6 +327,11 @@ class EmachineryWidget(QMainWindow):
         # print(self.sweepFreq_dict, end='\n'*2)
         return self.sweepFreq_dict
     def update_BodePlot(self):
+        try:
+            self.data_file_name
+        except AttributeError as e:
+            print('Warning: run C based simulation first with Sweep Frequency excitation first.')
+            return 
         dot_dat_file_dir = self.path2acmsimc+'/dat/'+self.data_file_name
         # print(self.motor_dict)
         # print(self.sweepFreq_dict)
@@ -525,7 +534,7 @@ class EmachineryWidget(QMainWindow):
         # print('self.data_file_name:', self.data_file_name, end='\n'*2)
         return self.data_file_name
     # read in .dat file for plot
-    def get_dataFrame(self):
+    def get_dataFrame(self, data_file_name):
 
         # info.dat
         # df_info = pd.read_csv(path+"/dat/info.dat", na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
@@ -541,63 +550,60 @@ class EmachineryWidget(QMainWindow):
         #         sleep(0.1)
         #         break    
 
-        self.data_file_name = self.get_data_file_name()
+        # moved outside of this function
+        # data_file_name = self.get_data_file_name()
 
         # ???.dat
-        # self.data_file_name = path+'/dat/'+data_file_name
-        df_profiles = pd.read_csv(self.path2acmsimc+'/dat/'+self.data_file_name, na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
+        # data_file_name = path+'/dat/'+data_file_name
+        df_profiles = pd.read_csv(self.path2acmsimc+'/dat/'+data_file_name, na_values = ['1.#QNAN', '-1#INF00', '-1#IND00'])
         no_samples = df_profiles.shape[0]
         no_traces  = df_profiles.shape[1]
         # print(data_file_name)
 
-        if self.last_no_samples == no_samples:
-            self.last_no_samples = None
-            self.anim.event_source.stop()
-            print('Stop ACMPlot animation.\n----------\n\n')
-
-        else:
-            self.last_no_samples = no_samples
-
-            print(df_profiles.shape, end=' | ')
-            print('read in', self.path2acmsimc+'/dat/'+self.data_file_name)
-            # print(df_profiles)
-
         return df_profiles, no_samples, no_traces 
     # plot as animation
-    def update_ACMPlot(self):
+    def clicked__pushButton_ACMPlotHere(self):
+        self.update_ACMPlot(data_file_name=self.ui.comboBox_PADataFileSelected.currentText())
+    def update_ACMPlot(self, bool_always_false_bug=None, data_file_name=None):
         # if(not self.bool_import_ACMPlot):
         #     sys.path.append(self.path2acmsimc)
         #     import ACMPlot
 
+        if data_file_name is None:
+            data_file_name = self.data_file_name
+
+        # 需要动画的原因是画图的程序和main.exe是同时运行的，数据还没完整就开始画了，所以要动画。
         def ACMアニメ(i):
-            try:
-                df_profiles, no_samples, no_traces = self.get_dataFrame()
-            except Exception as e:
-                # could capture an error when a negative sign is just got printed to the file and the file is read by the script.
-                print(e)
-                raise e
+            df_profiles, no_samples, no_traces = self.get_dataFrame(data_file_name)
+
+            if self.last_no_samples == no_samples:
+                self.last_no_samples = None
+                self.anim.event_source.stop()
+                print('Stop ACMPlot animation.\n----------\n\n')
+
+            else:
+                self.last_no_samples = no_samples
+
+                print(df_profiles.shape, end=' | ')
+                print('read in', self.path2acmsimc+'/dat/'+data_file_name)
+                # print(df_profiles)
+
 
             time = np.arange(1, no_samples+1) * self.motor_dict['DOWN_SAMPLE'] * self.motor_dict['CL_TS']
 
             self.ui.MplWidget_ACMPlot.canvas.figure.clf()
             trace_counter = 0
-            try: 
-                self.list__number_of_traces_per_subplot
-            except Exception as e:
-                self.decode_labelsAndSignals()
-            finally:
-                number_of_subplot = len(self.list__number_of_traces_per_subplot)
 
             # for i, key in enumerate(df_profiles.keys()):
             # for i, key in enumerate(self.list__label):
             first_ax = None
-            for i, number_of_traces_per_subplot in enumerate(self.list__number_of_traces_per_subplot):
+            for i, number_of_traces_per_subplot in enumerate(list__number_of_traces_per_subplot):
                 ax = self.ui.MplWidget_ACMPlot.canvas.figure.add_subplot(number_of_subplot, 1, 1+i, sharex=first_ax)
                 if first_ax is None:
                     first_ax = ax
 
                 for j in range(number_of_traces_per_subplot):
-                    key = self.list__detail[trace_counter]
+                    key = details[trace_counter]
                     # print('key:', key)
                     try:
                         signal = df_profiles[key]
@@ -610,20 +616,26 @@ class EmachineryWidget(QMainWindow):
                     except ValueError as e:
                         print('ValueError during ax.plot():', e, '\nThis is known issue and will ignore and continue.') # ValueError: could not convert string to float: '3.33723e-'
                         pass
-                ax.set_ylabel(self.list__label[i])
+                ax.set_ylabel(list__label[i])
                 ax.legend(loc='lower center')
             ax.set_xlabel('Time [s]')
 
-            # adjust height per number of traces
-            self.ui.MplWidget_ACMPlot.setMinimumSize(QtCore.QSize(500, 200*no_traces))
-
             # axes = self.ui.MplWidget_ACMPlot.canvas.figure.get_axes()
+
+        # before animation, some global information is set here first
+        details, list__number_of_traces_per_subplot, list__label = self.decode_labelsAndSignals()
+        number_of_subplot = len(list__number_of_traces_per_subplot)
 
         # plot it once (need to sleep for the data to complete)
         # ACMアニメ(0)
 
         # animate it (it is okay for incomeplete data)
         self.anim = animation.FuncAnimation(self.ui.MplWidget_ACMPlot.canvas.figure, ACMアニメ, interval=500)
+
+        # adjust height per number of traces
+        df_profiles, no_samples, no_traces = self.get_dataFrame(data_file_name)
+        self.ui.MplWidget_ACMPlot.setMinimumSize(QtCore.QSize(500, 200*no_traces))
+        # draw
         self.ui.MplWidget_ACMPlot.canvas.draw()
     def radioChecked_ACMExcitation(self):
         # This is not needed as there is an option for radioButton as autoExclusive
@@ -664,23 +676,24 @@ class EmachineryWidget(QMainWindow):
         labels = [el.strip() for el in self.ui.plainTextEdit_ACMPlotLabels.toPlainText().split('\n') if el.strip()!='']
         # avoid using ',' or ';' in label, because comma will be interpreted as new column by pandas
         # labels = [el.replace(',','|') for el in labels]
-        self.list__label = labels
+        # self.list__label = labels
         # print(labels)
 
         details = self.ui.plainTextEdit_ACMPlotDetails.toPlainText()
         # print(details)
 
         # 每个通道有几条信号？
-        self.list__number_of_traces_per_subplot = []
+        list__number_of_traces_per_subplot = []
         for detail in [el.strip() for el in self.ui.plainTextEdit_ACMPlotDetails.toPlainText().split('\n') if el.strip()!='']:
             number_of_traces_per_subplot = len( [el.strip() for el in detail.split(',') if el.strip()!=''] )
-            self.list__number_of_traces_per_subplot.append(number_of_traces_per_subplot)
+            list__number_of_traces_per_subplot.append(number_of_traces_per_subplot)
 
         # #define DATA_DETAILS
         details = [el.strip() for el in re.split('\n|,', details) if el.strip()!='']
-        self.list__detail = details
+        # self.list__detail = details
+
         # print(details)
-        return details
+        return details, list__number_of_traces_per_subplot, labels
     # save setting, compile .c and run .exe
     def compile_and_run(self):
         # compile c and run
@@ -753,7 +766,7 @@ class EmachineryWidget(QMainWindow):
                     elif '#define CL_TS '          in line: new_lines.append(f'#define CL_TS          ({motor_dict["CL_TS"]:g})\n'); continue
                     elif '#define CL_TS_INVERSE'   in line: new_lines.append(f'#define CL_TS_INVERSE  ({1.0/motor_dict["CL_TS"]:g})\n'); continue
                     elif '#define VL_TS '          in line: new_lines.append(f'#define VL_TS          ({motor_dict["VL_TS"]:g})\n'); continue
-                    elif '#define DATA_FILE_NAME'  in line: new_lines.append(f'#define DATA_FILE_NAME "{self.get_data_file_name()}"\n'); continue
+                    elif '#define DATA_FILE_NAME'  in line: new_lines.append(f'#define DATA_FILE_NAME "{self.data_file_name}"\n'); continue
 
                     # Load Related Quantities;
                     elif '#define LOAD_INERTIA'    in line: new_lines.append(f'#define LOAD_INERTIA    {motor_dict["JLoadRatio"]}\n'); continue
@@ -838,10 +851,11 @@ class EmachineryWidget(QMainWindow):
         if bool_savePlotSetting: savePlotSettings()
 
         # decode labels and signals for plot
-        details = self.decode_labelsAndSignals()
+        details, _, _ = self.decode_labelsAndSignals()
 
         # update path/to/acmsimcv5/c/utility.c
-        if bool_updatePlotSetting: updatePlotSettings(self.path2acmsimc, self.list__detail)
+        if bool_updatePlotSetting: updatePlotSettings(self.path2acmsimc, details)
+        self.data_file_name = self.get_data_file_name() # 这里是正式产生 self.data_file_name 的地方哦
         updateACMConfig(self.path2acmsimc, self.motor_dict, self.control_dict, self.sweepFreq_dict)
         print('ACMConfig.h is updated.')
 
@@ -854,7 +868,8 @@ class EmachineryWidget(QMainWindow):
             # but we don't need to use sleep() to wait for that anymore, because we have animated ACMPlot now which works well with incomplete data
             self.update_ACMPlot()
     # def runCBasedSimulation_SweepFrequnecyAnalysis(self):
-    def runCBasedSimulation4PA(self, bool_always_false_bug=9999999999, bool_=88888888):
+
+    def runCBasedSimulation4PA(self, bool_always_false_bug=99999999, bool_=88888888):
         # see the bug clearly
         # print(self, bool_always_false_bug, bool_)
 
@@ -881,9 +896,11 @@ class EmachineryWidget(QMainWindow):
                 break
 
         # 根据每一个PAValueTuple，更新ACMConfig.h，并编译运行，保存数据。
+        count = 0
         for _, PAValueTuple in enumerate(eval(self.ui.plainTextEdit_PAValues.toPlainText())):
             if PAValueTuple is ():
                 return 'PAValueTuple is empty.'
+            count += 1
 
             write_buf = copy.deepcopy(original_buf)
 
@@ -903,6 +920,67 @@ class EmachineryWidget(QMainWindow):
             # 编译+运行C
             self.compile_and_run()
 
+        # stop the animation as we are going to plot the canvas for PA
+        self.anim.event_source.stop()
+
+        # 画图
+        self.plot4PA(data_file_name_list = [f"{self.data_file_name}-{_+1:03d}" for _ in range(count)])
+    def getDataFileNameList4PA(self):
+        data_file_name = self.get_data_file_name()
+        target = data_file_name[len("../dat/"):]
+        data_file_name_list = ["../dat/"+file for file in os.listdir(self.path2acmsimc+'/dat/') if target in file] #  and 'dat-' in file
+        return data_file_name_list
+    def plot4PA(self, bool_always_false_bug=None, data_file_name_list=None):
+        # print(bool_always_false_bug, data_file_name_list)
+
+        # 不运行C，直接画图的话
+        if data_file_name_list is None:
+            data_file_name_list = self.getDataFileNameList4PA()
+
+        def 类似ACMアニメ_但只画第一个信号_j等于0(df_profiles, no_samples, no_traces, PAIndex=None):
+            time = np.arange(1, no_samples+1) * self.motor_dict['DOWN_SAMPLE'] * self.motor_dict['CL_TS']
+            trace_counter = 0
+            first_ax = None
+            for i, number_of_traces_per_subplot in enumerate(list__number_of_traces_per_subplot):
+                ax = axes[i]
+                # ax = self.ui.MplWidget_ACMPlot.canvas.figure.add_subplot(number_of_subplot, 1, 1+i, sharex=first_ax)
+                # if first_ax is None:
+                #     first_ax = ax
+
+                for j in range(number_of_traces_per_subplot):
+                    key = details[trace_counter]
+                    signal = df_profiles[key]
+                    trace_counter += 1
+                    if j==number_of_traces_per_subplot-1: # 我改变主意了，还是画最后一个吧
+                        ax.plot(time, signal, '-.', lw=1.0, label=key+f'{PAIndex}', alpha=0.75)
+                ax.set_ylabel(list__label[i])
+                ax.legend(loc='lower center')
+            ax.set_xlabel('Time [s]')
+            return no_traces
+
+        details, list__number_of_traces_per_subplot, list__label = self.decode_labelsAndSignals()
+        number_of_subplot = len(list__number_of_traces_per_subplot)
+
+        self.ui.MplWidget_ACMPlot.canvas.figure.clf()
+        axes = self.ui.MplWidget_ACMPlot.canvas.figure.subplots(nrows=number_of_subplot, ncols=1, sharex=True)
+        for index, data_file_name in enumerate(data_file_name_list[::-1]): # 我要倒着画
+            PAIndex = data_file_name[-4:] # len(data_file_name_list) - index
+            print('Parametric Analysis Read In:', data_file_name)
+            no_traces = 类似ACMアニメ_但只画第一个信号_j等于0(*self.get_dataFrame(data_file_name), PAIndex=PAIndex) # df_profiles, no_samples, no_traces
+
+
+        # adjust height per number of traces
+        self.ui.MplWidget_ACMPlot.setMinimumSize(QtCore.QSize(500, 200*no_traces))
+        # draw
+        self.ui.MplWidget_ACMPlot.canvas.draw()
+    def update_PASelected(self):
+        if self.ui.comboBox_PADataFileSelected.currentText()[-3:] == 'dat':
+            self.ui.lineEdit_PAValueSelected.setText('')
+            self.ui.label_PANameSelected.setText('')
+        else:
+            PAIndex = int(self.ui.comboBox_PADataFileSelected.currentText()[-3:]) - 1
+            self.ui.lineEdit_PAValueSelected.setText(', '.join(f'{el:g}' for el in eval(self.plainTextEdit_PAValues.toPlainText())[PAIndex]))
+            self.ui.label_PANameSelected.setText(self.plainTextEdit_PANames.toPlainText()) # maybe replace \n with ?
 
     ''' Optimization Section '''
     # choose machine specification
