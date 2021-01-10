@@ -987,8 +987,8 @@ class EmachineryWidget(QMainWindow):
             self.ui.label_PANameSelected.setText('')
         else:
             PAIndex = int(self.ui.comboBox_PADataFileSelected.currentText()[-3:]) - 1
-            self.ui.lineEdit_PAValueSelected.setText(', '.join(f'{el:g}' for el in eval(self.plainTextEdit_PAValues.toPlainText())[PAIndex]))
-            self.ui.label_PANameSelected.setText(self.plainTextEdit_PANames.toPlainText()) # maybe replace \n with ?
+            self.ui.lineEdit_PAValueSelected.setText(', '.join(f'{el:g}' for el in eval(self.ui.plainTextEdit_PAValues.toPlainText())[PAIndex]))
+            self.ui.label_PANameSelected.setText(self.ui.plainTextEdit_PANames.toPlainText()) # maybe replace \n with ?
 
     ''' Optimization Section '''
     # choose machine specification

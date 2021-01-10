@@ -27,9 +27,10 @@ pip install emachinery
 The package requires the following free softwares to work as expected:
 - qtconsole (can be installed via pip, see also https://github.com/jupyter/qtconsole)
 - gmake.exe (can be installed with TI's CCS, it is located at *D:\ti\ccs930\ccs\utils\bin\gmake.exe*)
+- gcc (comes with MinGW---note I have both CCS and MinGW installed on my PC)
 - pylab (numpy, matplotlib, ...)
 - pyqt5
-- [Optional] Qt Designer (can be download from https://build-system.fman.io/qt-designer-download) 
+- [Optional to view .ui file] Qt Designer (can be download from https://build-system.fman.io/qt-designer-download) 
 
 
 
