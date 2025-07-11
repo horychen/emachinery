@@ -7,7 +7,7 @@ class ElectricMachinery:
     NUMBER_OF_POLE_PAIRS : int
     RATED_CURRENT_RMS : float
     RATED_POWER_WATT : float
-    RATED_SPEED_RPM : float 
+    RATED_SPEED_RPM : float
     name : str = 'nameless'
 
     def __post_init__(self):
@@ -28,7 +28,7 @@ class ElectricMachinery:
         # unit is volt*sec where 'sec' here is in fact 1 / (rad/sec)---do note rad/sec means electrical speed.
         this.AMPL_INVARIANT_BACK_EMF_CONSTANT_VS    = AMPL_INVARIANT_PM_FLUX_LINKAGE_Wb  = this.TORQUE_CONSTANT_Nm_PER_Apeak / 1.5 / self.NUMBER_OF_POLE_PAIRS
         this.AMPL_INVARIANT_BACK_EMF_CONSTANT_VrmsS                                      = this.AMPL_INVARIANT_BACK_EMF_CONSTANT_VS / 1.414
-        this.POWER_INVARIANT_BACK_EMF_CONSTANT_VS   = POWER_INVARIANT_PM_FLUX_LINKAGE_Wb = this.TORQUE_CONSTANT_Nm_PER_Apeak / self.NUMBER_OF_POLE_PAIRS
+        this.POWER_INVARIANT_BACK_EMF_CONSTANT_VS   = POWER_INVARIANT_PM_FLUX_LINKAGE_Wb = this.TORQUE_CONSTANT_Nm_PER_Apeak / self.NUMBER_OF_POLE_PAIRS / math.sqrt(1.5)
 
         # KE
         # Convert electrical speed rad/sec to mechanical speed r/min
@@ -68,9 +68,14 @@ class ElectricMachinery:
         # f'{this.RATED_SPEED_MM_PER_SEC} mm/s\n',
             sep='\t')
 
+    def convert_KE_to_mVperRPM(self, KE):
+        # Vs -> mV/RPM
+        return KE * 1e3 / (1.0/self.NUMBER_OF_POLE_PAIRS/2/math.pi*60)
+
 if __name__ == '__main__':
     em = ElectricMachinery( NUMBER_OF_POLE_PAIRS = 4,
                                        RATED_CURRENT_RMS = 12.8,
                                        RATED_POWER_WATT = 400,
                                        RATED_SPEED_RPM = 3000
         )
+

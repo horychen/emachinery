@@ -1,0 +1,28 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  # init.IN: 30
+  # init.Vdc: 2000
+  sim.NUMBER_OF_STEPS: 50
+  FOC.delta: 2.5  # 25 # 6.5 **
+  FOC.CLBW_HZ: 800.0
+  FOC.bool_apply_decoupling_voltages_to_current_regulation: False
+
+signal_library:
+  -  ACM.KA
+
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time (s)
+  subplot:
+    - # Subplot 9
+      title: afe
+      y_title: flux
+      y:
+        -
+          y_data: ACM.KA
+          y_label: psi_a
+
+default_var_list:
+  - sim.NUMBER_OF_STEPS

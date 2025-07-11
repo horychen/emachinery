@@ -1,0 +1,22 @@
+Parameter: ("HOLTZ_2002_GAIN_OFFSET",)
+Values: [(5,), 
+	(10,),
+	(20,)]
+
+Parameter: ("IFE",)
+Values:
+    [("htz",), 
+    ("ohtani",),
+    ("picorr",),
+    ("lascu",),
+    ("clest",)]
+
+# 几乎没什么影响，暂态磁链观测垃圾还是垃圾
+
+Parameter: ("GAIN_HARNEFORS_LAMBDA",)
+Values: [(2,), 
+	(5,), 
+	(10,),
+	(20,)]
+
+

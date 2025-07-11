@@ -1,0 +1,203 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  sim.INVERTER_NONLINEARITY: 0
+  sim.CLTS: 1.0e-4
+  sim.NUMBER_OF_STEPS: 5000
+  FOC.delta   : 10  # 25 # 6.5 **
+  FOC.CLBW_HZ : 800.0
+  FOC.bool_apply_decoupling_voltages_to_current_regulation: False  # FOC.CL_KI_factor_when__bool_apply_decoupling_voltages_to_current_regulation__is_False: 1
+  FOC.VL_EXE_PER_CL_EXE : 2
+  CL.LIMIT_DC_BUS_UTILIZATION: 0.95
+  VL.LIMIT_OVERLOAD_FACTOR   : 0.95
+  ##############################
+  ####用户自己使用的变量在下面####
+  ##############################
+  # 吴波用
+  user.zeta                                     : 1.0  # Second-order system damping ratio
+  user.omega_n                                  : 400    # rad/s Second-order system undamped natWural angular speed
+  user.max_CLBW_PER_min_CLBW                    : 0.9    # 吴波：决定最终的current bandwith到底是多少
+  user.VL_FEEDBACK_KFB                          : 0.0
+  user.bool_apply_WC_tunner_for_speed_loop      : True # 是否开启InnerLoop
+  user.bool_sweeping_frequency_for_speed_loop   : False # 是否速度扫频
+  user.bool_Null_D_Control                      : True  # D轴是否0电流环
+  user.bool_apply_sweeping_frequency_excitation : True  # 是否扫频激励
+  user.Select_exp_operation                     : 0
+  user.bool_Parameter_Mismatch_test             : False # 给定偏离多少百分比的参数
+  # 扫频用
+  user.CMD_CURRENT_SINE_AMPERE     : 1 # [A]
+  user.CMD_SPEED_SINE_RPM          : 100 # [r/min]
+  user.CMD_SPEED_SINE_HZ           : 0 # [Hz] 这些写1代表从2Hz开始扫频
+  user.CMD_SPEED_SINE_STEP_SIZE    : 1 # [Hz]
+  user.CMD_SPEED_SINE_LAST_END_TIME: 0.0
+  user.CMD_SPEED_SINE_END_TIME     : 0.0
+  user.CMD_SPEED_SINE_HZ_CEILING   : 300 # [Hz]
+  
+
+signal_library:
+  - ACM.KA
+
+
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time (s)
+  width: 9
+  height: 3           # per subplot height
+  subplot:
+    - # Subplot 1
+      title: Speed
+      y_title: Speed [r/min]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\Omega^*$
+        -
+          y_data: ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\Omega$
+        -
+          y_data: (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\omega_c$
+default_var_list:
+  - sim.NUMBER_OF_STEPS
+  - sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD
+  - FOC.delta
+  - FOC.CLBW_HZ
+  - user.zeta   # Second-order system damping ratio
+  - user.omega_n  # rad/s # Second-order system undamped natural angular speed
+  - user.max_CLBW_PER_min_CLBW
+
+
+
+
+
+# cplot:
+#   title:
+#   x_data:             # default is time
+#   x_label: Time [s]
+#   width: 12
+#   height: 3           # per subplot height
+#   subplot:
+#     - # Subplot 1
+#       title: Speed
+#       y_title: Speed [r/min]
+#       y:
+#         -
+#           y_data: (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+#           y_label: $\Omega^*$
+#         -
+#           y_data: ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+#           y_label: $\Omega$
+#     - # Subplot 2
+#       title: iQ
+#       y_title: Q-axis Current [A]
+#       y:
+#         -
+#           y_data: (*CTRL).i->cmd_iDQ[1]
+#           y_label: $i_q^*$
+#         -
+#           y_data: ACM.iDQ[1]
+#           y_label: $i_q$
+#     # - # Subplot 8
+#     #   title: Speed Term
+#     #   y_title: Speed Term [A]
+#     #   y:
+#     #     -
+#     #       y_data: (*CTRL).s->Speed->P_Term
+#     #       y_label: $P_{\rm Term}$
+#     #     -
+#     #       y_data: (*CTRL).s->Speed->I_Term
+#     #       y_label: $I_{\rm Term}$
+#     #     -
+#     #       y_data: (*CTRL).s->Speed->KFB_Term
+#     #       y_label: $KFB_{\rm Term}$
+        
+#     # - # subplot 8-1
+#     #   title: Speed Term Sum
+#     #   y_title: Speed Term Sum [A]
+#     #   y:
+#     #     -
+#     #       y_data: (*CTRL).s->Speed->P_Term + (*CTRL).s->Speed->I_Term - (*CTRL).s->Speed->KFB_Term
+#     #       y_label: $P_{\rm Term} + I_{\rm Term} - KFB_{\rm Term}$
+#     #     -
+#     #       y_data: (*CTRL).s->Speed->OutPrev
+#     #       y_label: $Out_{VL}^{prev}$
+#     #     -
+#     #       y_data: (*CTRL).s->Speed->Out
+#     #       y_label: $Out_{VL}$
+#     - # Subplot 3
+#       title: Torque
+#       y_title: Torque [Nm]
+#       y:
+#         -
+#           y_data: ACM.TLoad
+#           y_label: $T_{L}$
+#         -
+#           y_data: ACM.Tem
+#           y_label: $T_{\rm em}$
+#         # -
+#         #  y_data : (*CTRL).i->Tem
+#         #  y_label: $CTRL_{T_{em}}$
+#     - # Subplot 4
+#       title: iD
+#       y_title: D-axis Current [A]
+#       y:
+#         -
+#           y_data: (*CTRL).i->cmd_iDQ[0]
+#           y_label: $i_d^*$
+#         -
+#           y_data: ACM.iDQ[0]
+#           y_label: $i_d$
+#         -
+#           y_data: (*CTRL).i->iDQ[0]
+#           y_label: $i_d$
+#     - # Subplot 5
+#       title: uDQ
+#       y_title: Voltage [V]
+#       y:
+#         -
+#           y_data:  ACM.uDQ[0]
+#           y_label: $u_d$
+#         -
+#           y_data: ACM.uDQ[1]
+#           y_label: $u_q$
+#         # -
+#         #   y_data: (*CTRL).o->cmd_uDQ[0]
+#         #   y_label: $u_d^*$
+#         # -
+#         #   y_data: (*CTRL).o->cmd_uDQ[1]
+#         #   y_label: $u_q^*$
+#     - # Subplot 6
+#       title: uAB without INV with Cop
+#       y_title: Voltage [V]
+#       y:
+#         -
+#           y_data: ACM.uAB[0]
+#           y_label: $u_\alpha$
+#         -
+#           y_data: ACM.uAB[1]
+#           y_label: $u_\beta$
+#     - # Subplot 7
+#       title: uAB with INV with Cop
+#       y_title: Voltage [V]
+#       y:
+#         -
+#           y_data: ACM.uAB_inverter[0]
+#           y_label: $u_{\alpha ,INV}$
+#         -
+#           y_data: ACM.uAB_inverter[1]
+#           y_label: $u_{\beta ,INV}$
+#     - # Subplot 9
+#       title: CTRL->iAB
+#       y_title: Current [A]
+#       y:
+#         -
+#           y_data: (*CTRL).i->iAB[0]
+#           y_label: $i_\alpha$
+#         -
+#           y_data: (*CTRL).i->iAB[1]
+#           y_label: $i_\beta$
+
+
+
+

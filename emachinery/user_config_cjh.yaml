@@ -1,0 +1,96 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  sim.NUMBER_OF_STEPS: 50000
+  FOC.delta: 10.0
+  FOC.CLBW_HZ: 30.0
+  user.marino_eta: 1.0
+  user.marino_lambda: 1.0
+  user.marino_gamma: 1.0
+
+signal_library:
+  - IFE.psi_2[0]
+  - IFE.psi_2[1]
+  - IFE.u_offset[0]
+  - IFE.u_offset[1]
+  - marino.xRho
+  - marino.xOmg
+  - marino.xAlpha
+  - marino.xTL
+  # - AFE_USED.theta_d/M_PI*180
+  # - ENC.theta_d_elec/M_PI*180
+  # - AFE_USED.psi_2[0]
+  # - AFE_USED.psi_2[1]
+  # - OBSV.nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM
+  # - OBSV.nsoaf.xIq
+  # - OBSV.nsoaf.active_power_real
+  # - OBSV.nsoaf.active_power_est
+  # - OBSV.nsoaf.active_power_error
+  # - OBSV.nsoaf.output_error
+  # - OBSV.nsoaf.xTL
+  # - OBSV.nsoaf.LoadTorquePI
+  # - AFE_USED.u_offset[0]
+  # - AFE_USED.u_offset[1]
+
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time (s)
+  width: 9
+  height: 3           # per subplot height
+  subplot:
+    - # Subplot 9
+      title: ife
+      y_title: flux
+      y:
+        -
+          y_data: IFE.psi_2[0]
+          y_label: psi_a
+        -
+          y_data: IFE.psi_2[1]
+          y_label: psi_b
+    - # Subplot 10
+      title: ife offset
+      y_title:
+      y:
+        -
+          y_data: IFE.u_offset[0]
+          y_label: u_off_a
+        -
+          y_data: IFE.u_offset[1]
+          y_label: u_off_b
+    - # Subplot 11
+      title:  Marino
+      y_title:
+      y:
+        -
+          y_data: marino.xRho
+          y_label: xRho
+        -
+          y_data: marino.xOmg
+          y_label: xOmg
+        -
+          y_data: marino.xAlpha
+          y_label: xAlpha
+        -
+          y_data: marino.xTL
+          y_label: xTL
+    - # Subplot 12
+      title:  Speed 
+      y_title: rad/s
+      y:
+        -
+          y_data: (*CTRL).i->cmd_varOmega
+          y_label: $\Omega^*$
+        -
+          y_data: (*CTRL).i->varOmega
+          y_label: $\Omega$
+        -
+          y_data: marino.xOmg
+          y_label: $\hat\Omega$
+
+
+default_var_list:
+  - user.marino_eta
+  - user.marino_lambda
+  - user.marino_gamma

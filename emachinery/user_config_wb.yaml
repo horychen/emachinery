@@ -1,0 +1,320 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  FOC.VL_EXE_PER_CL_EXE : 4
+  init.IN: 3
+  init.Vdc: 60
+  sim.INVERTER_NONLINEARITY: 0
+  sim.CLTS: 1.0e-4
+  sim.NUMBER_OF_STEPS: 700
+  FOC.delta   : 8 # 25 # 6.5
+  FOC.CLBW_HZ : 800 # 600
+  sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD: 1   # 500 enable simulation of SVPWM in ACMSimPy
+  FOC.bool_apply_decoupling_voltages_to_current_regulation: True  # FOC.CL_KI_factor_when__bool_apply_decoupling_voltages_to_current_regulation__is_False: 1
+  CL.LIMIT_DC_BUS_UTILIZATION: 0.96
+  VL.LIMIT_OVERLOAD_FACTOR   : 1.00
+  ##############################
+  ####用户自己使用的变量在下面####
+  ##############################
+  # Command
+  user.set_rpm_speed_command              : 100
+  # Inverter 逆变器
+  user.INVERTER_NONLINEARITY_COMPENSATION_METHOD : False
+  # Speed Inner Loop
+  user.zeta                               : 0.707     # Second-order system damping ratio
+  user.omega_n                            : 800     # rad/s Second-order system undamped natWural angular speed
+  user.max_CLBW_PER_min_CLBW              : 0.95    # 吴波：决定最终的current bandwith到底是多少
+  user.VL_FEEDBACK_KFB                    : 0.0
+  user.bool_Null_D_Control                : True   # D轴是否0电流环
+  user.bool_apply_WC_tunner_for_speed_loop: True   # 是否开启InnerLoop
+  user.Select_exp_operation               : 0.0
+  user.bool_enable_Harnefors_back_calculation: True # 是否开启 Harnefors 1998的电流环算法
+  user.Check_Harnerfors_1998_On           : -1.0 # 1 on -1 off
+  # 扫频用
+  user.bool_apply_sweeping_frequency_excitation : False  # 是否扫频激励
+  user.bool_sweeping_frequency_for_speed_loop   : True  # 是否速度扫频
+  user.bool_sweeping_frequency_for_current_loop_iD: False # 开启iD轴电流扫频
+  user.CMD_CURRENT_SINE_AMPERE     : 1 # [A]
+  user.CMD_SPEED_SINE_RPM          : 500 # [r/min]
+  user.CMD_SPEED_SINE_HZ           : 1 # [Hz] 这写1代表从2Hz开始扫频
+  user.CMD_SPEED_SINE_STEP_SIZE    : 1 # [Hz]
+  user.CMD_SPEED_SINE_LAST_END_TIME: 0.0
+  user.CMD_SPEED_SINE_END_TIME     : 1e-4
+  user.CMD_SPEED_SINE_HZ_CEILING   : 400 # [Hz]
+  user.timebase_for_Sweeping       : 0.0 # time base for Sweeping Signal
+  user.Mark_Sweeping_Freq_ThreeDB_Point : 0.0     # 1 代表找到扫频的-3dB点
+  user.Mark_Counter                : 0.0
+  user.Set_SpeedLoop_KI_as_Zero         : False   # 设置速度环积分系数为0
+  # ESO for Speed
+  user.bool_ESO_SPEED_ON : True
+  user.bool_apply_ESO_SPEED_for_SPEED_FBK : True
+  # Parameter Mismatch
+  user.bool_Parameter_Mismatch_test : False # 给定偏离多少百分比的参数
+  user.ParaMis_percent_max          : 4 # maximum percentage of parameter mismatch test
+  user.ParaMis_percent_min          : 0.4 # minimum percentage of parameter mismatch test
+  user.ParaMis_Mode_Select          : 5   # 1 for Ld, 2 for Lq, 3 for Rs, 4 for Js, 5 for KE
+  user.ParaMis_OneCycleTime         : 0.5 # The time for one cycle of parameter mismatch test
+  #Hit Wall Analysis
+  user.bool_apply_HitWall_analysis   : False # 分析母线电压和电流的Limit
+  user.HitWall_max_limit_ratio       : 2.0
+  user.HitWall_min_limit_ratio       : 0.1
+  user.HitWall_high_RPM_command      : 400 # 给予一个较高的转速以让控制器撞墙
+  user.HitWall_time_interval         : 0.2 # The invertal to change the output limit
+  # Position Loop
+  user.Position_Loop_Kp : 10
+  user.set_deg_position_command : 180
+  user.Position_Output_Limit : 30 # Unit: rad/s
+  user.Position_cmd_sine_frequency : 1 # Unit : Hz
+  user.Position_Loop_Ref_prev : 0 # Recording for previous position reference
+  user.Position_Loop_Ref_Diff : 0 # Diff for position reference
+  user.bool_use_position_feedforward_by_PosDiff : False
+  user.bool_compensation_of_Pos_CTRL_output_covergence: False
+  # COMM
+  user.COMM_bool_comm_status : 5 # 1 for R; 2\3 for L; 4 for KE; 5 for Js
+  ### Nyquist Plot ###
+  # 1Hz的正弦波，会经过4个周期(1Hz,4s)，然后轮到2Hz，2Hz再经过4个周期(2Hz,0.5s)，这里num确定的就是此周期数目，以此类推。一句话说，这个数字决定了当前频率下的正弦波会输入几次，几次就是几个周期 
+  # PAY ATTENTION: num should be 1.0 not 1 !!! make it float
+  user.flag_Nyquist_one_cycle_DONE: False
+  user.Nyquist_plot_num_cycles    : 1.0
+  user.Nyquist_one_cycle_count    : 0.0   # 也就是离散cos sin下的N，步长！
+  user.Nyquist_Input_Current_Amp  : 0.35   # 1A
+  user.Nyquist_Input_Speed_Amp    : 100.0 # 100RPM
+  user.Nyquist_sum_sin            : 0.0
+  user.Nyquist_sum_cos            : 0.0
+  user.Nyquist_Amp                : 0.0
+  user.Nyquist_Phase              : 0.0
+  user.Nyquist_Re                 : 0.0
+  user.Nyquist_Im                 : 0.0
+  user.Nyquist_Freq_Ceiling       : 200 # omega最大输入多少Hz
+  # ESO for Speed
+  user.bool_ESO_SPEED_ON : True
+  user.bool_apply_ESO_SPEED_for_SPEED_FBK : True
+  user.CAREFUL_ESOAF_OMEGA_OBSERVER : 5000 # ESO的增益，为了方便写到d_sim来在线debug
+  
+
+
+signal_library:
+  - (*CTRL).timebase # Mainly for running the CJH Bandwidth Calculation Script
+  - ACM.KA
+  - ACM.iDQ[0]
+  - ACM.iDQ[1]
+  - wubo_ParaMis.percent_Ld
+  - wubo_ParaMis.percent_Lq
+  - wubo_ParaMis.percent_Rs
+  - wubo_ParaMis.percent_Js
+  - wubo_ParaMis.percent_KE
+  - SIL_Controller.KFB
+  - (*CTRL).o->cmd_uAB[0]
+  - (*CTRL).o->cmd_uAB[1]
+  - (*CTRL).o->cmd_uAB_to_inverter[0]
+  - (*CTRL).o->cmd_uAB_to_inverter[1]
+  - (*CTRL).s->iD->OutLimit
+  - (*CTRL).s->iQ->OutLimit 
+  - (*CTRL).s->Speed->Kp
+  - (*CTRL).s->Speed->Ki_CODE
+  - (*CTRL).o->dc_bus_utilization_ratio
+  - (*CTRL).s->iD->Kp
+  - (*CTRL).s->iD->Ki_CODE
+  - (*CTRL).s->iQ->Kp
+  - (*CTRL).s->iQ->Ki_CODE
+  - ACM.theta_d/M_PI*180
+  - (*CTRL).i->cmd_varTheta
+  - (*CTRL).i->theta_d_elec * (*CTRL).motor->npp_inv # The Mech Angle of Motor by Encoder
+  - (*CTRL).i->varTheta # The Mech angle of motor by ACM.varTheta
+  - d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point
+  - d_sim.user.Mark_Counter
+
+
+
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time (s)
+  width: 20
+  height: 2           # per subplot height
+  subplot:
+    - # Subplot 0
+      title: Utilization Ratio of Vdc
+      y_title:  Vdc[%]
+      y:
+        -
+          y_data: (*CTRL).o->dc_bus_utilization_ratio
+          y_label: Utilization Ratio of Vdc
+    - # Subplot 1
+      title: Speed
+      y_title: Speed [r/min]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\Omega^*$
+        -
+          y_data: ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: ACM.$\Omega$
+        -
+          y_data: (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: CTRL.$\Omega$
+        -
+          y_data: OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM
+          y_label: OFSR.esoaf.$\Omega$
+    - # Subplot 2
+      title: iQ
+      y_title: Q-axis Current [A]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_iDQ[1]
+          y_label: $i_q^*$
+        -
+          y_data: (*CTRL).i->iDQ[1]
+          y_label: $i_q$
+    - # Subplot 1.2
+      title: ESO Speed
+      y_title: ESO Speed [r/min]
+      y:
+        -
+          y_data: OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM
+          y_label: OFSR.esoaf.$\Omega$
+    - # Subplot 1.2
+      title: Position
+      y_title: Position [rad]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_varTheta
+          y_label: $\Theta^*$
+        -
+          y_data: (*CTRL).i->varTheta
+          y_label: $\Theta$
+    - # Subplot 4
+      title: iD
+      y_title: D-axis Current [A]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_iDQ[0]
+          # y_data: (*CTRL).i->iAB[0]
+          y_label: $i_d^*$
+        -
+          y_data: (*CTRL).i->iDQ[0]
+          y_label: $i_d$
+    - # Subplot 6
+      title: uAB
+      y_title: Voltage [V]
+      y:
+        -
+          y_data: ACM.uAB[0]
+          y_label: $u_\alpha$
+        -
+          y_data: ACM.uAB[1]
+          y_label: $u_\beta$
+    - # Subplot 7
+      title: uDQ
+      y_title: Voltage [V]
+      y:
+        -
+          y_data: ACM.uDQ[0]
+          y_label: $u_d$
+        -
+          y_data: ACM.uDQ[1]
+          y_label: $u_q$
+    - # Subplot 8
+      title: uAB_com
+      y_title: Voltage [V]
+      y:
+        -
+          y_data: (*CTRL).o->cmd_uAB[0]
+          y_label: $u_A^*$
+        -
+          y_data: (*CTRL).o->cmd_uAB[1]
+          y_label: $u_B^*$
+    - # Subplot 21
+      title: Parameter Mismatch
+      y_title: Percentage
+      y:
+        -
+          y_data: wubo_ParaMis.percent_Ld
+          y_label: Ld[%]
+        -
+          y_data: wubo_ParaMis.percent_Lq
+          y_label: Lq[%]
+        - 
+          y_data: wubo_ParaMis.percent_Rs
+          y_label: Rs[%]
+        -
+          y_data: wubo_ParaMis.percent_Js
+          y_label: Js[%]
+        -
+          y_data: wubo_ParaMis.percent_KE
+          y_label: KE[%]
+    - # Subplot 22
+      title: KFB Value
+      y_title: KFB Value
+      y:
+        -
+          y_data: SIL_Controller.KFB
+          y_label: KFB
+    - # Subplot 23
+      title: Kp Value
+      y_title: Kp Value
+      y:
+        -
+          y_data: (*CTRL).s->Speed->Kp
+          y_label: Kp_Speed
+        -
+          y_data: (*CTRL).s->iD->Kp
+          y_label: Kp_iD
+        -
+          y_data: (*CTRL).s->iQ->Kp
+          y_label: Kp_iQ
+    - # Subplot 24
+      title: Ki_CODE Value
+      y_title: Ki_CODE Value
+      y:
+        -
+          y_data: (*CTRL).s->Speed->Ki_CODE
+          y_label: Ki_CODE_Speed
+        -
+          y_data: (*CTRL).s->iD->Ki_CODE
+          y_label: Ki_CODE_iD
+        -
+          y_data: (*CTRL).s->iQ->Ki_CODE
+          y_label: Ki_CODE_iQ
+    - # Subplot XX
+      title: Simualtion Timebase
+      y_title: Second
+      y:
+        -
+          y_data: (*CTRL).timebase
+          y_label: time
+    - # Subplot 1
+      title: Check -3dB
+      y_title: Mark(-1 or 1)
+      y:
+        -
+          y_data: d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point
+          y_label: $MARK_{CROSSing-3dB}$
+    - # Subplot 2
+      title: Check -3dB Mark Counter
+      y_title: Num of Hz
+      y:
+        -
+          y_data: d_sim.user.Mark_Counter
+          y_label: VLBW
+    - # Subplot 3
+      title: ESO Speed
+      y_title: ESO Speed[RPM]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\Omega^*$
+        -
+          y_data: OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM
+          y_label: OFSR.esoaf.$\Omega$
+
+
+default_var_list:
+  - sim.NUMBER_OF_STEPS
+  - sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD
+  - FOC.delta
+  - FOC.CLBW_HZ
+  - user.zeta   # Second-order system damping ratio
+  - user.omega_n  # rad/s # Second-order system undamped natural angular speed
+  - user.max_CLBW_PER_min_CLBW
+

@@ -1,0 +1,273 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  sim.NUMBER_OF_STEPS: 3200
+  FOC.delta   : 15  # 25 # 6.5 **
+  FOC.CLBW_HZ : 800
+  init.Vdc: 48
+  # user.verbose: True
+  user.set_rpm_speed_command: 200
+  user.set_iq_command: -0.5
+  user.set_id_command: 0.0
+  user.Set_SpeedLoop_KI_as_Zero               : False
+  user.CAREFUL_ESOAF_OMEGA_OBSERVER           : 3000
+  user.bool_apply_ESO_SPEED_for_SPEED_FBK     : False
+  user.bool_ESO_SPEED_ON                      : False
+  user.Variable_Parameters_percent            : 3 # 每段变化的百分比
+  user.Variable_Parameters_time               : 3 # 每段时间持续的时间
+  user.Variable_Parameters_status             : 4 # 选择模式 0->(*CTRL).timebase be 0,1->R, 2->Lq, 3->KE
+  user.Variable_Parameters_time_num           : 7 # 一共几段时间
+  user.VP_time_num_count                      : 0 # 用来计数
+  user.Variable_Parameters_timebase           : 0.0 # 用来计时
+  user.sensorless_only_theta_on               : 0
+  user.sensorless_speed_observer              : 0
+  user.SENSORLESS_CONTROL                     : 0       
+  user.inverter_nonlinearity_on               : 0
+  user.ell_feedback_on                        : 0 #1 - our method 2 - Bernard method 
+signal_library:
+  - (*CTRL).timebase
+  - ACM.x[0]
+  - ACM.x[1]
+  - ACM.x[2]
+  - ACM.x[3]
+  - ACM.x[4]
+  - ACM.theta_d
+  - ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+  - ACM.uAB[0]
+  - ACM.uAB[1]
+  - ACM.uDQ[0]
+  - ACM.uDQ[1]
+  - ACM.iAB[0]
+  - ACM.iAB[1]
+  - ACM.iDQ[0]
+  - ACM.iDQ[1]
+  - ACM.TLoad
+  - ACM.Tem
+  - ACM.KA
+  - ACM.KE
+  - ACM.psi_AB[0]
+  - ACM.psi_AB[1]
+  - ACM.emf_AB[0]
+  - ACM.emf_AB[1]
+  - (*debug).set_rpm_speed_command
+  - (*CTRL).s->xRho/M_PI*180
+  - (*CTRL).i->theta_d_elec
+  - (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+  - (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM
+  - (*CTRL).i->cmd_varOmega
+  - (*CTRL).i->varOmega
+  - (*CTRL).i->cmd_iDQ[0]
+  - (*CTRL).i->cmd_iDQ[1]
+  - (*CTRL).o->cmd_uDQ[0]
+  - (*CTRL).o->cmd_uDQ[1]
+  - (*CTRL).i->iDQ[0]
+  - (*CTRL).i->iDQ[1]
+  - (*CTRL).i->iAB[0]
+  - (*CTRL).i->iAB[1]
+  - (*CTRL).i->Tem
+  - (*CTRL).i->cmd_Tem
+  - (*debug).Overwrite_theta_d / ACM.npp
+  - ACM.iAB[0]
+  - ACM.theta_d
+  - (*CTRL).i->TLoad
+  - OBSV.theta_d
+  - (*CTRL).i->varOmega * MOTOR.npp - FE.CMDC.omega_elec
+  - FE.CMDC.omega_elec * ELEC_RAD_PER_SEC_2_RPM
+  - FE.CMDC.idq[0]
+  - FE.CMDC.idq[1]
+  - FE.CMDC.hat_idq[0]
+  - FE.CMDC.hat_idq[1]
+  - FE.CMDC.tilde_idq[0]
+  - FE.CMDC.tilde_idq[1]
+  - FE.CMDC.hat_emf_A_ss
+  - FE.CMDC.tilde_theta_d
+  - FE.CMDC.theta_d
+  - FE.CMDC.emf_ss_dq[0]
+  - FE.CMDC.emf_ss_dq[1]
+  - FE.CMDC.integral_tilde_id
+  - FE.CMDC.integral_tilde_iq * FE.CMDC.KI
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time (s)
+  subplot:
+    - # Subplot 1
+      title: 
+      y_title: Speed [r/min]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\Omega^*$
+        -
+          y_data: ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: ACM.$\Omega$
+        -
+          y_data: (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: CTRL.$\Omega$
+        -
+          y_data: OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM
+          y_label: $\hat{\Omega_{\rm eso}}$
+    - # Subplot 2
+      title: 
+      y_title: Q-axis Current [A]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_iDQ[1]
+          y_label: $i_q^*$
+        -
+          y_data: (*CTRL).i->iDQ[1]
+          y_label: $i_q$
+    - # Subplot 3
+      title: 
+      y_title: Torque [Nm]
+      y:
+        -
+          y_data: ACM.TLoad
+          y_label: $T_{L}$
+        -
+          y_data: ACM.Tem
+          y_label: $T_{\rm em}$
+        -
+          y_data : (*CTRL).i->TLoad
+          y_label: $\hat{T}_L$
+    - # Subplot 4
+      title: 
+      y_title: D-axis Current [A]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_iDQ[0]
+          y_label: $i_d^*$
+        -
+          y_data: (*CTRL).i->iDQ[0]
+          y_label: $i_d$
+    - # Subplot 5
+      title: 
+      y_title: uDQ Voltage [V]
+      y:
+        -
+          y_data:  ACM.uDQ[0]
+          y_label: $u_d$
+        -
+          y_data: ACM.uDQ[1]
+          y_label: $u_q$
+        -
+          y_data: (*CTRL).o->cmd_uDQ[0]
+          y_label: $u_d^*$
+        -
+          y_data: (*CTRL).o->cmd_uDQ[1]
+          y_label: $u_q^*$
+    - # Subplot 6
+      title: 
+      y_title: uAB Voltage [V]
+      y:
+        -
+          y_data: ACM.uAB[0]
+          y_label: $u_\alpha$
+        -
+          y_data: ACM.uAB[1]
+          y_label: $u_\beta$
+    - # Subplot 7
+      title: Vdc Util 
+      y_title: ratio [100\%]
+      y:
+        -
+          y_data:  (*CTRL).o->dc_bus_utilization_ratio
+          y_label: $\eta_{Vdc}$
+    - # Subplot 8
+      title: 
+      y_title: D-axis Current [A]
+      y:
+        -
+          y_data: ACM.iDQ[0]
+          y_label: $i_d$
+        -
+          y_data: FE.CMDC.hat_idq[0]
+          y_label: $\hat{i}_d$
+        -
+          y_data: FE.CMDC.idq[0]
+          y_label: $i_{d,\mathrm{CM}}$
+    - # Subplot 9
+      title: 
+      y_title: Q-axis Current [A]
+      y:
+        -
+          y_data: ACM.iDQ[1]
+          y_label: $i_q$
+        -
+          y_data: FE.CMDC.hat_idq[1]
+          y_label: $\hat{i}_q$
+        -
+          y_data: FE.CMDC.idq[1]
+          y_label: $i_{q,\mathrm{CM}}$
+    - # Subplot 10
+      title: 
+      y_title: Speed [r/min]
+      y:
+        -
+          y_data: ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\omega$
+        -
+          y_data: FE.CMDC.omega_elec * ELEC_RAD_PER_SEC_2_RPM
+          y_label: $\hat{\omega}$
+    - # Subplot 11
+      title: 
+      y_title: MY $\theta_d$
+      y:
+        -
+          y_data: ACM.theta_d
+          y_label: $\theta_d$
+        -
+          y_data: FE.CMDC.theta_d
+          y_label: $\hat{\theta}_d$
+    - # Subplot 12
+      title: 
+      y_title: dq current error
+      y:
+        -
+          y_data: FE.CMDC.tilde_idq[0] 
+          y_label: $\tilde i_{d}$
+        -
+          y_data: FE.CMDC.tilde_idq[1] 
+          y_label: $\tilde i_{q}$
+    - # Subplot 14
+      title: 
+      y_title: DQ EMF SS
+      y:
+        -
+          y_data: FE.CMDC.emf_ss_dq[1]
+          y_label: $e_q$
+        -
+          y_data: FE.CMDC.emf_ss_dq[0]
+          y_label: $e_d$
+    - # Subplot 15
+      title: 
+      y_title: Integral of dq current error
+      y:
+        -
+          y_data: ACM.KA
+          y_label: $K_{\mathrm{A}}$
+        -
+          y_data: FE.CMDC.integral_tilde_id
+          y_label: id err inte
+        -
+          y_data: FE.CMDC.integral_tilde_iq * FE.CMDC.KI
+          y_label: iq err inte
+        -
+          y_data: ACM.TLoad
+          y_label: Load torque
+    - # Subplot 16
+      title: $\tilde\theta_d$
+      y_title: 
+      y:
+        -
+          y_data: FE.CMDC.tilde_theta_d
+          y_label: $\tilde\theta_d$
+    - # Subplot 16
+      title: speed error
+      y_title: 
+      y:
+        -
+          y_data: (*CTRL).i->varOmega * MOTOR.npp - FE.CMDC.omega_elec
+          y_label: speed error
+default_var_list:
+  - sim.NUMBER_OF_STEPS

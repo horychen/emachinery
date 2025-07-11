@@ -1,0 +1,256 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  sim.INVERTER_NONLINEARITY: 0
+  sim.CLTS: 1.0e-4
+  sim.NUMBER_OF_STEPS: 50000
+  sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD: 1   # 500 enable simulation of SVPWM in ACMSimPy
+  FOC.delta: 5.0  # 25 # 6.5 **
+  FOC.CLBW_HZ: 100.0
+  FOC.bool_apply_decoupling_voltages_to_current_regulation: False # FOC.CL_KI_factor_when__bool_apply_decoupling_voltages_to_current_regulation__is_False: 1
+  FOC.VL_EXE_PER_CL_EXE: 1
+  CL.SERIES_KP_D_AXIS:
+  CL.SERIES_KI_D_AXIS:
+  CL.SERIES_KP_Q_AXIS:
+  CL.SERIES_KI_Q_AXIS:
+  CL.LIMIT_DC_BUS_UTILIZATION: 0.96
+  VL.SERIES_KP:
+  VL.SERIES_KI:
+  VL.LIMIT_OVERLOAD_FACTOR: 1.0
+  ##############################
+  ####用户自己使用的变量在下面####
+  ##############################
+  user.verbose: TRUE
+  # 选择用户/算法
+  user.who_is_user:
+  user.mode_select_synchronous_motor:
+  user.mode_select_induction_motor:
+  # 以下变量为吴波想加入到user_config里面去
+  user.INVERTER_NONLINEARITY_COMPENSATION_METHOD: 0 # 0 for nothing; 1 for WB; 2 for CJH
+  user.Select_exp_operation: 0
+  user.set_rpm_speed_command: 0.0
+
+signal_library:
+  - ACM.x[0]
+  - ACM.x[1]
+  - ACM.x[2]
+  - ACM.x[3]
+  - ACM.x[4]
+  - ACM.theta_d/M_PI*180
+  - ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+  - ACM.uAB[0]
+  - ACM.uAB[1]
+  - ACM.uDQ[0]
+  - ACM.uDQ[1]
+  - ACM.iAB[0]
+  - ACM.iAB[1]
+  - ACM.iDQ[0]
+  - ACM.iDQ[1]
+  - ACM.TLoad
+  - ACM.Tem
+  - ACM.KA
+  - (*debug).set_rpm_speed_command
+  - (*CTRL).s->xRho/M_PI*180
+  - (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+  - (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM
+  - (*CTRL).i->cmd_varOmega
+  - (*CTRL).i->varOmega
+  - (*CTRL).i->cmd_iDQ[0]
+  - (*CTRL).i->cmd_iDQ[1]
+  - (*CTRL).o->cmd_uDQ[0]
+  - (*CTRL).o->cmd_uDQ[1]
+  - (*CTRL).o->dc_bus_utilization_ratio
+  - (*CTRL).i->iDQ[0]
+  - (*CTRL).i->iDQ[1]
+  - (*CTRL).i->iAB[0]
+  - (*CTRL).i->iAB[1]
+  - (*CTRL).i->cmd_psi
+  - (*CTRL).i->Tem
+  - (*CTRL).i->cmd_Tem
+  - (*debug).Overwrite_theta_d / ACM.npp
+  - (*CTRL).timebase # Mainly for running the CJH Bandwidth Calculation Script
+  - OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM
+  - OFSR.esoaf.xPos
+  # - (*CTRL).O->cmd_uAB[0]
+  # - (*CTRL).O->cmd_uAB[1]
+  # - (*CTRL).o->cmd_uDQ[0]
+  # - (*CTRL).o->cmd_uDQ[1]
+  # - (*CTRL).o->cmd_uAB_to_inverter[0]
+  # - (*CTRL).o->cmd_uAB_to_inverter[1]
+  # - (*CTRL).o->cmd_uAB_to_inverter[0] - (*CTRL).o->cmd_uAB[0]
+  # - (*CTRL).o->cmd_uAB_to_inverter[1] - (*CTRL).o->cmd_uAB[1]
+  # - (REAL)ENC.encoder_incremental_cnt
+  # - (REAL)ENC.encoder_abs_cnt
+  # - INV.theta_trapezoidal/M_PI*180
+
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time [s]
+  width: 20
+  height: 0.5     # per subplot height
+  subplot:
+    - # Subplot 1
+      title: Speed
+      y_title: Speed [r/min]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\Omega^*$
+        -
+          y_data: ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: ACM.$\Omega$
+        -
+          y_data: (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: CTRL.$\Omega$
+        -
+          y_data: OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM
+          y_label: OFSR.esoaf.$\Omega$
+    - # Subplot 2
+      title: iQ
+      y_title: Q-axis Current [A]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_iDQ[1]
+          y_label: $i_q^*$
+        -
+          y_data: (*CTRL).i->iDQ[1]
+          y_label: $i_q$
+    - # Subplot 3
+      title: Torque
+      y_title: Torque [Nm]
+      y:
+        -
+          y_data: ACM.TLoad
+          y_label: $T_{L}$
+        -
+          y_data: ACM.Tem
+          y_label: $T_{\rm em}$
+        # -
+        #  y_data : (*CTRL).i->Tem
+        #  y_label: $CTRL_{T_{em}}$
+    - # Subplot 4
+      title: iD
+      y_title: D-axis Current [A]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_iDQ[0]
+          # y_data: (*CTRL).i->iAB[0]
+          y_label: $i_d^*$
+        -
+          y_data: (*CTRL).i->iDQ[0]
+          y_label: $i_d$
+    - # Subplot 5
+      title: Vdc Util
+      y_title: ratio [100%]
+      y:
+        -
+          y_data:  (*CTRL).o->dc_bus_utilization_ratio
+          y_label: $\eta_{Vdc}$
+    - # Subplot 6
+      title: uAB
+      y_title: Voltage [V]
+      y:
+        -
+          y_data:  ACM.uDQ[0]
+          y_label: $u_d$
+        -
+          y_data: ACM.uDQ[1]
+          y_label: $u_q$
+        -
+          y_data: ACM.uAB[0]
+          y_label: $u_\alpha$
+        -
+          y_data: ACM.uAB[1]
+          y_label: $u_\beta$
+    - # Subplot XX
+      title: Simualtion Timebase
+      y_title: Second
+      y:
+        -
+          y_data: (*CTRL).timebase
+          y_label: time
+    # - # Subplot 7
+    #   title: Active Flux
+    #   y_title: Active Flux 
+    #   y:
+    #     -
+    #       y_data: ACM.KA
+    #       y_label: 'KA'
+    #     -
+    #       y_data: ACM.x[2]
+    #       y_label: 'x[2]'
+    #     -
+    #       y_data: (*CTRL).i->cmd_psi
+    #       y_label: '$\psi^*$'
+
+config:
+  # DATA_FILE_NAME: /dat/ProjectBezier-0-0-0-0.dat
+  mpl:
+    mathtext.fontset: stix
+    font.family: STIXGeneral
+    # mathtext.fontset: stix
+    # font.family: STIXGeneral
+  plt:
+    # font.weight: 400 # bold is 700, normal is 400, see https://matplotlib.org/2.0.2/users/customizing.html
+    # font.size: 12 # 13 is too big, commenting out is too small
+    # axes.facecolor: '#3d444c' # also need to change facecolor in mplwidget.py to get a consistent look
+    # axes.labelcolor: '#d5d1c7' # tint grey
+    # axes.axisbelow: 'False' # 'line'
+    # ytick.color: '#d5d1c7' #'white'
+    # xtick.color: '#d5d1c7' #'white'
+    # text.color: '#d5d1c7' #'white'
+    # grid.color: '#d5d1c7' # grid color  
+    # grid.linestyle: '--' # solid
+    # grid.linewidth: 0.3 # in points
+    # grid.alpha: 0.8 # transparency, between 0.0 and 1.0
+    font.weight: 400  # 正常字体
+    font.size: 20 # 字体大小
+    legend.fontsize: 20  # 图例字体大小
+
+    axes.facecolor: 'none'  # 透明背景
+    axes.labelcolor: '#000000'  # 坐标轴标签颜色改为黑色
+    axes.axisbelow: 'False'  # 'line'
+    axes.labelsize: 24
+    axes.edgecolor: '#000000'  # 坐标轴边框颜色改为黑色
+    xtick.labelsize: 24
+    ytick.labelsize: 24
+    ytick.color: '#000000'  # Y轴刻度颜色改为黑色
+    xtick.color: '#000000'  # X轴刻度颜色改为黑色
+    text.color: '#000000'  # 文字颜色改为黑色
+    legend.edgecolor: '#000000'  # 图例边框颜色改为黑色
+    grid.color: '#000000'  # 网格颜色改为黑色
+    grid.linestyle: '--'  # 网格线为虚线
+    grid.linewidth: 0.8  # 网格线宽度
+    grid.alpha: 0.5  # 网格透明度
+    text.usetex: True # 使用LaTeX排版
+
+  cjh_colors: [
+        '#FF0000',  # orangered - 更深的红色，提高对比度
+        '#000000',  # black - 保持黑色
+        '#0057D9',  # deep blue - 适应白底的深蓝色
+        '#FF8C00',  # vivid yellow - 适应白底的亮黄色
+        '#8A2BE2',  # blue violet
+        '#008000',  # purple - 深紫色，提升对比度
+        '#800080',  # green - 适应白底的绿色
+        '#E60000',  # bright red - 纯红色，醒目r
+        '#0057D9',  # strong blue - 深蓝色，提高可见性
+        '#9400D3',  # dark violet - 深紫色
+        '#20B2AA',  # light sea green - 深青色
+        '#D2691E',  # chocolate - 深棕色，适应白底
+        '#DC143C',  # crimson - 深红色
+        '#1E90FF',  # dodger blue - 明亮的蓝色
+        '#8B4513',  # saddle brown - 深棕色
+        '#696969',  # dim gray - 深灰色
+        '#A52A2A',  # brown - 适应白底的深棕色
+        '#556B2F',  # dark olive green - 深橄榄绿
+        '#2F4F4F',  # dark slate gray - 深青灰色
+        '#000080',  # navy - 深蓝色，提高对比度
+    ] # https://uxdesign.cc/dark-mode-ui-design-the-definitive-guide-part-1-color-53dcfaea5129
+
+default_var_list:
+  - sim.NUMBER_OF_STEPS
+  - sim.CLTS
+  - sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD
+  - FOC.delta
+  - FOC.CLBW_HZ

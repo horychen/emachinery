@@ -1,1 +1,4 @@
-recursive-include emachinery *.txt *.py *.qss *.ui *.json *.xlsx *.c *.h makefile
+recursive-include emachinery *.txt *.py *.qss *.ui *.json *.xlsx *.c *.h makefile *.png *.svg gmake.exe
+prune emachinery\acmsimcv5\dat
+prune emachinery\acmsimcv5\dat.exp
+prune emachinery\acmsimcv5\cmake-build-debug

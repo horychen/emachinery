@@ -1,0 +1,33 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  VL.EXE_PER_CL_EXE: 1 # No need to apply reduced execution of velocity loop
+  sim.NUMBER_OF_STEPS: 5000
+  FOC.delta: 20.0
+  FOC.CLBW_HZ: 400.0
+  user.verbose: FALSE
+
+signal_library:
+  - FE.AFEOE.psi_1[0]
+  - FE.AFEOE.psi_1[1]
+
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time (s)
+  width: 9
+  height: 3           # per subplot height
+  subplot:
+    - # Subplot 9
+      title: 
+      y_title: 
+      y:
+        -
+          y_data: (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\Omega^*$
+        -
+          y_data: ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\Omega$
+
+default_var_list:
+  - sim.NUMBER_OF_STEPS

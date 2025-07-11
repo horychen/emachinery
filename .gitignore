@@ -1,4 +1,53 @@
+# user_config_*.yaml
 
+# in linux
+main 
+
+# in windows
+~$*.xlsx
+
+*.zip
+.*/
+args.txt
+plugin_moo_args.txt
+data/
+user_motor.yaml
+super_config.c
+super_config.h
+bezier_points
+acmsimc_bezier_points
+
+session_state.yaml
+
+emachinery/guiv2/*
+
+streamllit_user_session_data.json
+emachinery/config.h
+emachinery/sensorless/collect_data.py
+
+
+
+# .qt_for_python/
+# .venv/
+# .vscode/
+
+*.code-workspace
+
+# ctags files
+tags
+.tags
+
+# Python visualisation files
+*.snakeviz
+
+
+.vscode/
+
+.idea/
+cmake-build-debug/
+
+*.xls
+*.csv
 
 build/
 dist/
@@ -7,12 +56,12 @@ dist/
 
 *.afx
 
-dat/
+dat*/
 *.dat
 
 *.sublime-*
 
-~$*.xls*
+# ~$*.xls*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

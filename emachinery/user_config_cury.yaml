@@ -1,0 +1,36 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  # init.IN: 30
+  init.Vdc: 30
+  sim.NUMBER_OF_STEPS: 5500
+  FOC.delta: 10 # 10  # 25 # 6.5 **
+  FOC.CLBW_HZ: 800 # 1600.0
+  FOC.bool_apply_decoupling_voltages_to_current_regulation: False
+  CL.LIMIT_DC_BUS_UTILIZATION: 0.95
+  VL.LIMIT_OVERLOAD_FACTOR   : 0.95
+
+signal_library:
+  -  ACM.KA
+
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time (s)
+  subplot:
+    - # Subplot 9
+      title: Speed
+      y_title: Speed [r/min]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\Omega^*$
+        # -
+        #   y_data: ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+        #   y_label: $\Omega$
+        -
+          y_data: (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\omega_{\rm fbk}$
+
+default_var_list:
+  - sim.NUMBER_OF_STEPS

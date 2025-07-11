@@ -1,0 +1,127 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  sim.NUMBER_OF_STEPS: 200
+  FOC.delta: 10.0  # 25 # 6.5 **
+  FOC.CLBW_HZ: 500.0
+  # user.verbose: True
+
+signal_library:
+  - FE.AFEOE.psi_1[0]
+  - FE.AFEOE.psi_1[1]
+  - FE.AFEOE.u_offset[0]
+  - FE.AFEOE.u_offset[1]
+  - OBSV.nsoaf.xOmg
+  - OBSV.nsoaf.xIq 
+  - OBSV.nsoaf.output_error 
+  - FE.AFEOE.theta_d/M_PI*180
+  - OBSV.nsoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM 
+  - OBSV.nsoaf.xTL
+  - OBSV.nsoaf.active_power_error
+  - (*CTRL).motor->R
+  - COMM.R
+  - COMM.KE
+  - ACM.uAB[0]
+  - ACM.uAB[1]
+  - ACM.uDQ[0]
+  - ACM.uDQ[1]
+  - ACM.iAB[0]
+  - ACM.iAB[1]
+  - ACM.iDQ[0]
+  - ACM.iDQ[1]
+  - ACM.TLoad
+  - ACM.Tem
+  - ACM.KA
+  - ACM.omega_syn * ACM.KA * 1.732
+  - ACM.current_theta
+  - ACM.voltage_theta
+  - ACM.powerfactor
+  - CTRL->s->cosT 
+  - ACM.Tem * ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time (s)
+  width: 9
+  height: 3           # per subplot height
+  subplot:
+    - # Subplot 9
+      title: current
+      y_title: motor current
+      y:
+        -
+          y_data: ACM.iDQ[0]
+          y_label: $i_d$
+        -
+          y_data: ACM.iDQ[1]
+          y_label: $i_q$
+    - # Subplot 10
+      title: $\alpha$ $\beta$ current
+      y_title:
+      y:
+        -
+          y_data: ACM.iAB[0]
+          y_label: $i_{\alpha}$
+        -
+          y_data: ACM.iAB[1]
+          y_label: $i_{\beta}$
+    - # Subplot 11
+      title: $\alpha$ $\beta$ voltage
+      y_title:
+      y:
+        -
+          y_data: ACM.uAB[0]
+          y_label: $u_{\alpha}$
+        -
+          y_data: ACM.uAB[1]
+          y_label: $u_{\beta}$
+    - # Subplot 12
+      title: dq voltage
+      y_title:
+      y:
+        -
+          y_data: ACM.uDQ[0]
+          y_label: $u_d$
+        -
+          y_data: ACM.uDQ[1]
+          y_label: $u_q$
+    - # Subplot 13
+      title: EMF
+      y_title:
+      y:
+        -
+          y_data: ACM.omega_syn * ACM.KA * 1.732
+          y_label: EMF l2l
+    - # Subplot 14
+      title: phase theta
+      y_title:
+      y:
+        -
+          y_data: ACM.current_theta
+          y_label: current $\theta$
+        -
+          y_data: ACM.voltage_theta
+          y_label: voltage $\theta$
+    - # Subplot 15
+      title: power factor angle
+      y_title:
+      y:
+        -
+          y_data: ACM.powerfactor
+          y_label: $\delta$
+    - # Subplot 16
+      title: power factor
+      y_title:
+      y:
+        -
+          y_data: CTRL->s->cosT 
+          y_label: $power factor$
+    - # Subplot 17
+      title: Power
+      y_title: P [W]
+      y:
+        -
+          y_data: ACM.Tem * ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $Power$
+default_var_list:
+  - sim.NUMBER_OF_STEPS

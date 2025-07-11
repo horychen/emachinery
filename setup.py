@@ -13,7 +13,7 @@ loc1 = buf.find('__version__') + len('__version__')
 loc2 = buf[loc1:].find("'") + 1
 loc3 = buf[loc1+loc2:].find("'")
 VERSION = buf[loc1+loc2:loc1+loc2+loc3]
-print(VERSION)
+print('CJH AUTO DETECT VERSION:', VERSION)
 
 # This call to setup() does all the work
 setup(
@@ -32,7 +32,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],
-    keywords='electricmachinery', 
+    keywords='electric machinery, motors, motor control', 
     # package_dir={'emachinery':'core'},
     # packages=find_packages(),
     packages=["emachinery"],

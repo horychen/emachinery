@@ -1,6 +1,54 @@
 
 ## Changelog
 
+*2.0.0*
+- Streamlit now serves as the GUI.
+- Support both acmsimcv5 (c based simulation) and ACMSimPy (python/numba based simulation).
+
+
+*1.3.2*
+- ACMSimPy: memorize user's last input
+- ACMSimPy: allow user to do basic operations with the available variables and show in scope.
+
+*1.3.1*
+- Attempt to distribute <gmake.exe> with the package.
+
+*1.3.0*
+- Add button for revoking console (for Python based real-time simulation).
+- New gui-v3 using Wanderson's <PyOneDark> has issues with matplotlib stylesheet (which cannot be resolved and new gui is postponed).
+- Sensorless operation with ACMSimPy is tested.
+
+*1.2.6*
+- Use pycairo for faster plotting (as backend for matplotlib).
+
+*1.2.5*
+- Python based Real-time simulation now supports more waveforms.
+
+*1.2.4*
+- Python packaging issue. Update Manifest.in. See [this post](https://packaging.python.org/guides/using-manifest-in/).
+
+*1.2.3*
+- Fix bugs when calling acmsimpy from app_functions.py.
+
+*1.2.2*
+- Fix bugs when setting the path to acmsimc.
+
+*1.2.0*
+- Mordern GUI in dark theme by Wanderson.
+- Top level global variable CTRL, which is a struct of pointers to other structs.
+
+*1.1.5*
+- Recover last user selected MachineName and MachineType.
+
+*1.1.4*
+- Anaconda3 (Python 3.8) comes with qtconsole now, but it will cause problems. 
+>    My code was developed with Anaconda3 (Python 3.7). So one silly fix is to revert back to Python 3.7 for now: 
+>    ```conda install python=3.7 anaconda=custom```
+>    But before you try to revert, try ```pip install --upgrade jupyterlab``` first.
+
+*1.1.3*
+- No use of LoadUi when published.
+
 *1.1.2*
 - Support parametric analysis.
 

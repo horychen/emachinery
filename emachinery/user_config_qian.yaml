@@ -1,0 +1,43 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  # init.IN: 30
+  # init.Vdc: 2000
+  sim.NUMBER_OF_STEPS: 50
+  FOC.delta: 2.5  # 25 # 6.5 **
+  FOC.CLBW_HZ: 800.0
+  FOC.bool_apply_decoupling_voltages_to_current_regulation: False
+  user.set_rpm_speed_command: 0.0
+  # 扫频用
+  user.bool_apply_sweeping_frequency_excitation : False  # 是否扫频激励
+  user.bool_sweeping_frequency_for_speed_loop   : False # 是否速度扫频
+  user.bool_sweeping_frequency_for_current_loop_iD: False # 开启iD轴电流扫频
+  user.CMD_CURRENT_SINE_AMPERE     : 1 # [A]
+  user.CMD_SPEED_SINE_RPM          : 100 # [r/min]
+  user.CMD_SPEED_SINE_HZ           : 0 # [Hz] 这写1代表从2Hz开始扫频
+  user.CMD_SPEED_SINE_STEP_SIZE    : 1 # [Hz]
+  user.CMD_SPEED_SINE_LAST_END_TIME: 0.0
+  user.CMD_SPEED_SINE_END_TIME     : 1e-4
+  user.CMD_SPEED_SINE_HZ_CEILING   : 200 # [Hz]
+  user.timebase_for_Sweeping       : 0.0 # time base for Sweeping Signal
+
+
+signal_library:
+  - ACM.KA
+  - ACM.current_theta
+
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time (s)
+  subplot:
+    - # Subplot 9
+      title: afe
+      y_title: flux
+      y:
+        -
+          y_data: ACM.KA
+          y_label: psi_a
+
+default_var_list:
+  - sim.NUMBER_OF_STEPS

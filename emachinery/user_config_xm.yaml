@@ -1,0 +1,103 @@
+# --- User basic setting (Below shows an example of a user sim/plot configuration file)
+
+simulation:
+  FOC.VL_EXE_PER_CL_EXE : 5
+  init.IN: 1
+  init.Vdc: 48
+  sim.NUMBER_OF_STEPS: 7000
+  FOC.delta: 8 # 10  # 25 # 6.5 **
+  FOC.CLBW_HZ: 800 # 1600.0
+  FOC.bool_apply_decoupling_voltages_to_current_regulation: True
+  CL.LIMIT_DC_BUS_UTILIZATION: 0.96
+  VL.LIMIT_OVERLOAD_FACTOR   : 1.0
+  user.set_rpm_speed_command: 400
+  user.set_iq_command: 1
+  # 扫频用
+  user.bool_apply_sweeping_frequency_excitation    : True  # 是否扫频激励
+  user.bool_sweeping_frequency_for_speed_loop      : True  # 是否速度扫频
+  user.bool_sweeping_frequency_for_current_loop_iD : False  # 开启iD轴电流扫频
+  user.bool_speed_sweeping_with_Load               : True # 带负载扫频，刚开始先零速一段时间进入稳态
+  user.CMD_CURRENT_SINE_AMPERE     : 2  # [A]
+  user.CMD_SPEED_SINE_RPM          : 100 # [r/min]
+  user.CMD_SPEED_SINE_HZ           : 1  # [Hz] 这写1代表从2Hz开始扫频
+  user.CMD_SPEED_SINE_STEP_SIZE    : 1  # [Hz]
+  user.CMD_SPEED_SINE_LAST_END_TIME: 0.0
+  user.CMD_SPEED_SINE_END_TIME     : 1e-4
+  user.CMD_SPEED_SINE_HZ_CEILING   : 400 # [Hz]
+  user.timebase_for_Sweeping       : 0.0 # time base for Sweeping Signal
+  user.Mark_Sweeping_Freq_ThreeDB_Point : 0.0 # 1 代表找到扫频的-3dB点
+  user.Mark_Counter                : 0.0
+  user.Set_SpeedLoop_KI_as_Zero    : False # 设置速度环积分系数为0
+  user.Stable_Time_for_Sweeping    : 1.5   # 设置扫频前先以恒转速运行一段时间
+  user.flag_clear_timebase_once    : False # 让清空timebase操作执行一次
+  # ESO for Speed
+  user.bool_ESO_SPEED_ON : True
+  user.bool_apply_ESO_SPEED_for_SPEED_FBK : True
+  user.CAREFUL_ESOAF_OMEGA_OBSERVER : 4500 # ESO的增益，为了方便写到d_sim来在线debug
+
+
+signal_library:
+  - ACM.KA
+  - d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point
+  - d_sim.user.Mark_Counter
+
+cplot:
+  title:
+  x_data:             # default is time
+  x_label: Time (s)
+  subplot:
+    - # Subplot 1
+      title: Check -3dB
+      y_title: Mark(-1 or 1)
+      y:
+        -
+          y_data: d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point
+          y_label: $MARK_{CROSSing-3dB}$
+    - # Subplot 2
+      title: Check -3dB Mark Counter
+      y_title: Num of Hz
+      y:
+        -
+          y_data: d_sim.user.Mark_Counter
+          y_label: VLBW
+    - # Subplot 3
+      title: ESO Speed
+      y_title: ESO Speed[RPM]
+      y:
+        -
+          y_data: (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+          y_label: $\Omega^*$
+        -
+          y_data: OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM
+          y_label: OFSR.esoaf.$\Omega$
+  # - # Subplot 1.1
+  #   title: Check -3db
+  #   y_title: Mark
+  #   y:
+  #     -
+  #       y_data: d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point
+  #       y_label: $MARK_{CROSSing-3db}$
+  # - # Subplot 2
+  #   title: ESO Speed
+  #   y_title: Speed [r/min]
+  #   y:
+  #     -
+  #       y_data: OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM
+  #       y_label: OFSR.esoaf.$\Omega$
+  # subplot:
+  #   - # Subplot 9
+  #     title: Speed
+  #     y_title: Speed [r/min]
+  #     y:
+  #       -
+  #         y_data: (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM
+  #         y_label: $\Omega^*$
+  #       # -
+  #       #   y_data: ACM.varOmega * MECH_RAD_PER_SEC_2_RPM
+  #       #   y_label: $\Omega$
+  #       -
+  #         y_data: (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM
+  #         y_label: $\omega_{\rm fbk}$
+
+default_var_list:
+  - sim.NUMBER_OF_STEPS

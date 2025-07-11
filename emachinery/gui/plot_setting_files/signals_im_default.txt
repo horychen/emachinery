@@ -1,5 +1,0 @@
-ACM.rpm_cmd, ACM.rpm
-CTRL.iDs_cmd, ACM.iMs, CTRL.iDs
-CTRL.iQs_cmd, ACM.iTs, CTRL.iQs
-CTRL.uDs_cmd, CTRL.uQs_cmd
-ACM.theta_M
