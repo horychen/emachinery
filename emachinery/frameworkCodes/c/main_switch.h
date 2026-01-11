@@ -43,7 +43,10 @@
 #define MODE_SELECT_GENERATOR                8
 #define MODE_SELECT_NB_MODE                  99
 
-typedef struct {
+// 前向定义解决gcc的-Wincompatible-pointer-types问题
+typedef struct st_pid_regulator st_pid_regulator;
+
+struct st_pid_regulator {
     float32 Ref;
     float32 Fbk;
     float32 Err;
@@ -60,8 +63,8 @@ typedef struct {
     float32 Kd;
     float32 SatDiff;
     float32 FbkPrev;
-    void (*calc)();
-} st_pid_regulator;
+    void (*calc)(st_pid_regulator *);
+};
 typedef st_pid_regulator *st_pid_regulator_handle;
 
 // void ACMSIMC_PIDTuner();
@@ -85,7 +88,7 @@ void tustin_PI(st_pid_regulator *r);
     /*Kd*/  0.0, \
     /*Difference between Non-Saturated Output and Saturated Output*/  0.0, \
     /*Previous Feedback*/  0.0, \
-    (void (*)(Uint32)) incremental_PI \
+    (void (*)(st_pid_regulator *)) incremental_PI \
 }
     // (void (*)(Uint32)) tustin_PI \
 
